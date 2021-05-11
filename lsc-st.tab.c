@@ -2050,7 +2050,7 @@ yyreduce:
   case 54:
 #line 270 "lsc-st.y"
                                    {
-        (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
+        (yyval.node) = NewSTNode(JUMP_STATEMENT, 3);
         AddAttrs((yyval.node), CopyStr("return"), (yyvsp[-1].node), CopyStr("delimiter ;"));
     }
 #line 2057 "lsc-st.tab.c"

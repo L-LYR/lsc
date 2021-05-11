@@ -74,4 +74,6 @@ void AddAttrs(STNode *n, const void *a, ...);
 
 void DisplayST(ST *t, Fmt *f);
 
+void FreeST(ST *t);
+
 #endif

@@ -77,7 +77,7 @@ static const char *TypeNames[] = {
 static _Bool CheckDummy(const void *p) { return (*(const char *)p) == 0; }
 
 static int UnitIndent = 2;
-static void Display(STNode *node, Fmt *f) {
+static void _Display(STNode *node, Fmt *f) {
   if (node == NULL) {
     return;
   }
@@ -85,7 +85,7 @@ static void Display(STNode *node, Fmt *f) {
   f->indent += UnitIndent;
   for (int i = 0; i < node->nAttr; ++i) {
     if (CheckDummy(node->attr[i])) {
-      Display((STNode *)(node->attr[i]), f);
+      _Display((STNode *)(node->attr[i]), f);
     } else {
       fprintf(f->out, "%*s%s\n", f->indent, "", (const char *)(node->attr[i]));
     }
@@ -93,4 +93,20 @@ static void Display(STNode *node, Fmt *f) {
   f->indent -= UnitIndent;
 }
 
-void DisplayST(ST *t, Fmt *f) { Display(t->root, f); }
+void DisplayST(ST *t, Fmt *f) { _Display(t->root, f); }
+
+static void _Free(STNode *node) {
+  if (node == NULL) {
+    return;
+  }
+  for (int i = 0; i < node->nAttr; ++i) {
+    if (CheckDummy(node->attr[i])) {
+      _Free((STNode *)(node->attr[i]));
+    } else {
+      free((void *)(node->attr[i]));
+    }
+  }
+  free(node);
+}
+
+void FreeST(ST *t) { _Free(t->root); }

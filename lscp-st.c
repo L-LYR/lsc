@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     fclose(fmt.out);
   }
   yylex_destroy();
+  FreeST(&t);
   return ret;
 }
 

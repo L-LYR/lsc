@@ -268,7 +268,7 @@ jump_statement
         $$ = NewSTNode(JUMP_STATEMENT, 2);
         AddAttrs($$, CopyStr("return"), CopyStr("delimiter ;"));
     }| RETURN expression SEMICOLON {
-        $$ = NewSTNode(JUMP_STATEMENT, 2);
+        $$ = NewSTNode(JUMP_STATEMENT, 3);
         AddAttrs($$, CopyStr("return"), $2, CopyStr("delimiter ;"));
     };
 

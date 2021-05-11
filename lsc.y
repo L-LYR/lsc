@@ -365,7 +365,7 @@ expression
 
 assignment_expression
     : logical_or_expression
-    | unary_expression ASSIGN assignment_expression {
+    | postfix_expression ASSIGN assignment_expression {
         $$ = NewASTNode(BinaryExpr);
         $$->attr[0] = $1;
         $$->attr[1] = "=";
