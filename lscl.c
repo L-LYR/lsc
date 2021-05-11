@@ -20,6 +20,7 @@ typedef enum {
 
 // extern
 int yylex(void);
+int yylex_destroy(void);
 FILE *yyout;
 FILE *yyin;
 char *yytext;
@@ -54,6 +55,11 @@ int main(int argc, char *argv[]) {
       PANIC("Unreachable!");
     }
   }
+  fclose(yyin);
+  if (yyout != stdout) {
+    fclose(yyout);
+  }
+  yylex_destroy();
   return 0;
 }
 
@@ -68,7 +74,7 @@ const char *Usage = "Usage: lscl [-vh] -i <filename> -o <filename>\n"
                     "  -h           \tPrint this help.\n";
 void SetOpts(int argc, char *argv[]) {
   if (argc < 2) {
-    PANIC(Usage);
+    NOTIFY(Usage);
   }
   int opt;
   const char *Filename = NULL;
@@ -92,11 +98,11 @@ void SetOpts(int argc, char *argv[]) {
       break;
     default:
     case 'h':
-      PANIC(Usage);
+      NOTIFY(Usage);
     }
   }
   if (Filename == NULL) {
-    PANIC(Usage);
+    NOTIFY(Usage);
   }
 }
 

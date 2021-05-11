@@ -11,11 +11,9 @@
     #include "text.h"
     void yyerror(const char *s);
     int yylex(void);
-    int yylex_destroy(void);
 
     const char* yytext;
     AST t;
-    Fmt fmt;
 }
 
 %union {
@@ -276,19 +274,13 @@ declaration_list
     };
 
 statement
-    : compound_statement {
-        $$ = $1;
-    }| expression_statement {
-        $$ = $1;
-    }| jump_statement {
-        $$ = $1;
-    }| selection_statement {
-        $$ = $1;
-    }| loop_statement {
-        $$ = $1;
-    }| io_statement {
-        $$ = $1;
-    };
+    : compound_statement 
+    | expression_statement 
+    | jump_statement 
+    | selection_statement 
+    | loop_statement 
+    | io_statement
+    ;
 
 expression_statement 
     : SEMICOLON {
@@ -590,23 +582,4 @@ multiplicative_expression
 extern int yylineno;
 void yyerror(const char *s) {
     fprintf(stderr, "Line %d: %s\n", yylineno, s);
-}
-
-int main(void) {
-    int ret;
-    if ((ret = yyparse()) != 0) {
-        return ret;
-    }
-
-    fmt.out = fopen("./res/test.ast", "w");
-    if (fmt.out == NULL) {
-        PANIC("cannot open output file!");
-    }
-
-    DisplayAST(&t, &fmt);
-
-    fclose(fmt.out);
-    FreeAST(&t);
-    yylex_destroy();
-    return 0;
 }

@@ -63,19 +63,21 @@
 #define YYPULL 1
 
 /* "%code top" blocks.  */
-#line 7 "lsc.y"
+#line 7 "lsc-st.y"
 
     #include <stdio.h>
-    #include "ast.h"
+    #include "st.h"
     #include "panic.h"
     #include "text.h"
     void yyerror(const char *s);
     int yylex(void);
+    int yylex_destroy(void);
 
     const char* yytext;
-    AST t;
+    ST t;
+    Fmt fmt;
 
-#line 79 "lsc.tab.c"
+#line 81 "lsc-st.tab.c"
 
 
 
@@ -111,8 +113,8 @@
 
 /* Use api.header.include to #include this header
    instead of duplicating it here.  */
-#ifndef YY_YY_LSC_TAB_H_INCLUDED
-# define YY_YY_LSC_TAB_H_INCLUDED
+#ifndef YY_YY_LSC_ST_TAB_H_INCLUDED
+# define YY_YY_LSC_ST_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -121,11 +123,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 3 "lsc.y"
+#line 3 "lsc-st.y"
 
-    #include "ast.h"
+    #include "st.h"
 
-#line 129 "lsc.tab.c"
+#line 131 "lsc-st.tab.c"
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -188,13 +190,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 19 "lsc.y"
+#line 21 "lsc-st.y"
 
-    ASTNode* node;
+    STNode* node;
     // need a pointer to symbol table
     const char* str;
 
-#line 198 "lsc.tab.c"
+#line 200 "lsc-st.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -207,7 +209,7 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_LSC_TAB_H_INCLUDED  */
+#endif /* !YY_YY_LSC_ST_TAB_H_INCLUDED  */
 
 
 
@@ -513,7 +515,7 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  12
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   442
+#define YYLAST   486
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  52
@@ -574,18 +576,18 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    52,    52,    55,    59,    66,    67,    71,    76,    84,
-      90,    93,    96,    99,   102,   105,   114,   118,   125,   127,
-     133,   140,   155,   160,   163,   166,   172,   176,   183,   187,
-     194,   200,   209,   213,   220,   237,   240,   244,   248,   255,
-     259,   266,   270,   277,   278,   279,   280,   281,   282,   286,
-     289,   295,   299,   303,   307,   314,   319,   324,   332,   338,
-     347,   351,   358,   359,   367,   368,   376,   377,   381,   385,
-     389,   393,   397,   404,   405,   410,   414,   421,   424,   427,
-     430,   433,   436,   441,   445,   452,   453,   461,   462,   470,
-     471,   479,   480,   488,   489,   497,   498,   503,   511,   512,
-     517,   522,   527,   535,   536,   541,   549,   550,   555,   563,
-     564,   569,   574
+       0,    54,    54,    57,    60,    66,    69,    75,    78,    84,
+      90,    93,    96,    99,   102,   105,   111,   114,   120,   123,
+     129,   132,   138,   144,   147,   150,   156,   159,   165,   168,
+     174,   177,   183,   186,   192,   198,   201,   204,   207,   213,
+     216,   222,   225,   231,   234,   237,   240,   243,   246,   252,
+     255,   261,   264,   267,   270,   276,   279,   282,   288,   291,
+     297,   300,   306,   308,   314,   316,   322,   324,   327,   330,
+     333,   336,   339,   345,   347,   350,   353,   359,   362,   365,
+     368,   371,   374,   380,   383,   389,   391,   397,   399,   405,
+     407,   413,   415,   421,   423,   429,   431,   434,   440,   442,
+     445,   448,   451,   457,   459,   462,   468,   470,   473,   479,
+     481,   484,   487
 };
 #endif
 
@@ -633,7 +635,7 @@ static const yytype_int16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF (-143)
+#define YYPACT_NINF (-139)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -647,27 +649,27 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-      15,  -143,  -143,  -143,  -143,  -143,    35,    15,  -143,  -143,
-      -3,  -143,  -143,  -143,  -143,    29,    12,   -13,  -143,     2,
-    -143,    13,     6,    51,  -143,   354,    29,  -143,    39,    -3,
-      43,    52,  -143,  -143,  -143,  -143,  -143,  -143,  -143,  -143,
-     181,   181,   181,   181,   181,   181,   181,   354,  -143,  -143,
-     106,   104,    55,   110,   116,   120,   121,   122,    16,    34,
-      68,   115,    26,   117,   168,  -143,   119,    15,   112,    15,
-      39,  -143,  -143,  -143,  -143,  -143,  -143,    53,  -143,  -143,
-     -27,   181,   181,   365,   181,   181,   181,   181,   181,   181,
+      65,  -139,  -139,  -139,  -139,  -139,    11,    65,  -139,  -139,
+      -9,  -139,  -139,  -139,  -139,     6,    18,   -16,  -139,     5,
+    -139,   -21,    27,    28,  -139,   398,     6,  -139,    17,    -9,
+      -7,    44,  -139,  -139,  -139,  -139,  -139,  -139,  -139,   181,
+     181,   181,   181,   181,   181,   181,   398,  -139,  -139,  -139,
+    -139,    10,    42,    49,    68,    59,    76,    82,    21,    53,
+      86,   103,    51,    78,   168,  -139,    85,    65,    87,    65,
+      17,  -139,    90,  -139,  -139,  -139,  -139,  -139,    57,  -139,
+    -139,   -25,   181,   181,   409,   181,   181,   181,   181,   181,
      181,   181,   181,   181,   181,   181,   181,   181,   181,   181,
-     181,   181,  -143,   124,   132,   272,   144,   145,   163,   164,
-    -143,  -143,  -143,    -3,  -143,   105,   217,  -143,  -143,  -143,
-    -143,  -143,  -143,   -11,   165,  -143,    -3,  -143,  -143,   181,
-    -143,   319,  -143,  -143,   -12,  -143,  -143,    57,  -143,   116,
-     120,   121,   122,    16,    34,    34,    68,    68,    68,    68,
-     115,   115,    26,    26,  -143,  -143,  -143,   181,   308,  -143,
-     -10,  -143,  -143,   181,   181,   166,  -143,  -143,  -143,  -143,
-     261,  -143,  -143,  -143,  -143,  -143,   181,  -143,    65,   308,
-    -143,    66,    88,    15,  -143,  -143,    39,   396,   159,   193,
-     165,   158,    39,    89,  -143,  -143,     7,  -143,    39,  -143,
-    -143,  -143
+     181,   181,   181,  -139,   100,   102,   316,    98,    99,   106,
+     108,  -139,  -139,  -139,    -9,  -139,   261,   217,  -139,  -139,
+    -139,  -139,  -139,  -139,    -8,   107,  -139,    -9,  -139,  -139,
+     181,  -139,   363,  -139,  -139,    33,  -139,  -139,    58,    68,
+      59,    76,    82,    21,    53,    53,    86,    86,    86,    86,
+     103,   103,    51,    51,  -139,  -139,  -139,   181,   352,  -139,
+       3,  -139,  -139,   181,   181,   112,  -139,  -139,  -139,  -139,
+     305,  -139,  -139,  -139,  -139,  -139,   181,  -139,    61,   352,
+    -139,    67,    71,    65,  -139,  -139,    17,   440,   109,   110,
+     107,   150,    17,    75,  -139,  -139,     1,  -139,    17,  -139,
+    -139,  -139
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -678,17 +680,17 @@ static const yytype_int8 yydefact[] =
        0,    10,    11,    12,    13,    14,     0,     2,     3,     5,
        0,     6,     1,     4,     9,     0,    20,     0,    16,    18,
       22,     0,     0,     0,     7,     0,     0,    15,     0,    28,
-       0,     0,    32,    20,    17,    78,    77,    79,    80,    81,
-       0,     0,     0,     0,     0,     0,     0,     0,    19,    23,
+       0,     0,    32,    20,    17,    78,    79,    80,    81,     0,
+       0,     0,     0,     0,     0,     0,     0,    77,    19,    23,
      109,    66,    73,    64,    85,    87,    89,    91,    93,    95,
       98,   103,   106,     0,     0,    30,    34,     0,     0,     0,
-       0,    69,    70,    67,    68,    71,    72,     0,    62,    26,
+       0,    69,    66,    70,    67,    68,    71,    72,     0,    62,
+      26,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,    21,     0,     0,     0,     0,     0,     0,     0,
-      35,    49,    41,     0,    43,     0,     0,    39,    44,    45,
-      46,    47,    48,     0,    29,     8,     0,    33,    31,     0,
-      82,     0,    24,    65,     0,    75,    83,     0,   109,    86,
+       0,     0,     0,    21,     0,     0,     0,     0,     0,     0,
+       0,    35,    49,    41,     0,    43,     0,     0,    39,    44,
+      45,    46,    47,    48,     0,    29,     8,     0,    33,    31,
+       0,    82,     0,    24,    65,     0,    75,    83,     0,    86,
       88,    90,    92,    94,    96,    97,    99,   100,   101,   102,
      104,   105,   107,   108,   110,   111,   112,     0,     0,    53,
        0,    52,    51,     0,     0,    20,    36,    40,    37,    42,
@@ -701,20 +703,20 @@ static const yytype_int8 yydefact[] =
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -143,  -143,  -143,   207,   -57,    -6,   -21,  -143,   192,   -24,
-     190,   -41,  -143,  -143,  -143,  -143,   176,   -28,   130,  -143,
-    -107,  -142,  -143,    54,  -143,  -143,   -43,   -23,   -15,  -143,
-    -143,   -25,  -143,   167,   162,   169,   161,   170,    56,     0,
-      47,    50
+    -139,  -139,  -139,   155,   -52,     0,   -18,  -139,   143,   -27,
+     141,   -43,  -139,  -139,  -139,  -139,   126,   -28,    52,  -139,
+    -109,  -138,  -139,   -19,  -139,  -139,   -39,   -20,   -26,   -24,
+    -139,   -35,  -139,   111,   122,   123,   121,   125,    40,     2,
+      39,    43
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,     6,     7,     8,     9,    33,    10,    17,    18,    19,
-      21,    48,    80,    30,    11,    31,    32,   114,   115,   116,
-     117,   118,   119,   120,   121,   122,   123,    78,    50,    51,
-      52,   137,    53,    54,    55,    56,    57,    58,    59,    60,
+      -1,     6,     7,     8,     9,    47,    10,    17,    18,    19,
+      21,    48,    81,    30,    11,    31,    32,   115,   116,   117,
+     118,   119,   120,   121,   122,   123,   124,    79,    50,    72,
+      52,   138,    53,    54,    55,    56,    57,    58,    59,    60,
       61,    62
 };
 
@@ -723,100 +725,108 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      65,    29,    49,    77,    16,    66,    79,   112,   167,     1,
-       2,     3,     4,     5,    14,   103,   179,   131,     1,     2,
-       3,     4,     5,   132,    49,    71,    72,    73,    74,    75,
-      76,    23,   129,   129,   129,    12,   175,   187,    24,   134,
-     171,   180,   128,   113,    15,    25,   124,    20,   126,    26,
-      89,    90,    28,    99,   100,   101,    64,    22,   133,   169,
-     136,    27,   160,   167,    91,    92,    93,    94,    14,   138,
-     138,   138,   138,   138,   138,   138,   138,   138,   138,   138,
-     138,   138,   138,   138,   154,   155,   156,    67,    64,    68,
-     174,   146,   147,   148,   149,   113,    69,   129,    70,   130,
-      83,   176,    66,   177,    95,    96,   172,   165,    49,   129,
-     176,   186,   188,   103,   178,   104,   105,   106,   107,   108,
-     109,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      44,    45,   176,   129,   189,   198,    97,    98,   181,   182,
-     136,   136,   150,   151,   193,   144,   145,   152,   153,    81,
-      46,    82,    84,   185,    64,   166,   111,    85,   191,    86,
-      88,    87,   190,   125,   197,   102,    26,   196,   199,   157,
-     201,     1,     2,     3,     4,     5,   103,   158,   104,   105,
-     106,   107,   108,   109,    35,    36,    37,    38,    39,    40,
-      41,    42,    43,    44,    45,   161,   162,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,   163,   164,
-     194,   183,    15,    46,    13,    34,    63,    64,   110,   111,
-       1,     2,     3,     4,     5,   103,    46,   104,   105,   106,
-     107,   108,   109,    35,    36,    37,    38,    39,    40,    41,
-      42,    43,    44,    45,   195,   127,   170,   140,   142,     0,
-     200,   139,     0,     0,     0,   141,     0,     0,   143,     0,
-       0,     0,    46,     0,     0,     0,    64,   168,   111,   103,
-       0,   104,   105,   106,   107,   108,   109,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,     0,
-       0,     0,     0,     0,     0,     0,    46,     0,     0,     0,
-      64,   184,   111,     0,     0,     0,     0,    46,     0,     0,
-       0,     0,     0,   159,    35,    36,    37,    38,    39,    40,
-      41,    42,    43,    44,    45,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    45,     0,     0,     0,     0,
-       0,     0,     0,    46,     0,     0,     0,     0,     0,   111,
-       0,     0,     0,     0,    46,     0,     0,     0,    47,   173,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      44,    45,     0,     0,     0,     0,     0,     0,     0,    46,
-       0,     0,     0,    47,     0,     0,     0,     0,     0,     0,
-      46,   135,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    44,    45,     0,     0,     0,     0,     0,     0,     0,
+      65,    51,    66,    80,    29,    49,    78,   167,    14,   104,
+      16,    12,   113,    71,    73,    74,    75,    76,    77,   132,
+     179,    51,    51,    33,    20,   133,    49,    27,    23,    33,
+       1,     2,     3,     4,     5,    24,   130,    67,    15,    68,
+      51,   187,   129,   171,   135,    14,   114,   130,    25,   125,
+      64,   127,    26,    82,   180,    90,    91,    83,    51,    51,
+      51,   167,   134,    22,   137,   169,    64,   160,     1,     2,
+       3,     4,     5,    28,   154,   155,   156,   130,   100,   101,
+     102,   175,    51,    92,    93,    94,    95,    84,    69,   174,
+      70,    85,    51,    51,   146,   147,   148,   149,    87,   114,
+      66,   130,   176,   131,   177,   130,    51,   186,    51,    86,
+     172,   176,    49,   188,   165,   176,    88,   189,   178,   130,
+      89,   198,    96,    97,    98,    99,   103,    33,   181,   182,
+     144,   145,    26,    51,    51,   150,   151,    83,   126,    51,
+      51,   152,   153,   137,   137,   157,    51,   158,   193,   161,
+     162,   163,    51,   164,    15,    51,   185,   183,   191,   196,
+     194,   195,    13,    51,   197,   190,    34,    63,   199,   170,
+     201,     1,     2,     3,     4,     5,   104,   200,   105,   106,
+     107,   108,   109,   110,    35,    14,    36,    37,    38,    39,
+      40,    41,    42,    43,    44,   128,   139,    35,    14,    36,
+      37,    38,    39,    40,    41,    42,    43,    44,   140,   142,
+     141,     0,     0,    45,   143,     0,     0,    64,   111,   112,
+       1,     2,     3,     4,     5,   104,    45,   105,   106,   107,
+     108,   109,   110,    35,    14,    36,    37,    38,    39,    40,
+      41,    42,    43,    44,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    46,   192
+       0,     0,    45,     0,     0,     0,    64,   168,   112,   104,
+       0,   105,   106,   107,   108,   109,   110,    35,    14,    36,
+      37,    38,    39,    40,    41,    42,    43,    44,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    45,     0,     0,     0,
+      64,   166,   112,   104,     0,   105,   106,   107,   108,   109,
+     110,    35,    14,    36,    37,    38,    39,    40,    41,    42,
+      43,    44,    35,    14,    36,    37,    38,    39,    40,    41,
+      42,    43,    44,     0,     0,     0,     0,     0,     0,     0,
+      45,     0,     0,     0,    64,   184,   112,     0,     0,     0,
+       0,    45,     0,     0,     0,     0,     0,   159,    35,    14,
+      36,    37,    38,    39,    40,    41,    42,    43,    44,    35,
+      14,    36,    37,    38,    39,    40,    41,    42,    43,    44,
+       0,     0,     0,     0,     0,     0,     0,    45,     0,     0,
+       0,     0,     0,   112,     0,     0,     0,     0,    45,     0,
+       0,     0,    46,   173,    35,    14,    36,    37,    38,    39,
+      40,    41,    42,    43,    44,    35,    14,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,     0,     0,     0,     0,
+       0,     0,     0,    45,     0,     0,     0,    46,     0,     0,
+       0,     0,     0,     0,    45,   136,    35,    14,    36,    37,
+      38,    39,    40,    41,    42,    43,    44,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,    45,   192
 };
 
 static const yytype_int16 yycheck[] =
 {
-      28,    22,    25,    46,    10,    29,    47,    64,   115,     3,
-       4,     5,     6,     7,    17,     8,   158,    44,     3,     4,
-       5,     6,     7,    50,    47,    40,    41,    42,    43,    44,
-      45,    44,    44,    44,    44,     0,    48,   179,    51,    82,
-      51,    51,    70,    64,    47,    43,    67,    18,    69,    47,
-      34,    35,    46,    27,    28,    29,    49,    45,    81,   116,
-      83,    48,   105,   170,    30,    31,    32,    33,    17,    84,
-      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
-      95,    96,    97,    98,    99,   100,   101,    44,    49,    46,
-     131,    91,    92,    93,    94,   116,    44,    44,    46,    46,
-      45,    44,   126,    46,    36,    37,   129,   113,   131,    44,
-      44,    46,    46,     8,   157,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    44,    44,    46,    46,    21,    22,   163,   164,
-     163,   164,    95,    96,   187,    89,    90,    97,    98,    43,
-      45,    47,    42,   176,    49,    50,    51,    41,   186,    39,
-      38,    40,   183,    51,   192,    48,    47,     9,   196,    45,
-     198,     3,     4,     5,     6,     7,     8,    45,    10,    11,
+      28,    25,    29,    46,    22,    25,    45,   116,    17,     8,
+      10,     0,    64,    39,    40,    41,    42,    43,    44,    44,
+     158,    45,    46,    23,    18,    50,    46,    48,    44,    29,
+       3,     4,     5,     6,     7,    51,    44,    44,    47,    46,
+      64,   179,    70,    51,    83,    17,    64,    44,    43,    67,
+      49,    69,    47,    43,    51,    34,    35,    47,    82,    83,
+      84,   170,    82,    45,    84,   117,    49,   106,     3,     4,
+       5,     6,     7,    46,   100,   101,   102,    44,    27,    28,
+      29,    48,   106,    30,    31,    32,    33,    45,    44,   132,
+      46,    42,   116,   117,    92,    93,    94,    95,    39,   117,
+     127,    44,    44,    46,    46,    44,   130,    46,   132,    41,
+     130,    44,   132,    46,   114,    44,    40,    46,   157,    44,
+      38,    46,    36,    37,    21,    22,    48,   127,   163,   164,
+      90,    91,    47,   157,   158,    96,    97,    47,    51,   163,
+     164,    98,    99,   163,   164,    45,   170,    45,   187,    51,
+      51,    45,   176,    45,    47,   179,   176,    45,   186,     9,
+      51,    51,     7,   187,   192,   183,    23,    26,   196,   117,
+     198,     3,     4,     5,     6,     7,     8,   196,    10,    11,
       12,    13,    14,    15,    16,    17,    18,    19,    20,    21,
-      22,    23,    24,    25,    26,    51,    51,    16,    17,    18,
-      19,    20,    21,    22,    23,    24,    25,    26,    45,    45,
-      51,    45,    47,    45,     7,    23,    26,    49,    50,    51,
+      22,    23,    24,    25,    26,    69,    85,    16,    17,    18,
+      19,    20,    21,    22,    23,    24,    25,    26,    86,    88,
+      87,    -1,    -1,    45,    89,    -1,    -1,    49,    50,    51,
        3,     4,     5,     6,     7,     8,    45,    10,    11,    12,
       13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
-      23,    24,    25,    26,    51,    69,   116,    85,    87,    -1,
-     196,    84,    -1,    -1,    -1,    86,    -1,    -1,    88,    -1,
+      23,    24,    25,    26,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    45,    -1,    -1,    -1,    49,    50,    51,     8,
       -1,    10,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    20,    21,    22,    23,    24,    25,    26,    16,    17,
-      18,    19,    20,    21,    22,    23,    24,    25,    26,    -1,
+      19,    20,    21,    22,    23,    24,    25,    26,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    45,    -1,    -1,    -1,
-      49,    50,    51,    -1,    -1,    -1,    -1,    45,    -1,    -1,
-      -1,    -1,    -1,    51,    16,    17,    18,    19,    20,    21,
+      49,    50,    51,     8,    -1,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26,    16,    17,    18,    19,    20,    21,    22,    23,
+      24,    25,    26,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      45,    -1,    -1,    -1,    49,    50,    51,    -1,    -1,    -1,
+      -1,    45,    -1,    -1,    -1,    -1,    -1,    51,    16,    17,
+      18,    19,    20,    21,    22,    23,    24,    25,    26,    16,
+      17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    45,    -1,    -1,
+      -1,    -1,    -1,    51,    -1,    -1,    -1,    -1,    45,    -1,
+      -1,    -1,    49,    50,    16,    17,    18,    19,    20,    21,
       22,    23,    24,    25,    26,    16,    17,    18,    19,    20,
       21,    22,    23,    24,    25,    26,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    45,    -1,    -1,    -1,    -1,    -1,    51,
-      -1,    -1,    -1,    -1,    45,    -1,    -1,    -1,    49,    50,
-      16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
-      26,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    45,
-      -1,    -1,    -1,    49,    -1,    -1,    -1,    -1,    -1,    -1,
-      45,    46,    16,    17,    18,    19,    20,    21,    22,    23,
-      24,    25,    26,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    45,    -1,    -1,    -1,    49,    -1,    -1,
+      -1,    -1,    -1,    -1,    45,    46,    16,    17,    18,    19,
+      20,    21,    22,    23,    24,    25,    26,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    45,    46
+      -1,    -1,    -1,    -1,    -1,    45,    46
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -826,17 +836,17 @@ static const yytype_int8 yystos[] =
        0,     3,     4,     5,     6,     7,    53,    54,    55,    56,
       58,    66,     0,    55,    17,    47,    57,    59,    60,    61,
       18,    62,    45,    44,    51,    43,    47,    48,    46,    58,
-      65,    67,    68,    57,    60,    16,    17,    18,    19,    20,
-      21,    22,    23,    24,    25,    26,    45,    49,    63,    79,
+      65,    67,    68,    57,    60,    16,    18,    19,    20,    21,
+      22,    23,    24,    25,    26,    45,    49,    57,    63,    79,
       80,    81,    82,    84,    85,    86,    87,    88,    89,    90,
       91,    92,    93,    62,    49,    69,    61,    44,    46,    44,
-      46,    80,    80,    80,    80,    80,    80,    78,    79,    63,
-      64,    43,    47,    45,    42,    41,    39,    40,    38,    34,
-      35,    30,    31,    32,    33,    36,    37,    21,    22,    27,
-      28,    29,    48,     8,    10,    11,    12,    13,    14,    15,
-      50,    51,    56,    58,    69,    70,    71,    72,    73,    74,
-      75,    76,    77,    78,    58,    51,    58,    68,    69,    44,
-      46,    44,    50,    79,    78,    46,    79,    83,    80,    85,
+      46,    80,    81,    80,    80,    80,    80,    80,    78,    79,
+      63,    64,    43,    47,    45,    42,    41,    39,    40,    38,
+      34,    35,    30,    31,    32,    33,    36,    37,    21,    22,
+      27,    28,    29,    48,     8,    10,    11,    12,    13,    14,
+      15,    50,    51,    56,    58,    69,    70,    71,    72,    73,
+      74,    75,    76,    77,    78,    58,    51,    58,    68,    69,
+      44,    46,    44,    50,    79,    78,    46,    79,    83,    85,
       86,    87,    88,    89,    90,    90,    91,    91,    91,    91,
       92,    92,    93,    93,    80,    80,    80,    45,    45,    51,
       78,    51,    51,    45,    45,    57,    50,    72,    50,    56,
@@ -1573,926 +1583,989 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 52 "lsc.y"
+#line 54 "lsc-st.y"
                       {t.root = (yyval.node);}
-#line 1579 "lsc.tab.c"
+#line 1589 "lsc-st.tab.c"
     break;
 
   case 3:
-#line 55 "lsc.y"
+#line 57 "lsc-st.y"
                                        {
-        (yyval.node) = NewASTNode(GlobalDeclOrDefList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(GLOBAL_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1589 "lsc.tab.c"
+#line 1598 "lsc-st.tab.c"
     break;
 
   case 4:
-#line 59 "lsc.y"
+#line 60 "lsc-st.y"
                                                     {
-        (yyval.node) = NewASTNode(GlobalDeclOrDefList);
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(GLOBAL_LIST, 2);
+        AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
     }
-#line 1599 "lsc.tab.c"
+#line 1607 "lsc-st.tab.c"
+    break;
+
+  case 5:
+#line 66 "lsc-st.y"
+                  {
+        (yyval.node) = NewSTNode(GLOBAL_DECLARATION_OR_DEFINITION, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1616 "lsc-st.tab.c"
+    break;
+
+  case 6:
+#line 69 "lsc-st.y"
+                           {
+        (yyval.node) = NewSTNode(GLOBAL_DECLARATION_OR_DEFINITION, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1625 "lsc-st.tab.c"
     break;
 
   case 7:
-#line 71 "lsc.y"
+#line 75 "lsc-st.y"
                                                      {
-        (yyval.node) = NewASTNode(Declaration);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[-1].node);
-        SpecifyType((yyvsp[-1].node), (yyvsp[-2].node)->attr[0]);
+        (yyval.node) = NewSTNode(DECLARATION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), (yyvsp[-1].node), CopyStr("delimiter ;"));
     }
-#line 1610 "lsc.tab.c"
+#line 1634 "lsc-st.tab.c"
     break;
 
   case 8:
-#line 76 "lsc.y"
+#line 78 "lsc-st.y"
                                                                       {
-        (yyval.node) = NewASTNode(FunctionDecl);
-        (yyval.node)->attr[0] = (yyvsp[-5].node);
-        (yyval.node)->attr[1] = (yyvsp[-4].node);
-        (yyval.node)->attr[2] = (yyvsp[-2].node);
+        (yyval.node) = NewSTNode(DECLARATION, 6);
+        AddAttrs((yyval.node), (yyvsp[-5].node), (yyvsp[-4].node), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), CopyStr("delimiter ;"));
     }
-#line 1621 "lsc.tab.c"
+#line 1643 "lsc-st.tab.c"
     break;
 
   case 9:
-#line 84 "lsc.y"
+#line 84 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(Identifier);
-        (yyval.node)->attr[0] = CopyStr(yytext);
+        (yyval.node) = NewSTNode(ID, 1);
+        AddAttrs((yyval.node), CopyStr(yytext));
     }
-#line 1630 "lsc.tab.c"
+#line 1652 "lsc-st.tab.c"
     break;
 
   case 10:
-#line 90 "lsc.y"
+#line 90 "lsc-st.y"
            {
-        (yyval.node) = NewASTNode(TypeSpecifier);
-        (yyval.node)->attr[0] = CopyStr("void");
+        (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
+        AddAttrs((yyval.node), CopyStr("void"));
     }
-#line 1639 "lsc.tab.c"
+#line 1661 "lsc-st.tab.c"
     break;
 
   case 11:
-#line 93 "lsc.y"
+#line 93 "lsc-st.y"
            {
-        (yyval.node) = NewASTNode(TypeSpecifier);
-        (yyval.node)->attr[0] = CopyStr("i32");
+        (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
+        AddAttrs((yyval.node), CopyStr("i32"));
     }
-#line 1648 "lsc.tab.c"
+#line 1670 "lsc-st.tab.c"
     break;
 
   case 12:
-#line 96 "lsc.y"
+#line 96 "lsc-st.y"
            {
-        (yyval.node) = NewASTNode(TypeSpecifier);
-        (yyval.node)->attr[0] = CopyStr("f32");
+        (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
+        AddAttrs((yyval.node), CopyStr("f32"));
     }
-#line 1657 "lsc.tab.c"
+#line 1679 "lsc-st.tab.c"
     break;
 
   case 13:
-#line 99 "lsc.y"
+#line 99 "lsc-st.y"
               {
-        (yyval.node) = NewASTNode(TypeSpecifier);
-        (yyval.node)->attr[0] = CopyStr("string");
+        (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
+        AddAttrs((yyval.node), CopyStr("string"));
     }
-#line 1666 "lsc.tab.c"
+#line 1688 "lsc-st.tab.c"
     break;
 
   case 14:
-#line 102 "lsc.y"
+#line 102 "lsc-st.y"
             {
-        (yyval.node) = NewASTNode(TypeSpecifier);
-        (yyval.node)->attr[0] = CopyStr("bool");
+        (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
+        AddAttrs((yyval.node), CopyStr("bool"));
     }
-#line 1675 "lsc.tab.c"
+#line 1697 "lsc-st.tab.c"
     break;
 
   case 15:
-#line 105 "lsc.y"
+#line 105 "lsc-st.y"
                                             {
-        (yyval.node) = NewASTNode(TypeSpecifier);
-        (yyval.node)->attr[0] = ConcatenateStr((yyvsp[-3].node)->attr[0], "[", (yyvsp[-1].str), "]", NULL);
-        free((void*)((yyvsp[-3].node)->attr[0]));
-        free((yyvsp[-3].node));
-        free((void*)(yyvsp[-1].str));
+        (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
+        AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
     }
-#line 1687 "lsc.tab.c"
+#line 1706 "lsc-st.tab.c"
     break;
 
   case 16:
-#line 114 "lsc.y"
+#line 111 "lsc-st.y"
                       {
-        (yyval.node) = NewASTNode(DeclaratorList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INIT_DECLARATOR_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1697 "lsc.tab.c"
+#line 1715 "lsc-st.tab.c"
     break;
 
   case 17:
-#line 118 "lsc.y"
+#line 114 "lsc-st.y"
                                                   {
-        (yyval.node) = NewASTNode(DeclaratorList);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INIT_DECLARATOR_LIST, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
     }
-#line 1707 "lsc.tab.c"
+#line 1724 "lsc-st.tab.c"
     break;
 
   case 18:
-#line 125 "lsc.y"
+#line 120 "lsc-st.y"
                  {
-        (yyval.node) = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INIT_DECLARATOR, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1715 "lsc.tab.c"
+#line 1733 "lsc-st.tab.c"
     break;
 
   case 19:
-#line 127 "lsc.y"
+#line 123 "lsc-st.y"
                                      {
-        (yyval.node) = (yyvsp[-2].node);
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INIT_DECLARATOR, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ="), (yyvsp[0].node));
     }
-#line 1724 "lsc.tab.c"
+#line 1742 "lsc-st.tab.c"
     break;
 
   case 20:
-#line 133 "lsc.y"
+#line 129 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(Declarator);
-        ASTNode* ts = NewASTNode(TypeSpecifier);
-        ts->attr[0] = NULL;
-        (yyval.node)->attr[0] = ts;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
-        (yyval.node)->attr[2] = NULL;
+        (yyval.node) = NewSTNode(DECLARATOR, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1737 "lsc.tab.c"
+#line 1751 "lsc-st.tab.c"
     break;
 
   case 21:
-#line 140 "lsc.y"
+#line 132 "lsc-st.y"
                                        {
-        (yyval.node) = (yyvsp[-3].node);
-        ASTNode* ts = (ASTNode*)((yyval.node)->attr[0]);
-        if (ts->attr[0] == NULL) {
-            ts->attr[0] = ConcatenateStr("[", (yyvsp[-1].str), "]", NULL);
-            free((void*)(yyvsp[-1].str));
-        } else {
-            const char* t = (const char*)(ts->attr[0]);
-            ts->attr[0] = ConcatenateStr(t, "[", (yyvsp[-1].str), "]", NULL);
-            free((void*)t);
-            free((void*)(yyvsp[-1].str));
-        }
+        (yyval.node) = NewSTNode(DECLARATOR, 4);
+        AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
     }
-#line 1755 "lsc.tab.c"
+#line 1760 "lsc-st.tab.c"
     break;
 
   case 22:
-#line 155 "lsc.y"
+#line 138 "lsc-st.y"
                 {
-        (yyval.str) = CopyStr(yytext);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
+        AddAttrs((yyval.node), CopyStr(yytext));
     }
-#line 1763 "lsc.tab.c"
+#line 1769 "lsc-st.tab.c"
     break;
 
   case 23:
-#line 160 "lsc.y"
+#line 144 "lsc-st.y"
                             {
-        (yyval.node) = NewASTNode(Initializer);
-        (yyval.node)->attr[0] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INITIALIZER, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1772 "lsc.tab.c"
+#line 1778 "lsc-st.tab.c"
     break;
 
   case 24:
-#line 163 "lsc.y"
+#line 147 "lsc-st.y"
                                 {
-        (yyval.node) = NewASTNode(ArrayInitializer);
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(INITIALIZER, 3);
+        AddAttrs((yyval.node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
     }
-#line 1781 "lsc.tab.c"
+#line 1787 "lsc-st.tab.c"
     break;
 
   case 25:
-#line 166 "lsc.y"
+#line 150 "lsc-st.y"
                                       {
-        (yyval.node) = NewASTNode(ArrayInitializer);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
+        (yyval.node) = NewSTNode(INITIALIZER, 4);
+        AddAttrs((yyval.node), CopyStr("delimiter ["), (yyvsp[-2].node), CopyStr("delimiter ,"), CopyStr("delimiter delimiter ]"));
     }
-#line 1790 "lsc.tab.c"
+#line 1796 "lsc-st.tab.c"
     break;
 
   case 26:
-#line 172 "lsc.y"
+#line 156 "lsc-st.y"
                   {
-        (yyval.node) = NewASTNode(InitializerList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INITIALIZER_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1800 "lsc.tab.c"
+#line 1805 "lsc-st.tab.c"
     break;
 
   case 27:
-#line 176 "lsc.y"
+#line 159 "lsc-st.y"
                                           {
-        (yyval.node) = NewASTNode(InitializerList);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(INITIALIZER_LIST, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
     }
-#line 1810 "lsc.tab.c"
+#line 1814 "lsc-st.tab.c"
     break;
 
   case 28:
-#line 183 "lsc.y"
+#line 165 "lsc-st.y"
                       {
-        (yyval.node) = NewASTNode(ParameterTypeList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(PARAMETER_TYPE_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1820 "lsc.tab.c"
+#line 1823 "lsc-st.tab.c"
     break;
 
   case 29:
-#line 187 "lsc.y"
+#line 168 "lsc-st.y"
                                                  {
-        (yyval.node) = NewASTNode(ParameterTypeList);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(PARAMETER_TYPE_LIST, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
     }
-#line 1830 "lsc.tab.c"
+#line 1832 "lsc-st.tab.c"
     break;
 
   case 30:
-#line 194 "lsc.y"
+#line 174 "lsc-st.y"
                                                           {
-        (yyval.node) = NewASTNode(FunctionDef);
-        (yyval.node)->attr[0] = (yyvsp[-4].node);
-        (yyval.node)->attr[1] = (yyvsp[-3].node);
-        (yyval.node)->attr[2] = NULL;
-        (yyval.node)->attr[3] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(FUNCTION_DEFINITION, 5);
+        AddAttrs((yyval.node), (yyvsp[-4].node), (yyvsp[-3].node), CopyStr("delimiter ("), CopyStr("delimiter )"), (yyvsp[0].node));
     }
-#line 1842 "lsc.tab.c"
+#line 1841 "lsc-st.tab.c"
     break;
 
   case 31:
-#line 200 "lsc.y"
+#line 177 "lsc-st.y"
                                                                                      {
-        (yyval.node) = NewASTNode(FunctionDef);
-        (yyval.node)->attr[0] = (yyvsp[-5].node);
-        (yyval.node)->attr[1] = (yyvsp[-4].node);
-        (yyval.node)->attr[2] = (yyvsp[-2].node);
-        (yyval.node)->attr[3] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(FUNCTION_DEFINITION, 6);
+        AddAttrs((yyval.node), (yyvsp[-5].node), (yyvsp[-4].node), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
     }
-#line 1854 "lsc.tab.c"
+#line 1850 "lsc-st.tab.c"
     break;
 
   case 32:
-#line 209 "lsc.y"
+#line 183 "lsc-st.y"
                            {
-        (yyval.node) = NewASTNode(ParameterDeclList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(PARAMETER_DECLARATOR_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1864 "lsc.tab.c"
+#line 1859 "lsc-st.tab.c"
     break;
 
   case 33:
-#line 213 "lsc.y"
+#line 186 "lsc-st.y"
                                                             {
-        (yyval.node) = NewASTNode(ParameterDeclList);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(PARAMETER_DECLARATOR_LIST, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
     }
-#line 1874 "lsc.tab.c"
+#line 1868 "lsc-st.tab.c"
     break;
 
   case 34:
-#line 220 "lsc.y"
+#line 192 "lsc-st.y"
                                 {
-        (yyval.node) = NewASTNode(ParameterDecl);
-        ASTNode* ts = (ASTNode*)((yyvsp[0].node)->attr[0]);
-        const char* p = (const char*)(ts->attr[0]);
-        if (p != NULL) {
-            const char* t = (yyvsp[-1].node)->attr[0];
-            (yyvsp[-1].node)->attr[0] = ConcatenateStr(t, p, NULL);
-            free((void*)t);
-            free((void*)p);
-        }
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node)->attr[1];
-        free(ts);
-        free((yyvsp[0].node));
+        (yyval.node) = NewSTNode(PARAMETER_DECLARATOR, 2);
+        AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
     }
-#line 1894 "lsc.tab.c"
+#line 1877 "lsc-st.tab.c"
     break;
 
   case 35:
-#line 237 "lsc.y"
+#line 198 "lsc-st.y"
               {
-        (yyval.node) = NewASTNode(CompoundStm);
-        (yyval.node)->attr[0] = (yyval.node)->attr[1] = NULL;
+        (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 2);
+        AddAttrs((yyval.node), CopyStr("delimiter {"), CopyStr("delimiter }"));
     }
-#line 1903 "lsc.tab.c"
+#line 1886 "lsc-st.tab.c"
     break;
 
   case 36:
-#line 240 "lsc.y"
+#line 201 "lsc-st.y"
                               {
-        (yyval.node) = NewASTNode(CompoundStm);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 3);
+        AddAttrs((yyval.node), CopyStr("delimiter {"), (yyvsp[-1].node), CopyStr("delimiter }"));
     }
-#line 1913 "lsc.tab.c"
+#line 1895 "lsc-st.tab.c"
     break;
 
   case 37:
-#line 244 "lsc.y"
+#line 204 "lsc-st.y"
                                 {
-        (yyval.node) = NewASTNode(CompoundStm);
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
-        (yyval.node)->attr[1] = NULL;
+        (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 3);
+        AddAttrs((yyval.node), CopyStr("delimiter {"), (yyvsp[-1].node), CopyStr("delimiter }"));
     }
-#line 1923 "lsc.tab.c"
+#line 1904 "lsc-st.tab.c"
     break;
 
   case 38:
-#line 248 "lsc.y"
+#line 207 "lsc-st.y"
                                                {
-        (yyval.node) = NewASTNode(CompoundStm);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 4);
+        AddAttrs((yyval.node), CopyStr("delimiter {"), (yyvsp[-2].node), (yyvsp[-1].node), CopyStr("delimiter }"));
     }
-#line 1933 "lsc.tab.c"
+#line 1913 "lsc-st.tab.c"
     break;
 
   case 39:
-#line 255 "lsc.y"
+#line 213 "lsc-st.y"
                 {
-        (yyval.node) = NewASTNode(StatementList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(STATEMENT_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1943 "lsc.tab.c"
+#line 1922 "lsc-st.tab.c"
     break;
 
   case 40:
-#line 259 "lsc.y"
+#line 216 "lsc-st.y"
                                 {
-        (yyval.node) = NewASTNode(StatementList);
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(STATEMENT_LIST, 2);
+        AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
     }
-#line 1953 "lsc.tab.c"
+#line 1931 "lsc-st.tab.c"
     break;
 
   case 41:
-#line 266 "lsc.y"
+#line 222 "lsc-st.y"
                   {
-        (yyval.node) = NewASTNode(DeclarationList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(DECLARATION_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 1963 "lsc.tab.c"
+#line 1940 "lsc-st.tab.c"
     break;
 
   case 42:
-#line 270 "lsc.y"
+#line 225 "lsc-st.y"
                                     {
-        (yyval.node) = NewASTNode(DeclarationList);
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(DECLARATION_LIST, 2);
+        AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
     }
-#line 1973 "lsc.tab.c"
+#line 1949 "lsc-st.tab.c"
+    break;
+
+  case 43:
+#line 231 "lsc-st.y"
+                         {
+        (yyval.node) = NewSTNode(STATEMENT, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1958 "lsc-st.tab.c"
+    break;
+
+  case 44:
+#line 234 "lsc-st.y"
+                            {
+        (yyval.node) = NewSTNode(STATEMENT, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1967 "lsc-st.tab.c"
+    break;
+
+  case 45:
+#line 237 "lsc-st.y"
+                      {
+        (yyval.node) = NewSTNode(STATEMENT, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1976 "lsc-st.tab.c"
+    break;
+
+  case 46:
+#line 240 "lsc-st.y"
+                           {
+        (yyval.node) = NewSTNode(STATEMENT, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1985 "lsc-st.tab.c"
+    break;
+
+  case 47:
+#line 243 "lsc-st.y"
+                      {
+        (yyval.node) = NewSTNode(STATEMENT, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 1994 "lsc-st.tab.c"
+    break;
+
+  case 48:
+#line 246 "lsc-st.y"
+                    {
+        (yyval.node) = NewSTNode(STATEMENT, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
+    }
+#line 2003 "lsc-st.tab.c"
     break;
 
   case 49:
-#line 286 "lsc.y"
+#line 252 "lsc-st.y"
                 {
-        (yyval.node) = NewASTNode(ExpressionStm);
-        (yyval.node)->attr[0] = NULL;
+        (yyval.node) = NewSTNode(EXPRESSION_STATEMENT, 1);
+        AddAttrs((yyval.node), CopyStr("delimiter ;"));
     }
-#line 1982 "lsc.tab.c"
+#line 2012 "lsc-st.tab.c"
     break;
 
   case 50:
-#line 289 "lsc.y"
+#line 255 "lsc-st.y"
                             {
-        (yyval.node) = NewASTNode(ExpressionStm);
-        (yyval.node)->attr[0] = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(EXPRESSION_STATEMENT, 2);
+        AddAttrs((yyval.node), (yyvsp[-1].node), CopyStr("delimiter ;"));
     }
-#line 1991 "lsc.tab.c"
+#line 2021 "lsc-st.tab.c"
     break;
 
   case 51:
-#line 295 "lsc.y"
+#line 261 "lsc-st.y"
                          {
-        (yyval.node) = NewASTNode(JumpStm);
-        (yyval.node)->attr[0] = "continue";
-        (yyval.node)->attr[1] = NULL;
+        (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
+        AddAttrs((yyval.node), CopyStr("continue"), CopyStr("delimiter ;"));
     }
-#line 2001 "lsc.tab.c"
+#line 2030 "lsc-st.tab.c"
     break;
 
   case 52:
-#line 299 "lsc.y"
+#line 264 "lsc-st.y"
                        {
-        (yyval.node) = NewASTNode(JumpStm);
-        (yyval.node)->attr[0] = "break";
-        (yyval.node)->attr[1] = NULL;
+        (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
+        AddAttrs((yyval.node), CopyStr("break"), CopyStr("delimiter ;"));
     }
-#line 2011 "lsc.tab.c"
+#line 2039 "lsc-st.tab.c"
     break;
 
   case 53:
-#line 303 "lsc.y"
+#line 267 "lsc-st.y"
                         {
-        (yyval.node) = NewASTNode(JumpStm);
-        (yyval.node)->attr[0] = "return";
-        (yyval.node)->attr[1] = NULL;
+        (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
+        AddAttrs((yyval.node), CopyStr("return"), CopyStr("delimiter ;"));
     }
-#line 2021 "lsc.tab.c"
+#line 2048 "lsc-st.tab.c"
     break;
 
   case 54:
-#line 307 "lsc.y"
+#line 270 "lsc-st.y"
                                    {
-        (yyval.node) = NewASTNode(JumpStm);
-        (yyval.node)->attr[0] = "return";
-        (yyval.node)->attr[1] = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
+        AddAttrs((yyval.node), CopyStr("return"), (yyvsp[-1].node), CopyStr("delimiter ;"));
     }
-#line 2031 "lsc.tab.c"
+#line 2057 "lsc-st.tab.c"
     break;
 
   case 55:
-#line 314 "lsc.y"
+#line 276 "lsc-st.y"
                                              {
-        (yyval.node) = NewASTNode(SelectionStm);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
-        (yyval.node)->attr[2] = NULL;
+        (yyval.node) = NewSTNode(SELECTION_STATEMENT, 5);
+        AddAttrs((yyval.node), CopyStr("if"), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
     }
-#line 2042 "lsc.tab.c"
+#line 2066 "lsc-st.tab.c"
     break;
 
   case 56:
-#line 319 "lsc.y"
+#line 279 "lsc-st.y"
                                                                       {
-        (yyval.node) = NewASTNode(SelectionStm);
-        (yyval.node)->attr[0] = (yyvsp[-4].node);
-        (yyval.node)->attr[1] = (yyvsp[-2].node);
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(SELECTION_STATEMENT, 7);
+        AddAttrs((yyval.node), CopyStr("if"), CopyStr("delimiter ("), (yyvsp[-4].node), CopyStr("delimiter )"), (yyvsp[-2].node), CopyStr("else"), (yyvsp[0].node));
     }
-#line 2053 "lsc.tab.c"
+#line 2075 "lsc-st.tab.c"
     break;
 
   case 57:
-#line 324 "lsc.y"
+#line 282 "lsc-st.y"
                                                                        {
-        (yyval.node) = NewASTNode(SelectionStm);
-        (yyval.node)->attr[0] = (yyvsp[-4].node);
-        (yyval.node)->attr[1] = (yyvsp[-2].node);
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(SELECTION_STATEMENT, 7);
+        AddAttrs((yyval.node), CopyStr("if"), CopyStr("delimiter ("), (yyvsp[-4].node), CopyStr("delimiter )"), (yyvsp[-2].node), CopyStr("else"), (yyvsp[0].node));
     }
-#line 2064 "lsc.tab.c"
+#line 2084 "lsc-st.tab.c"
     break;
 
   case 58:
-#line 332 "lsc.y"
+#line 288 "lsc-st.y"
                                                                              {
-        (yyval.node) = NewASTNode(LoopStm);
-        (yyval.node)->attr[0] = (yyvsp[-3].node);
-        (yyval.node)->attr[1] = (yyvsp[-2].node);
-        (yyval.node)->attr[2] = NULL;
-        (yyval.node)->attr[3] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(LOOP_STATEMENT, 6);
+        AddAttrs((yyval.node), CopyStr("for"), CopyStr("delimiter ("), (yyvsp[-3].node), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
     }
-#line 2076 "lsc.tab.c"
+#line 2093 "lsc-st.tab.c"
     break;
 
   case 59:
-#line 338 "lsc.y"
+#line 291 "lsc-st.y"
                                                                                          {
-        (yyval.node) = NewASTNode(LoopStm);
-        (yyval.node)->attr[0] = (yyvsp[-4].node);
-        (yyval.node)->attr[1] = (yyvsp[-3].node);
-        (yyval.node)->attr[2] = (yyvsp[-2].node);
-        (yyval.node)->attr[3] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(LOOP_STATEMENT, 7);
+        AddAttrs((yyval.node), CopyStr("for"), CopyStr("delimiter ("), (yyvsp[-4].node), (yyvsp[-3].node), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
     }
-#line 2088 "lsc.tab.c"
+#line 2102 "lsc-st.tab.c"
     break;
 
   case 60:
-#line 347 "lsc.y"
+#line 297 "lsc-st.y"
                                           {
-        (yyval.node) = NewASTNode(IOStm);
-        (yyval.node)->attr[0] = "print";
-        (yyval.node)->attr[1] = (yyvsp[-2].node);
+        (yyval.node) = NewSTNode(IO_STATEMENT, 5);
+        AddAttrs((yyval.node), CopyStr("print"), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), CopyStr("delimiter ;"));
     }
-#line 2098 "lsc.tab.c"
+#line 2111 "lsc-st.tab.c"
     break;
 
   case 61:
-#line 351 "lsc.y"
+#line 300 "lsc-st.y"
                                           {
-        (yyval.node) = NewASTNode(IOStm);
-        (yyval.node)->attr[0] = "scan";
-        (yyval.node)->attr[1] = (yyvsp[-2].node);
+        (yyval.node) = NewSTNode(IO_STATEMENT, 5);
+        AddAttrs((yyval.node), CopyStr("scan"), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), CopyStr("delimiter ;"));
     }
-#line 2108 "lsc.tab.c"
+#line 2120 "lsc-st.tab.c"
+    break;
+
+  case 62:
+#line 306 "lsc-st.y"
+                            {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2128 "lsc-st.tab.c"
     break;
 
   case 63:
-#line 359 "lsc.y"
-                                             {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = ",";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 308 "lsc-st.y"
+                                              {
+        (yyval.node) = NewSTNode(EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ,"), (yyvsp[0].node));
     }
-#line 2119 "lsc.tab.c"
+#line 2137 "lsc-st.tab.c"
+    break;
+
+  case 64:
+#line 314 "lsc-st.y"
+                            {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2145 "lsc-st.tab.c"
     break;
 
   case 65:
-#line 368 "lsc.y"
-                                                    {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "=";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 316 "lsc-st.y"
+                                                       {
+        (yyval.node) = NewSTNode(ASSIGNMENT_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ="), (yyvsp[0].node));
     }
-#line 2130 "lsc.tab.c"
+#line 2154 "lsc-st.tab.c"
+    break;
+
+  case 66:
+#line 322 "lsc-st.y"
+                         {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2162 "lsc-st.tab.c"
     break;
 
   case 67:
-#line 377 "lsc.y"
-                           {
-        (yyval.node) = NewASTNode(UnaryExpr);
-        (yyval.node)->attr[0] = "++";
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+#line 324 "lsc-st.y"
+                            {
+        (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
+        AddAttrs((yyval.node), CopyStr("operator ++"), (yyvsp[0].node));
     }
-#line 2140 "lsc.tab.c"
+#line 2171 "lsc-st.tab.c"
     break;
 
   case 68:
-#line 381 "lsc.y"
+#line 327 "lsc-st.y"
                             {
-        (yyval.node) = NewASTNode(UnaryExpr);
-        (yyval.node)->attr[0] = "--";
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
+        AddAttrs((yyval.node), CopyStr("operator --"), (yyvsp[0].node));
     }
-#line 2150 "lsc.tab.c"
+#line 2180 "lsc-st.tab.c"
     break;
 
   case 69:
-#line 385 "lsc.y"
+#line 330 "lsc-st.y"
                              {
-        (yyval.node) = NewASTNode(UnaryExpr);
-        (yyval.node)->attr[0] = "+";
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
+        AddAttrs((yyval.node), CopyStr("operator +"), (yyvsp[0].node));
     }
-#line 2160 "lsc.tab.c"
+#line 2189 "lsc-st.tab.c"
     break;
 
   case 70:
-#line 389 "lsc.y"
+#line 333 "lsc-st.y"
                               {
-        (yyval.node) = NewASTNode(UnaryExpr);
-        (yyval.node)->attr[0] = "-";
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
+        AddAttrs((yyval.node), CopyStr("operator -"), (yyvsp[0].node));
     }
-#line 2170 "lsc.tab.c"
+#line 2198 "lsc-st.tab.c"
     break;
 
   case 71:
-#line 393 "lsc.y"
+#line 336 "lsc-st.y"
                              {
-        (yyval.node) = NewASTNode(UnaryExpr);
-        (yyval.node)->attr[0] = "~";
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
+        AddAttrs((yyval.node), CopyStr("operator ~"), (yyvsp[0].node));
     }
-#line 2180 "lsc.tab.c"
+#line 2207 "lsc-st.tab.c"
     break;
 
   case 72:
-#line 397 "lsc.y"
+#line 339 "lsc-st.y"
                             {
-        (yyval.node) = NewASTNode(UnaryExpr);
-        (yyval.node)->attr[0] = "!";
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
+        AddAttrs((yyval.node), CopyStr("operator !"), (yyvsp[0].node));
     }
-#line 2190 "lsc.tab.c"
+#line 2216 "lsc-st.tab.c"
+    break;
+
+  case 73:
+#line 345 "lsc-st.y"
+                         {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2224 "lsc-st.tab.c"
     break;
 
   case 74:
-#line 405 "lsc.y"
-                                            {
-        (yyval.node) = NewASTNode(PostfixExpr);
-        (yyval.node)->attr[0] = (yyvsp[-3].node);
-        (yyval.node)->attr[1] = "[]";
-        (yyval.node)->attr[2] = (yyvsp[-1].node);
+#line 347 "lsc-st.y"
+                                             {
+        (yyval.node) = NewSTNode(POSTFIX_EXPRESSION, 4);
+        AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
     }
-#line 2201 "lsc.tab.c"
+#line 2233 "lsc-st.tab.c"
     break;
 
   case 75:
-#line 410 "lsc.y"
+#line 350 "lsc-st.y"
                                 {
-        (yyval.node) = NewASTNode(FunctionCall);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = NULL;
+        (yyval.node) = NewSTNode(POSTFIX_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ("), CopyStr("delimiter )"));
     }
-#line 2211 "lsc.tab.c"
+#line 2242 "lsc-st.tab.c"
     break;
 
   case 76:
-#line 414 "lsc.y"
+#line 353 "lsc-st.y"
                                               {
-        (yyval.node) = NewASTNode(FunctionCall);
-        (yyval.node)->attr[0] = (yyvsp[-3].node);
-        (yyval.node)->attr[1] = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(POSTFIX_EXPRESSION, 4);
+        AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ("), (yyvsp[-1].node), CopyStr("delimiter )"));
     }
-#line 2221 "lsc.tab.c"
+#line 2251 "lsc-st.tab.c"
     break;
 
   case 77:
-#line 421 "lsc.y"
+#line 359 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(Identifier);
-        (yyval.node)->attr[0] = CopyStr(yytext);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 2230 "lsc.tab.c"
+#line 2260 "lsc-st.tab.c"
     break;
 
   case 78:
-#line 424 "lsc.y"
+#line 362 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(BoolConst);
-        (yyval.node)->attr[0] = CopyStr(yytext);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
+        AddAttrs((yyval.node), CopyStr(yytext));
     }
-#line 2239 "lsc.tab.c"
+#line 2269 "lsc-st.tab.c"
     break;
 
   case 79:
-#line 427 "lsc.y"
+#line 365 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(IntConst);
-        (yyval.node)->attr[0] = CopyStr(yytext);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
+        AddAttrs((yyval.node), CopyStr(yytext));
     }
-#line 2248 "lsc.tab.c"
+#line 2278 "lsc-st.tab.c"
     break;
 
   case 80:
-#line 430 "lsc.y"
+#line 368 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(FloatConst);
-        (yyval.node)->attr[0] = CopyStr(yytext);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
+        AddAttrs((yyval.node), CopyStr(yytext));
     }
-#line 2257 "lsc.tab.c"
+#line 2287 "lsc-st.tab.c"
     break;
 
   case 81:
-#line 433 "lsc.y"
+#line 371 "lsc-st.y"
                  {
-        (yyval.node) = NewASTNode(StrConst);
-        (yyval.node)->attr[0] = CopyStr(yytext);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
+        AddAttrs((yyval.node), CopyStr(yytext));
     }
-#line 2266 "lsc.tab.c"
+#line 2296 "lsc-st.tab.c"
     break;
 
   case 82:
-#line 436 "lsc.y"
+#line 374 "lsc-st.y"
                         {
-        (yyval.node) = (yyvsp[-1].node);
+        (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 3);
+        AddAttrs((yyval.node), CopyStr("delimiter ("), (yyvsp[-1].node), CopyStr("delimiter )"));
     }
-#line 2274 "lsc.tab.c"
+#line 2305 "lsc-st.tab.c"
     break;
 
   case 83:
-#line 441 "lsc.y"
+#line 380 "lsc-st.y"
                             {
-        (yyval.node) = NewASTNode(ArguementList);
-        (yyval.node)->attr[0] = NULL;
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(ARGUMENT_LIST, 1);
+        AddAttrs((yyval.node), (yyvsp[0].node));
     }
-#line 2284 "lsc.tab.c"
+#line 2314 "lsc-st.tab.c"
     break;
 
   case 84:
-#line 445 "lsc.y"
+#line 383 "lsc-st.y"
                                                  {
-        (yyval.node) = NewASTNode(ArguementList);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(ARGUMENT_LIST, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
     }
-#line 2294 "lsc.tab.c"
+#line 2323 "lsc-st.tab.c"
+    break;
+
+  case 85:
+#line 389 "lsc-st.y"
+                             {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2331 "lsc-st.tab.c"
     break;
 
   case 86:
-#line 453 "lsc.y"
-                                                      {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "||";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 391 "lsc-st.y"
+                                                       {
+        (yyval.node) = NewSTNode(LOGICAL_OR_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ||"), (yyvsp[0].node));
     }
-#line 2305 "lsc.tab.c"
+#line 2340 "lsc-st.tab.c"
+    break;
+
+  case 87:
+#line 397 "lsc-st.y"
+                            {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2348 "lsc-st.tab.c"
     break;
 
   case 88:
-#line 462 "lsc.y"
-                                                       {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "&&";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 399 "lsc-st.y"
+                                                        {
+        (yyval.node) = NewSTNode(LOGICAL_AND_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator &&"), (yyvsp[0].node));
     }
-#line 2316 "lsc.tab.c"
+#line 2357 "lsc-st.tab.c"
+    break;
+
+  case 89:
+#line 405 "lsc-st.y"
+                             {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2365 "lsc-st.tab.c"
     break;
 
   case 90:
-#line 471 "lsc.y"
-                                                       {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "|";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 407 "lsc-st.y"
+                                                        {
+        (yyval.node) = NewSTNode(BITWISE_OR_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator |"), (yyvsp[0].node));
     }
-#line 2327 "lsc.tab.c"
+#line 2374 "lsc-st.tab.c"
+    break;
+
+  case 91:
+#line 413 "lsc-st.y"
+                             {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2382 "lsc-st.tab.c"
     break;
 
   case 92:
-#line 480 "lsc.y"
-                                                         {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "^";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 415 "lsc-st.y"
+                                                          {
+        (yyval.node) = NewSTNode(BITWISE_XOR_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ^"), (yyvsp[0].node));
     }
-#line 2338 "lsc.tab.c"
+#line 2391 "lsc-st.tab.c"
+    break;
+
+  case 93:
+#line 421 "lsc-st.y"
+                          {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2399 "lsc-st.tab.c"
     break;
 
   case 94:
-#line 489 "lsc.y"
-                                                      {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "&";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 423 "lsc-st.y"
+                                                       {
+        (yyval.node) = NewSTNode(BITWISE_AND_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator &"), (yyvsp[0].node));
     }
-#line 2349 "lsc.tab.c"
+#line 2408 "lsc-st.tab.c"
+    break;
+
+  case 95:
+#line 429 "lsc-st.y"
+                            {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2416 "lsc-st.tab.c"
     break;
 
   case 96:
-#line 498 "lsc.y"
-                                                   {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "==";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 431 "lsc-st.y"
+                                                    {
+        (yyval.node) = NewSTNode(EQUALITY_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator =="), (yyvsp[0].node));
     }
-#line 2360 "lsc.tab.c"
+#line 2425 "lsc-st.tab.c"
     break;
 
   case 97:
-#line 503 "lsc.y"
+#line 434 "lsc-st.y"
                                                     {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "!=";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(EQUALITY_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator !="), (yyvsp[0].node));
     }
-#line 2371 "lsc.tab.c"
+#line 2434 "lsc-st.tab.c"
+    break;
+
+  case 98:
+#line 440 "lsc-st.y"
+                       {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2442 "lsc-st.tab.c"
     break;
 
   case 99:
-#line 512 "lsc.y"
-                                                {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "<";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 442 "lsc-st.y"
+                                                 {
+        (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator <"), (yyvsp[0].node));
     }
-#line 2382 "lsc.tab.c"
+#line 2451 "lsc-st.tab.c"
     break;
 
   case 100:
-#line 517 "lsc.y"
+#line 445 "lsc-st.y"
                                                  {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = ">";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator >"), (yyvsp[0].node));
     }
-#line 2393 "lsc.tab.c"
+#line 2460 "lsc-st.tab.c"
     break;
 
   case 101:
-#line 522 "lsc.y"
+#line 448 "lsc-st.y"
                                                  {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "<=";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator <="), (yyvsp[0].node));
     }
-#line 2404 "lsc.tab.c"
+#line 2469 "lsc-st.tab.c"
     break;
 
   case 102:
-#line 527 "lsc.y"
+#line 451 "lsc-st.y"
                                                  {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = ">=";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator >="), (yyvsp[0].node));
     }
-#line 2415 "lsc.tab.c"
+#line 2478 "lsc-st.tab.c"
+    break;
+
+  case 103:
+#line 457 "lsc-st.y"
+                          {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2486 "lsc-st.tab.c"
     break;
 
   case 104:
-#line 536 "lsc.y"
-                                              {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "<<";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 459 "lsc-st.y"
+                                               {
+        (yyval.node) = NewSTNode(SHIFT_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator <<"), (yyvsp[0].node)); 
     }
-#line 2426 "lsc.tab.c"
+#line 2495 "lsc-st.tab.c"
     break;
 
   case 105:
-#line 541 "lsc.y"
+#line 462 "lsc-st.y"
                                                {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = ">>";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(SHIFT_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator >>"), (yyvsp[0].node));
     }
-#line 2437 "lsc.tab.c"
+#line 2504 "lsc-st.tab.c"
+    break;
+
+  case 106:
+#line 468 "lsc-st.y"
+                                {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2512 "lsc-st.tab.c"
     break;
 
   case 107:
-#line 550 "lsc.y"
-                                                         {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "+";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 470 "lsc-st.y"
+                                                          {
+        (yyval.node) = NewSTNode(ADDITIVE_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator +"), (yyvsp[0].node));
     }
-#line 2448 "lsc.tab.c"
+#line 2521 "lsc-st.tab.c"
     break;
 
   case 108:
-#line 555 "lsc.y"
+#line 473 "lsc-st.y"
                                                            {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "-";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(ADDITIVE_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator -"), (yyvsp[0].node));
     }
-#line 2459 "lsc.tab.c"
+#line 2530 "lsc-st.tab.c"
+    break;
+
+  case 109:
+#line 479 "lsc-st.y"
+                       {
+        (yyval.node) = (yyvsp[0].node);
+    }
+#line 2538 "lsc-st.tab.c"
     break;
 
   case 110:
-#line 564 "lsc.y"
-                                                     {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "*";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+#line 481 "lsc-st.y"
+                                                      {
+        (yyval.node) = NewSTNode(MULTIPLICATIVE_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator *"), (yyvsp[0].node));
     }
-#line 2470 "lsc.tab.c"
+#line 2547 "lsc-st.tab.c"
     break;
 
   case 111:
-#line 569 "lsc.y"
+#line 484 "lsc-st.y"
                                                       {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "/";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(MULTIPLICATIVE_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator /"), (yyvsp[0].node));
     }
-#line 2481 "lsc.tab.c"
+#line 2556 "lsc-st.tab.c"
     break;
 
   case 112:
-#line 574 "lsc.y"
+#line 487 "lsc-st.y"
                                                       {
-        (yyval.node) = NewASTNode(BinaryExpr);
-        (yyval.node)->attr[0] = (yyvsp[-2].node);
-        (yyval.node)->attr[1] = "%";
-        (yyval.node)->attr[2] = (yyvsp[0].node);
+        (yyval.node) = NewSTNode(MULTIPLICATIVE_EXPRESSION, 3);
+        AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator %"), (yyvsp[0].node));
     }
-#line 2492 "lsc.tab.c"
+#line 2565 "lsc-st.tab.c"
     break;
 
 
-#line 2496 "lsc.tab.c"
+#line 2569 "lsc-st.tab.c"
 
       default: break;
     }
@@ -2724,7 +2797,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 580 "lsc.y"
+#line 491 "lsc-st.y"
 
 
 extern int yylineno;

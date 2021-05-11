@@ -16,7 +16,10 @@ i32 main() {
     
     for (x = 32; x != 0; --x) {
         print(fibonaci(x));
+        continue;
     }
+
     // This is a test comment
+    
     return 0;
 }

@@ -34,8 +34,8 @@
 /* Undocumented macros, especially those whose name start with YY_,
    are private implementation details.  Do not rely on them.  */
 
-#ifndef YY_YY_LSC_TAB_H_INCLUDED
-# define YY_YY_LSC_TAB_H_INCLUDED
+#ifndef YY_YY_LSC_ST_TAB_H_INCLUDED
+# define YY_YY_LSC_ST_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -44,11 +44,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 3 "lsc.y"
+#line 3 "lsc-st.y"
 
-    #include "ast.h"
+    #include "st.h"
 
-#line 52 "lsc.tab.h"
+#line 52 "lsc-st.tab.h"
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -111,13 +111,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 19 "lsc.y"
+#line 21 "lsc-st.y"
 
-    ASTNode* node;
+    STNode* node;
     // need a pointer to symbol table
     const char* str;
 
-#line 121 "lsc.tab.h"
+#line 121 "lsc-st.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -130,4 +130,4 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_LSC_TAB_H_INCLUDED  */
+#endif /* !YY_YY_LSC_ST_TAB_H_INCLUDED  */
