@@ -7,15 +7,16 @@ i32 fibonaci(i32 n) {
         return fibonaci(n - 1) + fibonaci(n - 2);
     }
 }
-
-i32 main(void) {
-    f32 = 5.e-45;
+i32 main() {
+    f32 f = 5.e-45;
     f32 __float__;
-    for (i32 x = 32; x != 0; ++x) {
+    i32 a[4][2] = {{1,2},{3,4},{5,6},{7,8}};
+    string s = "Hello, World!";
+    i32 x;
+    
+    for (x = 32; x != 0; --x) {
         print(fibonaci(x));
     }
     // This is a test comment
-    i32 a[4][2] = {{1,2},{3,4},{5,6},{7,8}};
-    string s = "Hello, World!";
     return 0;
 }

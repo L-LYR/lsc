@@ -1,5 +1,6 @@
 Digit           [0-9]
 NonzeroDigit    [1-9]
+DecDigits       ({NonzeroDigit}{Digit}*|[0])
 HexDigit        [0-9a-fA-F]
 Exp             [Ee][+-]?{Digit}+
 BoolLiteral     (true|false)
@@ -10,16 +11,24 @@ Escape          (\\(["\\ntfvr]))
 %option noyywrap yylineno
 
 %{
-#include "def.h"
-#include "opt.h"
+#include "lsc.tab.h"
+#include <stdio.h>
+#include <stdbool.h>
 
-void VerboseInfo(TokenType tt);
+extern _Bool Verbose;
+_Bool Verbose = false; // this can only be set in lscl.
+
 %}
 
 %%
 {Blank}+                            {/* skip */}
 
-"//".*                              {VerboseInfo(TK_T_COMMENT); /* skip comments */}
+"//".*                              {
+    /* skip comments */
+    if (Verbose) {
+        fprintf(yyout, "Line %3d: %16s: %s\n", yylineno, "Comment", yytext);
+    }
+}
 
 "void"                              {return VOID;}
 "i32"                               {return I32;}
@@ -39,11 +48,12 @@ void VerboseInfo(TokenType tt);
 
 {NonDigit}({Digit}|{NonDigit})*     {return IDENTIFIER;}
 
-"0"|{NonzeroDigit}{Digit}*          {return ICONSTANT;}
+{DecDigits}                         {return ICONSTANT;}
 "0"[xX]{HexDigit}+                  {return ICONSTANT;}
 
-{Digit}*"."{Digit}+{Exp}?           {return FCONSTANT;}
-{Digit}+"."{Exp}?                   {return FCONSTANT;}
+{DecDigits}{Exp}                    {return FCONSTANT;}
+{DecDigits}"."{Digit}*{Exp}?        {return FCONSTANT;}
+"."{Digit}+{Exp}?                   {return FCONSTANT;}
 
 \"([^"\\\n]|{Escape})*\"            {return SCONSTANT;}
 
@@ -77,53 +87,12 @@ void VerboseInfo(TokenType tt);
 "]"                                 {return RSB;}
 "{"                                 {return LCB;}
 "}"                                 {return RCB;}
-";"                                 {return SEMECOLON;}
+";"                                 {return SEMICOLON;}
 ","                                 {return COMMA;}
-
-/* {Digit}+{NonDigit}+                 {VerboseInfo(TK_T_UNKNOWN);} */
-.                                   {VerboseInfo(TK_T_UNKNOWN);/* skip unknown chars */}
-%%
-
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        printf(Usage, argv[0]);
-        exit(-1);
-    }
-    SetOpts(argc, argv);
-    if (Filename == NULL) {
-        printf(Usage, argv[0]);
-        exit(-1);
-    }
-    yyin = fopen(Filename, "r");
-    if (yyin == NULL) {
-        printf("cannot open input file %s\n", Filename);
-        exit(-1);
-    }
-    if (OutputFile == NULL)
-        OutputFile = stdout;
-    int t;
-    while ((t = yylex())) {
-        if (t <= BCONSTANT) {
-            VerboseInfo(TK_T_KEYWORD);
-        } else if (t == IDENTIFIER) {
-            VerboseInfo(TK_T_IDENTIFIER);
-        } else if (t == ICONSTANT) {
-            VerboseInfo(TK_T_INTEGER_CONSTANT);
-        } else if (t == FCONSTANT) {
-            VerboseInfo(TK_T_FLOAT_CONSTANT);
-        } else if (t == SCONSTANT) {
-            VerboseInfo(TK_T_STRING_CONSTANT);
-        } else if (t <= ASSIGN) {
-            VerboseInfo(TK_T_OPERATOR);
-        } else {
-            VerboseInfo(TK_T_DELIMITER);
-        }
-    }
-    return 0;
-}
-
-void VerboseInfo(TokenType tt) {
+.                                   {
+    /* skip unknown */
     if (Verbose) {
-        fprintf(OutputFile, "Line %3d: %16s: %s\n", yylineno, TokenTypeToString(tt), yytext);
+        fprintf(yyout, "Line %3d: %16s: %s\n", yylineno, "Unknown", yytext);
     }
 }
+%%
