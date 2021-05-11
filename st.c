@@ -74,6 +74,8 @@ static const char *TypeNames[] = {
     "delimiter",
 };
 
+// ST->dummy is a marker to distinguish void* from const char*.
+// Attention! const char* must not be "".
 static _Bool CheckDummy(const void *p) { return (*(const char *)p) == 0; }
 
 static int UnitIndent = 2;
@@ -82,7 +84,7 @@ static void _Display(STNode *node, Fmt *f) {
     return;
   }
   fprintf(f->out, "%*s%s\n", f->indent, "", TypeNames[node->nType]);
-  f->indent += UnitIndent;
+  f->indent += UnitIndent; // indent
   for (int i = 0; i < node->nAttr; ++i) {
     if (CheckDummy(node->attr[i])) {
       _Display((STNode *)(node->attr[i]), f);
@@ -90,7 +92,7 @@ static void _Display(STNode *node, Fmt *f) {
       fprintf(f->out, "%*s%s\n", f->indent, "", (const char *)(node->attr[i]));
     }
   }
-  f->indent -= UnitIndent;
+  f->indent -= UnitIndent; // rewind
 }
 
 void DisplayST(ST *t, Fmt *f) { _Display(t->root, f); }
@@ -109,4 +111,7 @@ static void _Free(STNode *node) {
   free(node);
 }
 
-void FreeST(ST *t) { _Free(t->root); }
+void FreeST(ST *t) {
+  _Free(t->root);
+  t->root = NULL;
+}

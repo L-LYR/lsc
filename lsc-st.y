@@ -21,7 +21,7 @@
 %union {
     STNode* node;
     // need a pointer to symbol table
-    const char* str;
+    // const char* str;
 }
 
 %token VOID "void" I32 "i32" F32 "f32" STRING "string" BOOL "bool"
@@ -35,7 +35,8 @@
 %token LB "(" RB ")" LSB "[" RSB "]" LCB "{" RCB "}" SEMICOLON ";" 
 /* %token COMMENT UNKNOWN */
 
-%type <node> array_length
+%type <node> array_length // Temporarily, array_length will be set as a primary expression, 
+                          // but in AST the array_length will be set in the specified type.
 %type <node> program global_list global_declaration_or_definition declaration 
 %type <node> type_specifiers init_declarator_list init_declarator declarator 
 %type <node> parameter_type_list identifier initializer initializer_list

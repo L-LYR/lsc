@@ -194,7 +194,7 @@ union YYSTYPE
 
     STNode* node;
     // need a pointer to symbol table
-    const char* str;
+    // const char* str;
 
 #line 200 "lsc-st.tab.c"
 
@@ -576,18 +576,18 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    54,    54,    57,    60,    66,    69,    75,    78,    84,
-      90,    93,    96,    99,   102,   105,   111,   114,   120,   123,
-     129,   132,   138,   144,   147,   150,   156,   159,   165,   168,
-     174,   177,   183,   186,   192,   198,   201,   204,   207,   213,
-     216,   222,   225,   231,   234,   237,   240,   243,   246,   252,
-     255,   261,   264,   267,   270,   276,   279,   282,   288,   291,
-     297,   300,   306,   308,   314,   316,   322,   324,   327,   330,
-     333,   336,   339,   345,   347,   350,   353,   359,   362,   365,
-     368,   371,   374,   380,   383,   389,   391,   397,   399,   405,
-     407,   413,   415,   421,   423,   429,   431,   434,   440,   442,
-     445,   448,   451,   457,   459,   462,   468,   470,   473,   479,
-     481,   484,   487
+       0,    55,    55,    58,    61,    67,    70,    76,    79,    85,
+      91,    94,    97,   100,   103,   106,   112,   115,   121,   124,
+     130,   133,   139,   145,   148,   151,   157,   160,   166,   169,
+     175,   178,   184,   187,   193,   199,   202,   205,   208,   214,
+     217,   223,   226,   232,   235,   238,   241,   244,   247,   253,
+     256,   262,   265,   268,   271,   277,   280,   283,   289,   292,
+     298,   301,   307,   309,   315,   317,   323,   325,   328,   331,
+     334,   337,   340,   346,   348,   351,   354,   360,   363,   366,
+     369,   372,   375,   381,   384,   390,   392,   398,   400,   406,
+     408,   414,   416,   422,   424,   430,   432,   435,   441,   443,
+     446,   449,   452,   458,   460,   463,   469,   471,   474,   480,
+     482,   485,   488
 };
 #endif
 
@@ -1583,13 +1583,13 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 54 "lsc-st.y"
+#line 55 "lsc-st.y"
                       {t.root = (yyval.node);}
 #line 1589 "lsc-st.tab.c"
     break;
 
   case 3:
-#line 57 "lsc-st.y"
+#line 58 "lsc-st.y"
                                        {
         (yyval.node) = NewSTNode(GLOBAL_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1598,7 +1598,7 @@ yyreduce:
     break;
 
   case 4:
-#line 60 "lsc-st.y"
+#line 61 "lsc-st.y"
                                                     {
         (yyval.node) = NewSTNode(GLOBAL_LIST, 2);
         AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
@@ -1607,7 +1607,7 @@ yyreduce:
     break;
 
   case 5:
-#line 66 "lsc-st.y"
+#line 67 "lsc-st.y"
                   {
         (yyval.node) = NewSTNode(GLOBAL_DECLARATION_OR_DEFINITION, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1616,7 +1616,7 @@ yyreduce:
     break;
 
   case 6:
-#line 69 "lsc-st.y"
+#line 70 "lsc-st.y"
                            {
         (yyval.node) = NewSTNode(GLOBAL_DECLARATION_OR_DEFINITION, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1625,7 +1625,7 @@ yyreduce:
     break;
 
   case 7:
-#line 75 "lsc-st.y"
+#line 76 "lsc-st.y"
                                                      {
         (yyval.node) = NewSTNode(DECLARATION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), (yyvsp[-1].node), CopyStr("delimiter ;"));
@@ -1634,7 +1634,7 @@ yyreduce:
     break;
 
   case 8:
-#line 78 "lsc-st.y"
+#line 79 "lsc-st.y"
                                                                       {
         (yyval.node) = NewSTNode(DECLARATION, 6);
         AddAttrs((yyval.node), (yyvsp[-5].node), (yyvsp[-4].node), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), CopyStr("delimiter ;"));
@@ -1643,7 +1643,7 @@ yyreduce:
     break;
 
   case 9:
-#line 84 "lsc-st.y"
+#line 85 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(ID, 1);
         AddAttrs((yyval.node), CopyStr(yytext));
@@ -1652,7 +1652,7 @@ yyreduce:
     break;
 
   case 10:
-#line 90 "lsc-st.y"
+#line 91 "lsc-st.y"
            {
         (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
         AddAttrs((yyval.node), CopyStr("void"));
@@ -1661,7 +1661,7 @@ yyreduce:
     break;
 
   case 11:
-#line 93 "lsc-st.y"
+#line 94 "lsc-st.y"
            {
         (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
         AddAttrs((yyval.node), CopyStr("i32"));
@@ -1670,7 +1670,7 @@ yyreduce:
     break;
 
   case 12:
-#line 96 "lsc-st.y"
+#line 97 "lsc-st.y"
            {
         (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
         AddAttrs((yyval.node), CopyStr("f32"));
@@ -1679,7 +1679,7 @@ yyreduce:
     break;
 
   case 13:
-#line 99 "lsc-st.y"
+#line 100 "lsc-st.y"
               {
         (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
         AddAttrs((yyval.node), CopyStr("string"));
@@ -1688,7 +1688,7 @@ yyreduce:
     break;
 
   case 14:
-#line 102 "lsc-st.y"
+#line 103 "lsc-st.y"
             {
         (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
         AddAttrs((yyval.node), CopyStr("bool"));
@@ -1697,7 +1697,7 @@ yyreduce:
     break;
 
   case 15:
-#line 105 "lsc-st.y"
+#line 106 "lsc-st.y"
                                             {
         (yyval.node) = NewSTNode(TYPE_SPECIFIERS, 1);
         AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
@@ -1706,7 +1706,7 @@ yyreduce:
     break;
 
   case 16:
-#line 111 "lsc-st.y"
+#line 112 "lsc-st.y"
                       {
         (yyval.node) = NewSTNode(INIT_DECLARATOR_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1715,7 +1715,7 @@ yyreduce:
     break;
 
   case 17:
-#line 114 "lsc-st.y"
+#line 115 "lsc-st.y"
                                                   {
         (yyval.node) = NewSTNode(INIT_DECLARATOR_LIST, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
@@ -1724,7 +1724,7 @@ yyreduce:
     break;
 
   case 18:
-#line 120 "lsc-st.y"
+#line 121 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(INIT_DECLARATOR, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1733,7 +1733,7 @@ yyreduce:
     break;
 
   case 19:
-#line 123 "lsc-st.y"
+#line 124 "lsc-st.y"
                                      {
         (yyval.node) = NewSTNode(INIT_DECLARATOR, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ="), (yyvsp[0].node));
@@ -1742,7 +1742,7 @@ yyreduce:
     break;
 
   case 20:
-#line 129 "lsc-st.y"
+#line 130 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(DECLARATOR, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1751,7 +1751,7 @@ yyreduce:
     break;
 
   case 21:
-#line 132 "lsc-st.y"
+#line 133 "lsc-st.y"
                                        {
         (yyval.node) = NewSTNode(DECLARATOR, 4);
         AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
@@ -1760,7 +1760,7 @@ yyreduce:
     break;
 
   case 22:
-#line 138 "lsc-st.y"
+#line 139 "lsc-st.y"
                 {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
         AddAttrs((yyval.node), CopyStr(yytext));
@@ -1769,7 +1769,7 @@ yyreduce:
     break;
 
   case 23:
-#line 144 "lsc-st.y"
+#line 145 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(INITIALIZER, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1778,7 +1778,7 @@ yyreduce:
     break;
 
   case 24:
-#line 147 "lsc-st.y"
+#line 148 "lsc-st.y"
                                 {
         (yyval.node) = NewSTNode(INITIALIZER, 3);
         AddAttrs((yyval.node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
@@ -1787,7 +1787,7 @@ yyreduce:
     break;
 
   case 25:
-#line 150 "lsc-st.y"
+#line 151 "lsc-st.y"
                                       {
         (yyval.node) = NewSTNode(INITIALIZER, 4);
         AddAttrs((yyval.node), CopyStr("delimiter ["), (yyvsp[-2].node), CopyStr("delimiter ,"), CopyStr("delimiter delimiter ]"));
@@ -1796,7 +1796,7 @@ yyreduce:
     break;
 
   case 26:
-#line 156 "lsc-st.y"
+#line 157 "lsc-st.y"
                   {
         (yyval.node) = NewSTNode(INITIALIZER_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1805,7 +1805,7 @@ yyreduce:
     break;
 
   case 27:
-#line 159 "lsc-st.y"
+#line 160 "lsc-st.y"
                                           {
         (yyval.node) = NewSTNode(INITIALIZER_LIST, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
@@ -1814,7 +1814,7 @@ yyreduce:
     break;
 
   case 28:
-#line 165 "lsc-st.y"
+#line 166 "lsc-st.y"
                       {
         (yyval.node) = NewSTNode(PARAMETER_TYPE_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1823,7 +1823,7 @@ yyreduce:
     break;
 
   case 29:
-#line 168 "lsc-st.y"
+#line 169 "lsc-st.y"
                                                  {
         (yyval.node) = NewSTNode(PARAMETER_TYPE_LIST, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
@@ -1832,7 +1832,7 @@ yyreduce:
     break;
 
   case 30:
-#line 174 "lsc-st.y"
+#line 175 "lsc-st.y"
                                                           {
         (yyval.node) = NewSTNode(FUNCTION_DEFINITION, 5);
         AddAttrs((yyval.node), (yyvsp[-4].node), (yyvsp[-3].node), CopyStr("delimiter ("), CopyStr("delimiter )"), (yyvsp[0].node));
@@ -1841,7 +1841,7 @@ yyreduce:
     break;
 
   case 31:
-#line 177 "lsc-st.y"
+#line 178 "lsc-st.y"
                                                                                      {
         (yyval.node) = NewSTNode(FUNCTION_DEFINITION, 6);
         AddAttrs((yyval.node), (yyvsp[-5].node), (yyvsp[-4].node), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
@@ -1850,7 +1850,7 @@ yyreduce:
     break;
 
   case 32:
-#line 183 "lsc-st.y"
+#line 184 "lsc-st.y"
                            {
         (yyval.node) = NewSTNode(PARAMETER_DECLARATOR_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1859,7 +1859,7 @@ yyreduce:
     break;
 
   case 33:
-#line 186 "lsc-st.y"
+#line 187 "lsc-st.y"
                                                             {
         (yyval.node) = NewSTNode(PARAMETER_DECLARATOR_LIST, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
@@ -1868,7 +1868,7 @@ yyreduce:
     break;
 
   case 34:
-#line 192 "lsc-st.y"
+#line 193 "lsc-st.y"
                                 {
         (yyval.node) = NewSTNode(PARAMETER_DECLARATOR, 2);
         AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
@@ -1877,7 +1877,7 @@ yyreduce:
     break;
 
   case 35:
-#line 198 "lsc-st.y"
+#line 199 "lsc-st.y"
               {
         (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 2);
         AddAttrs((yyval.node), CopyStr("delimiter {"), CopyStr("delimiter }"));
@@ -1886,7 +1886,7 @@ yyreduce:
     break;
 
   case 36:
-#line 201 "lsc-st.y"
+#line 202 "lsc-st.y"
                               {
         (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 3);
         AddAttrs((yyval.node), CopyStr("delimiter {"), (yyvsp[-1].node), CopyStr("delimiter }"));
@@ -1895,7 +1895,7 @@ yyreduce:
     break;
 
   case 37:
-#line 204 "lsc-st.y"
+#line 205 "lsc-st.y"
                                 {
         (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 3);
         AddAttrs((yyval.node), CopyStr("delimiter {"), (yyvsp[-1].node), CopyStr("delimiter }"));
@@ -1904,7 +1904,7 @@ yyreduce:
     break;
 
   case 38:
-#line 207 "lsc-st.y"
+#line 208 "lsc-st.y"
                                                {
         (yyval.node) = NewSTNode(COMPOUND_STATEMENT, 4);
         AddAttrs((yyval.node), CopyStr("delimiter {"), (yyvsp[-2].node), (yyvsp[-1].node), CopyStr("delimiter }"));
@@ -1913,7 +1913,7 @@ yyreduce:
     break;
 
   case 39:
-#line 213 "lsc-st.y"
+#line 214 "lsc-st.y"
                 {
         (yyval.node) = NewSTNode(STATEMENT_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1922,7 +1922,7 @@ yyreduce:
     break;
 
   case 40:
-#line 216 "lsc-st.y"
+#line 217 "lsc-st.y"
                                 {
         (yyval.node) = NewSTNode(STATEMENT_LIST, 2);
         AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
@@ -1931,7 +1931,7 @@ yyreduce:
     break;
 
   case 41:
-#line 222 "lsc-st.y"
+#line 223 "lsc-st.y"
                   {
         (yyval.node) = NewSTNode(DECLARATION_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1940,7 +1940,7 @@ yyreduce:
     break;
 
   case 42:
-#line 225 "lsc-st.y"
+#line 226 "lsc-st.y"
                                     {
         (yyval.node) = NewSTNode(DECLARATION_LIST, 2);
         AddAttrs((yyval.node), (yyvsp[-1].node), (yyvsp[0].node));
@@ -1949,7 +1949,7 @@ yyreduce:
     break;
 
   case 43:
-#line 231 "lsc-st.y"
+#line 232 "lsc-st.y"
                          {
         (yyval.node) = NewSTNode(STATEMENT, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1958,7 +1958,7 @@ yyreduce:
     break;
 
   case 44:
-#line 234 "lsc-st.y"
+#line 235 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(STATEMENT, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1967,7 +1967,7 @@ yyreduce:
     break;
 
   case 45:
-#line 237 "lsc-st.y"
+#line 238 "lsc-st.y"
                       {
         (yyval.node) = NewSTNode(STATEMENT, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1976,7 +1976,7 @@ yyreduce:
     break;
 
   case 46:
-#line 240 "lsc-st.y"
+#line 241 "lsc-st.y"
                            {
         (yyval.node) = NewSTNode(STATEMENT, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1985,7 +1985,7 @@ yyreduce:
     break;
 
   case 47:
-#line 243 "lsc-st.y"
+#line 244 "lsc-st.y"
                       {
         (yyval.node) = NewSTNode(STATEMENT, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -1994,7 +1994,7 @@ yyreduce:
     break;
 
   case 48:
-#line 246 "lsc-st.y"
+#line 247 "lsc-st.y"
                     {
         (yyval.node) = NewSTNode(STATEMENT, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -2003,7 +2003,7 @@ yyreduce:
     break;
 
   case 49:
-#line 252 "lsc-st.y"
+#line 253 "lsc-st.y"
                 {
         (yyval.node) = NewSTNode(EXPRESSION_STATEMENT, 1);
         AddAttrs((yyval.node), CopyStr("delimiter ;"));
@@ -2012,7 +2012,7 @@ yyreduce:
     break;
 
   case 50:
-#line 255 "lsc-st.y"
+#line 256 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(EXPRESSION_STATEMENT, 2);
         AddAttrs((yyval.node), (yyvsp[-1].node), CopyStr("delimiter ;"));
@@ -2021,7 +2021,7 @@ yyreduce:
     break;
 
   case 51:
-#line 261 "lsc-st.y"
+#line 262 "lsc-st.y"
                          {
         (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
         AddAttrs((yyval.node), CopyStr("continue"), CopyStr("delimiter ;"));
@@ -2030,7 +2030,7 @@ yyreduce:
     break;
 
   case 52:
-#line 264 "lsc-st.y"
+#line 265 "lsc-st.y"
                        {
         (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
         AddAttrs((yyval.node), CopyStr("break"), CopyStr("delimiter ;"));
@@ -2039,7 +2039,7 @@ yyreduce:
     break;
 
   case 53:
-#line 267 "lsc-st.y"
+#line 268 "lsc-st.y"
                         {
         (yyval.node) = NewSTNode(JUMP_STATEMENT, 2);
         AddAttrs((yyval.node), CopyStr("return"), CopyStr("delimiter ;"));
@@ -2048,7 +2048,7 @@ yyreduce:
     break;
 
   case 54:
-#line 270 "lsc-st.y"
+#line 271 "lsc-st.y"
                                    {
         (yyval.node) = NewSTNode(JUMP_STATEMENT, 3);
         AddAttrs((yyval.node), CopyStr("return"), (yyvsp[-1].node), CopyStr("delimiter ;"));
@@ -2057,7 +2057,7 @@ yyreduce:
     break;
 
   case 55:
-#line 276 "lsc-st.y"
+#line 277 "lsc-st.y"
                                              {
         (yyval.node) = NewSTNode(SELECTION_STATEMENT, 5);
         AddAttrs((yyval.node), CopyStr("if"), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
@@ -2066,7 +2066,7 @@ yyreduce:
     break;
 
   case 56:
-#line 279 "lsc-st.y"
+#line 280 "lsc-st.y"
                                                                       {
         (yyval.node) = NewSTNode(SELECTION_STATEMENT, 7);
         AddAttrs((yyval.node), CopyStr("if"), CopyStr("delimiter ("), (yyvsp[-4].node), CopyStr("delimiter )"), (yyvsp[-2].node), CopyStr("else"), (yyvsp[0].node));
@@ -2075,7 +2075,7 @@ yyreduce:
     break;
 
   case 57:
-#line 282 "lsc-st.y"
+#line 283 "lsc-st.y"
                                                                        {
         (yyval.node) = NewSTNode(SELECTION_STATEMENT, 7);
         AddAttrs((yyval.node), CopyStr("if"), CopyStr("delimiter ("), (yyvsp[-4].node), CopyStr("delimiter )"), (yyvsp[-2].node), CopyStr("else"), (yyvsp[0].node));
@@ -2084,7 +2084,7 @@ yyreduce:
     break;
 
   case 58:
-#line 288 "lsc-st.y"
+#line 289 "lsc-st.y"
                                                                              {
         (yyval.node) = NewSTNode(LOOP_STATEMENT, 6);
         AddAttrs((yyval.node), CopyStr("for"), CopyStr("delimiter ("), (yyvsp[-3].node), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
@@ -2093,7 +2093,7 @@ yyreduce:
     break;
 
   case 59:
-#line 291 "lsc-st.y"
+#line 292 "lsc-st.y"
                                                                                          {
         (yyval.node) = NewSTNode(LOOP_STATEMENT, 7);
         AddAttrs((yyval.node), CopyStr("for"), CopyStr("delimiter ("), (yyvsp[-4].node), (yyvsp[-3].node), (yyvsp[-2].node), CopyStr("delimiter )"), (yyvsp[0].node));
@@ -2102,7 +2102,7 @@ yyreduce:
     break;
 
   case 60:
-#line 297 "lsc-st.y"
+#line 298 "lsc-st.y"
                                           {
         (yyval.node) = NewSTNode(IO_STATEMENT, 5);
         AddAttrs((yyval.node), CopyStr("print"), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), CopyStr("delimiter ;"));
@@ -2111,7 +2111,7 @@ yyreduce:
     break;
 
   case 61:
-#line 300 "lsc-st.y"
+#line 301 "lsc-st.y"
                                           {
         (yyval.node) = NewSTNode(IO_STATEMENT, 5);
         AddAttrs((yyval.node), CopyStr("scan"), CopyStr("delimiter ("), (yyvsp[-2].node), CopyStr("delimiter )"), CopyStr("delimiter ;"));
@@ -2120,7 +2120,7 @@ yyreduce:
     break;
 
   case 62:
-#line 306 "lsc-st.y"
+#line 307 "lsc-st.y"
                             {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2128,7 +2128,7 @@ yyreduce:
     break;
 
   case 63:
-#line 308 "lsc-st.y"
+#line 309 "lsc-st.y"
                                               {
         (yyval.node) = NewSTNode(EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ,"), (yyvsp[0].node));
@@ -2137,7 +2137,7 @@ yyreduce:
     break;
 
   case 64:
-#line 314 "lsc-st.y"
+#line 315 "lsc-st.y"
                             {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2145,7 +2145,7 @@ yyreduce:
     break;
 
   case 65:
-#line 316 "lsc-st.y"
+#line 317 "lsc-st.y"
                                                        {
         (yyval.node) = NewSTNode(ASSIGNMENT_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ="), (yyvsp[0].node));
@@ -2154,7 +2154,7 @@ yyreduce:
     break;
 
   case 66:
-#line 322 "lsc-st.y"
+#line 323 "lsc-st.y"
                          {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2162,7 +2162,7 @@ yyreduce:
     break;
 
   case 67:
-#line 324 "lsc-st.y"
+#line 325 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
         AddAttrs((yyval.node), CopyStr("operator ++"), (yyvsp[0].node));
@@ -2171,7 +2171,7 @@ yyreduce:
     break;
 
   case 68:
-#line 327 "lsc-st.y"
+#line 328 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
         AddAttrs((yyval.node), CopyStr("operator --"), (yyvsp[0].node));
@@ -2180,7 +2180,7 @@ yyreduce:
     break;
 
   case 69:
-#line 330 "lsc-st.y"
+#line 331 "lsc-st.y"
                              {
         (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
         AddAttrs((yyval.node), CopyStr("operator +"), (yyvsp[0].node));
@@ -2189,7 +2189,7 @@ yyreduce:
     break;
 
   case 70:
-#line 333 "lsc-st.y"
+#line 334 "lsc-st.y"
                               {
         (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
         AddAttrs((yyval.node), CopyStr("operator -"), (yyvsp[0].node));
@@ -2198,7 +2198,7 @@ yyreduce:
     break;
 
   case 71:
-#line 336 "lsc-st.y"
+#line 337 "lsc-st.y"
                              {
         (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
         AddAttrs((yyval.node), CopyStr("operator ~"), (yyvsp[0].node));
@@ -2207,7 +2207,7 @@ yyreduce:
     break;
 
   case 72:
-#line 339 "lsc-st.y"
+#line 340 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(UNARY_EXPRESSION, 2);
         AddAttrs((yyval.node), CopyStr("operator !"), (yyvsp[0].node));
@@ -2216,7 +2216,7 @@ yyreduce:
     break;
 
   case 73:
-#line 345 "lsc-st.y"
+#line 346 "lsc-st.y"
                          {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2224,7 +2224,7 @@ yyreduce:
     break;
 
   case 74:
-#line 347 "lsc-st.y"
+#line 348 "lsc-st.y"
                                              {
         (yyval.node) = NewSTNode(POSTFIX_EXPRESSION, 4);
         AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ["), (yyvsp[-1].node), CopyStr("delimiter ]"));
@@ -2233,7 +2233,7 @@ yyreduce:
     break;
 
   case 75:
-#line 350 "lsc-st.y"
+#line 351 "lsc-st.y"
                                 {
         (yyval.node) = NewSTNode(POSTFIX_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ("), CopyStr("delimiter )"));
@@ -2242,7 +2242,7 @@ yyreduce:
     break;
 
   case 76:
-#line 353 "lsc-st.y"
+#line 354 "lsc-st.y"
                                               {
         (yyval.node) = NewSTNode(POSTFIX_EXPRESSION, 4);
         AddAttrs((yyval.node), (yyvsp[-3].node), CopyStr("delimiter ("), (yyvsp[-1].node), CopyStr("delimiter )"));
@@ -2251,7 +2251,7 @@ yyreduce:
     break;
 
   case 77:
-#line 359 "lsc-st.y"
+#line 360 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -2260,7 +2260,7 @@ yyreduce:
     break;
 
   case 78:
-#line 362 "lsc-st.y"
+#line 363 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
         AddAttrs((yyval.node), CopyStr(yytext));
@@ -2269,7 +2269,7 @@ yyreduce:
     break;
 
   case 79:
-#line 365 "lsc-st.y"
+#line 366 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
         AddAttrs((yyval.node), CopyStr(yytext));
@@ -2278,7 +2278,7 @@ yyreduce:
     break;
 
   case 80:
-#line 368 "lsc-st.y"
+#line 369 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
         AddAttrs((yyval.node), CopyStr(yytext));
@@ -2287,7 +2287,7 @@ yyreduce:
     break;
 
   case 81:
-#line 371 "lsc-st.y"
+#line 372 "lsc-st.y"
                  {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 1);
         AddAttrs((yyval.node), CopyStr(yytext));
@@ -2296,7 +2296,7 @@ yyreduce:
     break;
 
   case 82:
-#line 374 "lsc-st.y"
+#line 375 "lsc-st.y"
                         {
         (yyval.node) = NewSTNode(PRIMARY_EXPRESSION, 3);
         AddAttrs((yyval.node), CopyStr("delimiter ("), (yyvsp[-1].node), CopyStr("delimiter )"));
@@ -2305,7 +2305,7 @@ yyreduce:
     break;
 
   case 83:
-#line 380 "lsc-st.y"
+#line 381 "lsc-st.y"
                             {
         (yyval.node) = NewSTNode(ARGUMENT_LIST, 1);
         AddAttrs((yyval.node), (yyvsp[0].node));
@@ -2314,7 +2314,7 @@ yyreduce:
     break;
 
   case 84:
-#line 383 "lsc-st.y"
+#line 384 "lsc-st.y"
                                                  {
         (yyval.node) = NewSTNode(ARGUMENT_LIST, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("delimiter ,"), (yyvsp[0].node));
@@ -2323,7 +2323,7 @@ yyreduce:
     break;
 
   case 85:
-#line 389 "lsc-st.y"
+#line 390 "lsc-st.y"
                              {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2331,7 +2331,7 @@ yyreduce:
     break;
 
   case 86:
-#line 391 "lsc-st.y"
+#line 392 "lsc-st.y"
                                                        {
         (yyval.node) = NewSTNode(LOGICAL_OR_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ||"), (yyvsp[0].node));
@@ -2340,7 +2340,7 @@ yyreduce:
     break;
 
   case 87:
-#line 397 "lsc-st.y"
+#line 398 "lsc-st.y"
                             {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2348,7 +2348,7 @@ yyreduce:
     break;
 
   case 88:
-#line 399 "lsc-st.y"
+#line 400 "lsc-st.y"
                                                         {
         (yyval.node) = NewSTNode(LOGICAL_AND_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator &&"), (yyvsp[0].node));
@@ -2357,7 +2357,7 @@ yyreduce:
     break;
 
   case 89:
-#line 405 "lsc-st.y"
+#line 406 "lsc-st.y"
                              {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2365,7 +2365,7 @@ yyreduce:
     break;
 
   case 90:
-#line 407 "lsc-st.y"
+#line 408 "lsc-st.y"
                                                         {
         (yyval.node) = NewSTNode(BITWISE_OR_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator |"), (yyvsp[0].node));
@@ -2374,7 +2374,7 @@ yyreduce:
     break;
 
   case 91:
-#line 413 "lsc-st.y"
+#line 414 "lsc-st.y"
                              {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2382,7 +2382,7 @@ yyreduce:
     break;
 
   case 92:
-#line 415 "lsc-st.y"
+#line 416 "lsc-st.y"
                                                           {
         (yyval.node) = NewSTNode(BITWISE_XOR_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator ^"), (yyvsp[0].node));
@@ -2391,7 +2391,7 @@ yyreduce:
     break;
 
   case 93:
-#line 421 "lsc-st.y"
+#line 422 "lsc-st.y"
                           {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2399,7 +2399,7 @@ yyreduce:
     break;
 
   case 94:
-#line 423 "lsc-st.y"
+#line 424 "lsc-st.y"
                                                        {
         (yyval.node) = NewSTNode(BITWISE_AND_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator &"), (yyvsp[0].node));
@@ -2408,7 +2408,7 @@ yyreduce:
     break;
 
   case 95:
-#line 429 "lsc-st.y"
+#line 430 "lsc-st.y"
                             {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2416,7 +2416,7 @@ yyreduce:
     break;
 
   case 96:
-#line 431 "lsc-st.y"
+#line 432 "lsc-st.y"
                                                     {
         (yyval.node) = NewSTNode(EQUALITY_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator =="), (yyvsp[0].node));
@@ -2425,7 +2425,7 @@ yyreduce:
     break;
 
   case 97:
-#line 434 "lsc-st.y"
+#line 435 "lsc-st.y"
                                                     {
         (yyval.node) = NewSTNode(EQUALITY_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator !="), (yyvsp[0].node));
@@ -2434,7 +2434,7 @@ yyreduce:
     break;
 
   case 98:
-#line 440 "lsc-st.y"
+#line 441 "lsc-st.y"
                        {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2442,7 +2442,7 @@ yyreduce:
     break;
 
   case 99:
-#line 442 "lsc-st.y"
+#line 443 "lsc-st.y"
                                                  {
         (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator <"), (yyvsp[0].node));
@@ -2451,7 +2451,7 @@ yyreduce:
     break;
 
   case 100:
-#line 445 "lsc-st.y"
+#line 446 "lsc-st.y"
                                                  {
         (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator >"), (yyvsp[0].node));
@@ -2460,7 +2460,7 @@ yyreduce:
     break;
 
   case 101:
-#line 448 "lsc-st.y"
+#line 449 "lsc-st.y"
                                                  {
         (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator <="), (yyvsp[0].node));
@@ -2469,7 +2469,7 @@ yyreduce:
     break;
 
   case 102:
-#line 451 "lsc-st.y"
+#line 452 "lsc-st.y"
                                                  {
         (yyval.node) = NewSTNode(RELATIONAL_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator >="), (yyvsp[0].node));
@@ -2478,7 +2478,7 @@ yyreduce:
     break;
 
   case 103:
-#line 457 "lsc-st.y"
+#line 458 "lsc-st.y"
                           {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2486,7 +2486,7 @@ yyreduce:
     break;
 
   case 104:
-#line 459 "lsc-st.y"
+#line 460 "lsc-st.y"
                                                {
         (yyval.node) = NewSTNode(SHIFT_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator <<"), (yyvsp[0].node)); 
@@ -2495,7 +2495,7 @@ yyreduce:
     break;
 
   case 105:
-#line 462 "lsc-st.y"
+#line 463 "lsc-st.y"
                                                {
         (yyval.node) = NewSTNode(SHIFT_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator >>"), (yyvsp[0].node));
@@ -2504,7 +2504,7 @@ yyreduce:
     break;
 
   case 106:
-#line 468 "lsc-st.y"
+#line 469 "lsc-st.y"
                                 {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2512,7 +2512,7 @@ yyreduce:
     break;
 
   case 107:
-#line 470 "lsc-st.y"
+#line 471 "lsc-st.y"
                                                           {
         (yyval.node) = NewSTNode(ADDITIVE_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator +"), (yyvsp[0].node));
@@ -2521,7 +2521,7 @@ yyreduce:
     break;
 
   case 108:
-#line 473 "lsc-st.y"
+#line 474 "lsc-st.y"
                                                            {
         (yyval.node) = NewSTNode(ADDITIVE_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator -"), (yyvsp[0].node));
@@ -2530,7 +2530,7 @@ yyreduce:
     break;
 
   case 109:
-#line 479 "lsc-st.y"
+#line 480 "lsc-st.y"
                        {
         (yyval.node) = (yyvsp[0].node);
     }
@@ -2538,7 +2538,7 @@ yyreduce:
     break;
 
   case 110:
-#line 481 "lsc-st.y"
+#line 482 "lsc-st.y"
                                                       {
         (yyval.node) = NewSTNode(MULTIPLICATIVE_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator *"), (yyvsp[0].node));
@@ -2547,7 +2547,7 @@ yyreduce:
     break;
 
   case 111:
-#line 484 "lsc-st.y"
+#line 485 "lsc-st.y"
                                                       {
         (yyval.node) = NewSTNode(MULTIPLICATIVE_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator /"), (yyvsp[0].node));
@@ -2556,7 +2556,7 @@ yyreduce:
     break;
 
   case 112:
-#line 487 "lsc-st.y"
+#line 488 "lsc-st.y"
                                                       {
         (yyval.node) = NewSTNode(MULTIPLICATIVE_EXPRESSION, 3);
         AddAttrs((yyval.node), (yyvsp[-2].node), CopyStr("operator %"), (yyvsp[0].node));
@@ -2797,7 +2797,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 491 "lsc-st.y"
+#line 492 "lsc-st.y"
 
 
 extern int yylineno;

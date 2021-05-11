@@ -1,11 +1,11 @@
 .PHONY:
-	lexer parser clean
+	lexer ast-parser st-parser clean
 
 lexer: lsc.yy.c lscl.c
 	clang -g -o ./bin/lscl $^
 
-parser: lsc.yy.c lsc.tab.c ast.c text.c lscp.c
-	clang -g -o ./bin/lscp $^
+ast-parser: lsc.yy.c lsc.tab.c ast.c text.c lscp.c
+	clang -g -o ./bin/lscp-ast $^
 
 st-parser: lsc.yy.c lsc-st.tab.c st.c text.c lscp-st.c
 	clang -g -o ./bin/lscp-st $^

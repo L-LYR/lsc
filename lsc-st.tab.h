@@ -115,7 +115,7 @@ union YYSTYPE
 
     STNode* node;
     // need a pointer to symbol table
-    const char* str;
+    // const char* str;
 
 #line 121 "lsc-st.tab.h"
 

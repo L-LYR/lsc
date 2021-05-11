@@ -14,13 +14,13 @@
 ### 整型数字面量
 
 ```
-<integer-literal>       ::= <decimal-literal> | <hexadecimal-literal>
-<decimal-literal>       ::= '0' | <nonzero-digit> {<digit>}
-<hexadecimal-literal>   ::= <hexadecimal-header><hexadecimal-digit> {<hexadecimal-digit>}
+<integer-literal>       ::= <decimal-literal>|<hexadecimal-literal>
+<decimal-literal>       ::= '0'|<nonzero-digit>{<digit>}
+<hexadecimal-literal>   ::= <hexadecimal-header><hexadecimal-digit>{<hexadecimal-digit>}
 <hexadecimal-header>    ::= '0x'|'0X'
-<digit>                 ::= '0' | <nonzero-digit>
+<digit>                 ::= '0'|<nonzero-digit>
 <nonzero-digit>         ::= '1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
-<hexadecimal-digit>     ::= <digit> |'a'|'b'|'c'|'d'|'e'|'f'|'A'|'B'|'C'|'D'|'E'|'F'
+<hexadecimal-digit>     ::= <digit>|'a'|'b'|'c'|'d'|'e'|'f'|'A'|'B'|'C'|'D'|'E'|'F'
 ```
 
 例子：
@@ -37,8 +37,8 @@
 ```
 <digit-seq>         ::= <digit>{<digit>}
 <floating-literal>  ::= <decimal-literal>'.'{<digit-seq>}[<exponent>]
-                        | '.'<digit-seq>[<exponent>]
-						| <decimal-literal><exponent>
+                        |'.'<digit-seq>[<exponent>]
+						|<decimal-literal><exponent>
 <exponent>          ::= <exp>['+'|'-']<digit-seq>
 <exp>               ::= 'e'|'E'
 ```
@@ -62,7 +62,8 @@
 
 ```
 <string-literal>    ::= '"'{<any-char>|<escape-seq>}'"'
-<any-char>          ::= <ASCII> // no '\' '"' '\n'
+<any-char>          ::= [^"\\\n]                         
+                        // 这里不好用EBNF描述，所以用正则/捂脸
 <escape-seq>        ::= '\\'|'\"'|'\n'|'\r'|'\t'|'\f'|'\v'
 
 ```
@@ -127,11 +128,7 @@ matrixRow
 ## 注释
 
 ```
-<single-line-comment> ::= '//'{<ASCII>}[<LF>|<CRLF>|<LFCR>]
-<CR>                  ::= '\r'
-<LF>                  ::= '\n'
-<CRLF>                ::= <CR><LF>
-<LFCR>                ::= <LF><CR>
+<single-line-comment> ::= '//'{<ASCII-visible-characters>}
 ```
 
 例子：
@@ -170,6 +167,15 @@ matrixRow
                           |<parameter-type-list><comma><type-specifiers>
 ```
 
+注意:
+
+1. 函数声明的参数列表不需要也不能写形参的名字，只写类型即可，例：
+    ```
+    i32 max(i32, i32);
+    ```
+2. 函数声明不可以和变量声明写在一起（C语言可以QAQ）。
+3. 函数可以返回定长数组，也可传定长数组。
+
 ### 函数定义
 
 ```
@@ -179,6 +185,11 @@ matrixRow
                                |<parameter-declarator-list><comma><parameter-declarator>
 <parameter-declarator>      ::= <type-specifiers><declarator>
 ```
+
+注意：
+
+1. 函数定义中，声明必须写在执行语句之前。
+
 
 ### 语句
 
@@ -211,6 +222,10 @@ matrixRow
 <io-statement>          ::= 'print'<LB><argument-list><RB><semicolon>
                            |'scan'<LB><argument-list><RB><semicolon>
 ```
+注意：
+
+1. 块语句的花括弧必带，因此`if`和`for`之后跟的都是花括弧。
+
 
 ### 表达式
 
@@ -218,7 +233,7 @@ matrixRow
 <expression>                ::= <assignment-expression>
                                 |<expression><comma><assignment-expression>
 <assignment-expression>     ::= <logical-or-expression>
-                                |<unary-expression>'='<assignment-expression>
+                                |<postfix-expression>'='<assignment-expression>
 <logical-or-expression>     ::= <logical-and-expression>
                                 |<logical-or-expression>'||'<logical-and-expression>
 <logical-and-expression>    ::= <bitwise-or-expression>

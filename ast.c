@@ -71,7 +71,7 @@ static void _GoDown(ASTNode *node, mapper m, void *cl) {
     _Map((ASTNode *)(node->attr[1]), m, cl);
   } else if (node->nType <= ParameterTypeList) {
     _MapForList(node, m, cl);
-    return; // or it may call mapper twice.
+    return; // must return, or it may call mapper twice.
   } else if (node->nType <= BinaryExpr) {
     _Map((ASTNode *)(node->attr[0]), m, cl);
     _Map((ASTNode *)(node->attr[2]), m, cl);

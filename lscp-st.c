@@ -28,7 +28,8 @@ int main(int argc, char *argv[]) {
   if (fmt.out != stdout) {
     fclose(fmt.out);
   }
-  yylex_destroy();
+  yylex_destroy(); // fclose must before the yylex_destroy()
+                   // yyin and yyout will be reset in the yylex_destroy()
   FreeST(&t);
   return ret;
 }
