@@ -1,5 +1,6 @@
+#include "../lib/llsc.h"
+#include "exception.h"
 #include "lsc.tab.h"
-#include "panic.h"
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
     } else if (t <= SEMICOLON) {
       VerboseInfo("Delimiter");
     } else {
-      PANIC("Unreachable!");
+      RAISE(Unreachable);
     }
   }
   fclose(yyin);
@@ -74,7 +75,7 @@ const char *Usage = "Usage: lscl [-vh] -i <filename> -o <filename>\n"
                     "  -h           \tPrint this help.\n";
 void SetOpts(int argc, char *argv[]) {
   if (argc < 2) {
-    NOTIFY(Usage);
+    notify(Usage);
   }
   int opt;
   const char *Filename = NULL;
@@ -87,22 +88,22 @@ void SetOpts(int argc, char *argv[]) {
       Filename = optarg;
       yyin = fopen(optarg, "r");
       if (yyin == NULL) {
-        PANIC("cannot open input file!");
+        RAISE(InFileOpenErr);
       }
       break;
     case 'o':
       yyout = fopen(optarg, "w");
       if (yyout == NULL) {
-        PANIC("cannot open output file!");
+        RAISE(OutFileOpenErr);
       }
       break;
     default:
     case 'h':
-      NOTIFY(Usage);
+      notify(Usage);
     }
   }
   if (Filename == NULL) {
-    NOTIFY(Usage);
+    notify(Usage);
   }
 }
 

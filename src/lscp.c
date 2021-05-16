@@ -1,5 +1,7 @@
+#include "../lib/llsc.h"
+#include "exception.h"
 #include "lsc.tab.h"
-#include "panic.h"
+#include "symbol_table.h"
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -18,7 +20,7 @@ static void SetOpts(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
   SetOpts(argc, argv);
-
+  InitAtom();
   int ret = yyparse();
   if (ret == 0 && ShowAST) {
     DisplayAST(&t, &fmt);
@@ -30,6 +32,7 @@ int main(int argc, char *argv[]) {
   }
   yylex_destroy();
   FreeAST(&t);
+  AtomReset();
   return ret;
 }
 
@@ -43,7 +46,7 @@ const char *Usage = "Usage: lscp [-vh] -i <filename> -o <filename>\n"
                     "  -h           \tPrint this help.\n";
 void SetOpts(int argc, char *argv[]) {
   if (argc < 2) {
-    NOTIFY(Usage);
+    notify(Usage);
   }
   int opt;
   const char *Filename = NULL;
@@ -56,22 +59,22 @@ void SetOpts(int argc, char *argv[]) {
       Filename = optarg;
       yyin = fopen(optarg, "r");
       if (yyin == NULL) {
-        PANIC("cannot open input file!");
+        RAISE(InFileOpenErr);
       }
       break;
     case 'o':
       fmt.out = fopen(optarg, "w");
       if (fmt.out == NULL) {
-        PANIC("cannot open output file!");
+        RAISE(OutFileOpenErr);
       }
       break;
     default:
     case 'h':
-      NOTIFY(Usage);
+      notify(Usage);
     }
   }
   if (Filename == NULL) {
-    NOTIFY(Usage);
+    notify(Usage);
   }
   if (fmt.out == NULL) {
     fmt.out = stdout;

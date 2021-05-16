@@ -1,6 +1,6 @@
 #include "ast.h"
-#include "panic.h"
-#include "text.h"
+#include "../lib/llsc.h"
+#include "exception.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,18 +11,15 @@ static size_t ASTNodeSize(int nChild) {
 ASTNode *NewASTNode(ASTNodeType t) {
   ASTNode *r;
   if (t <= ArrayInitializer) {
-    r = (ASTNode *)malloc(ASTNodeSize(1));
+    r = ALLOC(ASTNodeSize(1));
   } else if (t <= ParameterTypeList) {
-    r = (ASTNode *)malloc(ASTNodeSize(2));
+    r = ALLOC(ASTNodeSize(2));
   } else if (t <= FunctionDecl) {
-    r = (ASTNode *)malloc(ASTNodeSize(3));
+    r = ALLOC(ASTNodeSize(3));
   } else if (t <= FunctionDef) {
-    r = (ASTNode *)malloc(ASTNodeSize(4));
+    r = ALLOC(ASTNodeSize(4));
   } else {
-    PANIC("unkown type of AST node!");
-  }
-  if (r == NULL) {
-    PANIC("bad malloc!");
+    RAISE(UnknownNodeType);
   }
   r->nType = t;
   return r;
@@ -73,7 +70,7 @@ static void _GoDown(ASTNode *node, mapper m, void *cl) {
     _MapForList(node, m, cl);
     return; // must return, or it may call mapper twice.
   } else if (node->nType <= BinaryExpr) {
-    _Map((ASTNode *)(node->attr[0]), m, cl);
+    _Map((ASTNode *)(node->attr[1]), m, cl);
     _Map((ASTNode *)(node->attr[2]), m, cl);
   } else if (node->nType <= FunctionDecl) {
     _Map((ASTNode *)(node->attr[0]), m, cl);
@@ -85,7 +82,7 @@ static void _GoDown(ASTNode *node, mapper m, void *cl) {
     _Map((ASTNode *)(node->attr[2]), m, cl);
     _Map((ASTNode *)(node->attr[3]), m, cl);
   } else {
-    PANIC("unkown type of AST node!");
+    RAISE(UnknownNodeType);
   }
   if (!TopDown) {
     m(node, cl);
@@ -112,9 +109,9 @@ static const char *TypeStr[] = {
     "IO Statement",
     "Jump Statement",
     "Unary Expression",
+    "Declaration",
     "Function Call",
     "Parameter Declarator",
-    "Declaration",
     "Compound Statement",
     "Arugument List",
     "Declaration List",
@@ -148,11 +145,11 @@ void Printer(ASTNode *node, void *cl) {
     fprintf(fmt->out, "%*s%s\n", indent, "", TypeStr[node->nType]);
   } else if (node->nType <= BinaryExpr) {
     fprintf(fmt->out, "%*s%s: %s\n", indent, "", TypeStr[node->nType],
-            Attr(node, 1));
+            Attr(node, 0));
   } else if (node->nType <= FunctionDef) {
     fprintf(fmt->out, "%*s%s\n", indent, "", TypeStr[node->nType]);
   } else {
-    PANIC("unkown type of AST node!");
+    RAISE(UnknownNodeType);
   }
 #undef Attr
 }
@@ -163,33 +160,35 @@ void DisplayAST(AST *t, Fmt *fmt) {
 }
 
 void FreeAttr(ASTNode *node, void *cl) {
-  if (node->nType <= ArrayInitializer) {
-    free((void *)(node->attr[0]));
+  if (node->nType <= TypeSpecifier) {
+    return;
+  } else if (node->nType <= ArrayInitializer) {
+    FREE((node->attr[0]));
   } else if (node->nType <= UnaryExpr) {
-    free((void *)(node->attr[1]));
+    FREE((node->attr[1]));
   } else if (node->nType <= ParameterTypeList) {
-    free((void *)(node->attr[0]));
-    free((void *)(node->attr[1]));
+    FREE((node->attr[0]));
+    FREE((node->attr[1]));
   } else if (node->nType <= BinaryExpr) {
-    free((void *)(node->attr[0]));
-    free((void *)(node->attr[2]));
+    FREE((node->attr[1]));
+    FREE((node->attr[2]));
   } else if (node->nType <= FunctionDecl) {
-    free((void *)(node->attr[0]));
-    free((void *)(node->attr[1]));
-    free((void *)(node->attr[2]));
+    FREE((node->attr[0]));
+    FREE((node->attr[1]));
+    FREE((node->attr[2]));
   } else if (node->nType <= FunctionDef) {
-    free((void *)(node->attr[0]));
-    free((void *)(node->attr[1]));
-    free((void *)(node->attr[2]));
-    free((void *)(node->attr[3]));
+    FREE((node->attr[0]));
+    FREE((node->attr[1]));
+    FREE((node->attr[2]));
+    FREE((node->attr[3]));
   } else {
-    PANIC("unkown type of AST node!");
+    RAISE(UnknownNodeType);
   }
 }
 
 void FreeAST(AST *t) {
   Map(t, FreeAttr, NULL, false);
-  free(t->root);
+  FREE(t->root);
   t->root = NULL;
 }
 
@@ -198,12 +197,14 @@ void SpecifyType(ASTNode *node, const char *baseType) {
     return;
   }
   if (node->nType != DeclaratorList) {
-    PANIC("unexpected AST node type!");
+    RAISE(UnknownNodeType);
   }
   ASTNode *d = (ASTNode *)(node->attr[1]);
   ASTNode *ts = (ASTNode *)(d->attr[0]);
   const char *t = ts->attr[0];
-  ts->attr[0] = AppendStr(baseType, t);
-  free((void *)t); // memory leak!!
+  if (t == NULL) {
+    t = "";
+  }
+  ts->attr[0] = (void *)AtomAppend(baseType, t);
   SpecifyType((ASTNode *)(node->attr[0]), baseType);
 }

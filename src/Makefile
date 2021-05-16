@@ -1,22 +1,21 @@
 .PHONY:
 	lexer ast-parser st-parser clean
 
-lexer: lsc.yy.c lscl.c
-	clang -g -o ../bin/lscl $^
+cc := clang
+LLSC := ../lib/lib/llsc.a
 
-ast-parser: lsc.yy.c lsc.tab.c ast.c text.c lscp.c
-	clang -g -o ../bin/lscp-ast $^
+lexer: lsc.yy.o lscl.o exception.o symbol_table.o
+	clang -Wall -g $^ $(LLSC)  -o ../bin/lscl
 
-st-parser: lsc.yy.c lsc-st.tab.c st.c text.c lscp-st.c
-	clang -g -o ../bin/lscp-st $^
+parser: lsc.yy.o lsc.tab.o ast.o lscp.o symbol_table.o exception.o
+	clang -Wall -g $^ $(LLSC) -o ../bin/lscp
 
-lsc.yy.c: lsc.l lsc.tab.c lsc-st.tab.c
+%.o: %.c
+	clang -g -c $^
+
+lsc.yy.c: lsc.l lsc.tab.c
 	flex -o lsc.yy.c lsc.l
 lsc.tab.c: lsc.y
 	bison -v -d lsc.y
-
-lsc-st.tab.c: lsc-st.y
-	bison -v -d lsc-st.y
-
 clean:
 	rm -rf *.o *.output ../bin/* *.yy.c *.tab.*

@@ -18,12 +18,13 @@ typedef enum {
   ArrayInitializer, // [0]initializer list
   // Identifiers will be temporarily treated as strings.
 
-  IOStm,               // [0]const char* IO [1]arguement list
-  JumpStm,             // [0]const char* keyword [1]expression
-  UnaryExpr,           // [0]const char* operator [1]expression
+  IOStm,       // [0]const char* IO [1]arguement list
+  JumpStm,     // [0]const char* keyword [1]expression
+  UnaryExpr,   // [0]const char* operator [1]expression
+  Declaration, // [0]base type [1]declarator list
+
   FunctionCall,        // [0]identifier [1]arguement list
   ParameterDecl,       // [0]type specifier [1]identifier
-  Declaration,         // [0]base type [1]declarator list
   CompoundStm,         // [0]declaration list [1]statement list
   ArguementList,       // [0]next [1]expression
   DeclarationList,     // [0]next [1]declaration
@@ -49,8 +50,8 @@ typedef struct ASTNode ASTNode;
 typedef struct AST AST;
 
 struct ASTNode {
-  ASTNodeType nType;   // node type
-  const void *attr[0]; // attribute
+  ASTNodeType nType; // node type
+  void *attr[0];     // attribute
 };
 
 struct AST {
