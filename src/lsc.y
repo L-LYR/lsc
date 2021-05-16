@@ -34,8 +34,9 @@
 /* %token COMMENT UNKNOWN */
 
 %type <str> array_length
+%type <str> type_specifiers
 %type <node> program global_list global_declaration_or_definition declaration 
-%type <node> type_specifiers init_declarator_list init_declarator declarator 
+%type <node> init_declarator_list init_declarator declarator 
 %type <node> parameter_type_list identifier initializer initializer_list
 %type <node> function_definition parameter_declarator_list parameter_declarator
 %type <node> compound_statement loop_statement selection_statement expression_statement io_statement
@@ -70,12 +71,14 @@ global_declaration_or_definition
 declaration
     : type_specifiers init_declarator_list SEMICOLON {
         $$ = NewASTNode(Declaration);
-        $$->attr[0] = $1;
+        $$->attr[0] = NewASTNode(TypeSpecifier);
+        ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
-        SpecifyType($2, $1->attr[0]);
+        SpecifyType($2, $1);
     }| type_specifiers identifier LB parameter_type_list RB SEMICOLON {
         $$ = NewASTNode(FunctionDecl);
-        $$->attr[0] = $1;
+        $$->attr[0] = NewASTNode(TypeSpecifier);
+        ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         $$->attr[2] = $4;
     };
@@ -88,23 +91,17 @@ identifier
 
 type_specifiers
     : VOID {
-        $$ = NewASTNode(TypeSpecifier);
-        $$->attr[0] = (void*)AtomString("void");
+        $$ = (void*)AtomString("void");
     }| I32 {
-        $$ = NewASTNode(TypeSpecifier);
-        $$->attr[0] = (void*)AtomString("i32");
+        $$ = (void*)AtomString("i32");
     }| F32 {
-        $$ = NewASTNode(TypeSpecifier);
-        $$->attr[0] = (void*)AtomString("f32");
+        $$ = (void*)AtomString("f32");
     }| STRING {
-        $$ = NewASTNode(TypeSpecifier);
-        $$->attr[0] = (void*)AtomString("string");
+        $$ = (void*)AtomString("string");
     }| BOOL {
-        $$ = NewASTNode(TypeSpecifier);
-        $$->attr[0] = (void*)AtomString("bool");
+        $$ = (void*)AtomString("bool");
     }| type_specifiers LSB array_length RSB {
-        $$ = $1;
-        $$->attr[0] = (void*)AtomConcatenate($$->attr[0], "[", $3, "]", NULL);
+        $$ = (void*)AtomConcatenate($1, "[", $3, "]", NULL);
     }
 
 init_declarator_list
@@ -177,23 +174,27 @@ parameter_type_list
     : type_specifiers {
         $$ = NewASTNode(ParameterTypeList);
         $$->attr[0] = NULL;
-        $$->attr[1] = $1;
+        $$->attr[1] = NewASTNode(TypeSpecifier);
+        ((ASTNode*)($$->attr[1]))->attr[0] = (void*)$1;
     }| parameter_type_list COMMA type_specifiers {
         $$ = NewASTNode(ParameterTypeList);
         $$->attr[0] = $1;
-        $$->attr[1] = $3;
+        $$->attr[1] = NewASTNode(TypeSpecifier);
+        ((ASTNode*)($$->attr[1]))->attr[0] = (void*)$3;
     };
 
 function_definition
     : type_specifiers identifier LB RB compound_statement {
         $$ = NewASTNode(FunctionDef);
-        $$->attr[0] = $1;
+        $$->attr[0] = NewASTNode(TypeSpecifier);
+        ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         $$->attr[2] = NULL;
         $$->attr[3] = $5;
     }| type_specifiers identifier LB parameter_declarator_list RB compound_statement {
         $$ = NewASTNode(FunctionDef);
-        $$->attr[0] = $1;
+        $$->attr[0] = NewASTNode(TypeSpecifier);
+        ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         $$->attr[2] = $4;
         $$->attr[3] = $6;
@@ -212,17 +213,14 @@ parameter_declarator_list
 
 parameter_declarator
     :type_specifiers declarator {
-        $$ = NewASTNode(ParameterDecl);
-        ASTNode* ts = (ASTNode*)($2->attr[0]);
+        $$ = $2;
+        ASTNode* ts = (ASTNode*)($$->attr[0]);
         const char* p = (const char*)(ts->attr[0]);
         if (p != NULL) {
-            const char* t = $1->attr[0];
-            $1->attr[0] = (void*)AtomConcatenate(t, p, NULL);
+            ts->attr[0] = (void*)AtomConcatenate($1, p, NULL);
+        } else {
+            ts->attr[0] = (void*)$1;
         }
-        $$->attr[0] = $1;
-        $$->attr[1] = $2->attr[1];
-        FREE(ts);
-        FREE($2);
     };
 
 compound_statement

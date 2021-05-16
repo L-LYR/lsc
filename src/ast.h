@@ -24,7 +24,6 @@ typedef enum {
   Declaration, // [0]base type [1]declarator list
 
   FunctionCall,        // [0]identifier [1]arguement list
-  ParameterDecl,       // [0]type specifier [1]identifier
   CompoundStm,         // [0]declaration list [1]statement list
   ArguementList,       // [0]next [1]expression
   DeclarationList,     // [0]next [1]declaration
@@ -91,9 +90,17 @@ void DisplayAST(AST *t, Fmt *fmt);
   FreeAttr is a mapper, which free each AST Node.
   cl should be NULL, because it will not be used;
 */
-
-void FreeAttr(ASTNode *node, void *cl);
-void FreeAST(AST *t);
+// NOTICE:
+//    Because AST is a huge complex structure with a lot of nodes.
+//    It will also exist in memory for a long time.
+//    So there are three points special:
+//        1. To construct it, we need to call malloc() frequently.
+//        2. We only need to destroy it before the process exits.
+//        3. The deconstructor of AST is quite complex.
+//    So for efficiency, we use arena for AST struct.
+//
+// void FreeAttr(ASTNode *node, void *cl);
+// void FreeAST(AST *t);
 
 /*
   SpecifyType will only be called in the declaration action.

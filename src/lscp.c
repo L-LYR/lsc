@@ -20,7 +20,10 @@ static void SetOpts(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
   SetOpts(argc, argv);
-  InitAtom();
+  
+  AtomInit();
+  ArenaInit();
+
   int ret = yyparse();
   if (ret == 0 && ShowAST) {
     DisplayAST(&t, &fmt);
@@ -31,7 +34,7 @@ int main(int argc, char *argv[]) {
     fclose(fmt.out);
   }
   yylex_destroy();
-  FreeAST(&t);
+  ArenaClear();
   AtomReset();
   return ret;
 }

@@ -11,13 +11,13 @@ static size_t ASTNodeSize(int nChild) {
 ASTNode *NewASTNode(ASTNodeType t) {
   ASTNode *r;
   if (t <= ArrayInitializer) {
-    r = ALLOC(ASTNodeSize(1));
+    r = ArenaAllocFor(ASTNodeSize(1));
   } else if (t <= ParameterTypeList) {
-    r = ALLOC(ASTNodeSize(2));
+    r = ArenaAllocFor(ASTNodeSize(2));
   } else if (t <= FunctionDecl) {
-    r = ALLOC(ASTNodeSize(3));
+    r = ArenaAllocFor(ASTNodeSize(3));
   } else if (t <= FunctionDef) {
-    r = ALLOC(ASTNodeSize(4));
+    r = ArenaAllocFor(ASTNodeSize(4));
   } else {
     RAISE(UnknownNodeType);
   }
@@ -95,6 +95,7 @@ void Map(AST *t, mapper m, void *cl, _Bool topDown) {
 }
 
 static int UnitIndent = 2;
+static int Gap = 5;
 // TypeStr is corrsponding to ASTNodeType.
 static const char *TypeStr[] = {
     "Bool Constant",
@@ -111,7 +112,6 @@ static const char *TypeStr[] = {
     "Unary Expression",
     "Declaration",
     "Function Call",
-    "Parameter Declarator",
     "Compound Statement",
     "Arugument List",
     "Declaration List",
@@ -134,20 +134,20 @@ void Printer(ASTNode *node, void *cl) {
   Fmt *fmt = cl;
   int indent = fmt->depth * UnitIndent;
   if (node->nType <= TypeSpecifier) {
-    fprintf(fmt->out, "%*s%s: %s\n", indent, "", TypeStr[node->nType],
+    fprintf(fmt->out, "%-*d%s: %s\n", Gap, indent, TypeStr[node->nType],
             Attr(node, 0));
   } else if (node->nType <= ArrayInitializer) {
-    fprintf(fmt->out, "%*s%s\n", indent, "", TypeStr[node->nType]);
+    fprintf(fmt->out, "%-*d%s\n", Gap, indent, TypeStr[node->nType]);
   } else if (node->nType <= UnaryExpr) {
-    fprintf(fmt->out, "%*s%s: %s\n", indent, "", TypeStr[node->nType],
+    fprintf(fmt->out, "%-*d%s: %s\n", Gap, indent, TypeStr[node->nType],
             Attr(node, 0));
   } else if (node->nType <= ParameterTypeList) {
-    fprintf(fmt->out, "%*s%s\n", indent, "", TypeStr[node->nType]);
+    fprintf(fmt->out, "%-*d%s\n", Gap, indent, TypeStr[node->nType]);
   } else if (node->nType <= BinaryExpr) {
-    fprintf(fmt->out, "%*s%s: %s\n", indent, "", TypeStr[node->nType],
+    fprintf(fmt->out, "%-*d%s: %s\n", Gap, indent, TypeStr[node->nType],
             Attr(node, 0));
   } else if (node->nType <= FunctionDef) {
-    fprintf(fmt->out, "%*s%s\n", indent, "", TypeStr[node->nType]);
+    fprintf(fmt->out, "%-*d%s\n", Gap, indent, TypeStr[node->nType]);
   } else {
     RAISE(UnknownNodeType);
   }
@@ -159,38 +159,45 @@ void DisplayAST(AST *t, Fmt *fmt) {
   Map(t, Printer, fmt, true);
 }
 
-void FreeAttr(ASTNode *node, void *cl) {
-  if (node->nType <= TypeSpecifier) {
-    return;
-  } else if (node->nType <= ArrayInitializer) {
-    FREE((node->attr[0]));
-  } else if (node->nType <= UnaryExpr) {
-    FREE((node->attr[1]));
-  } else if (node->nType <= ParameterTypeList) {
-    FREE((node->attr[0]));
-    FREE((node->attr[1]));
-  } else if (node->nType <= BinaryExpr) {
-    FREE((node->attr[1]));
-    FREE((node->attr[2]));
-  } else if (node->nType <= FunctionDecl) {
-    FREE((node->attr[0]));
-    FREE((node->attr[1]));
-    FREE((node->attr[2]));
-  } else if (node->nType <= FunctionDef) {
-    FREE((node->attr[0]));
-    FREE((node->attr[1]));
-    FREE((node->attr[2]));
-    FREE((node->attr[3]));
-  } else {
-    RAISE(UnknownNodeType);
-  }
-}
+// void FreeAttr(ASTNode *node, void *cl) {
+//   if (node->nType <= TypeSpecifier) {
+//     return;
+//   } else if (node->nType <= ArrayInitializer) {
+//     FREE((node->attr[0]));
+//   } else if (node->nType <= UnaryExpr) {
+//     FREE((node->attr[1]));
+//   } else if (node->nType <= ParameterTypeList) {
+//     FREE((node->attr[0]));
+//     FREE((node->attr[1]));
+//   } else if (node->nType <= BinaryExpr) {
+//     FREE((node->attr[1]));
+//     FREE((node->attr[2]));
+//   } else if (node->nType <= FunctionDecl) {
+//     FREE((node->attr[0]));
+//     FREE((node->attr[1]));
+//     FREE((node->attr[2]));
+//   } else if (node->nType <= FunctionDef) {
+//     FREE((node->attr[0]));
+//     FREE((node->attr[1]));
+//     FREE((node->attr[2]));
+//     FREE((node->attr[3]));
+//   } else {
+//     RAISE(UnknownNodeType);
+//   }
+// }
 
-void FreeAST(AST *t) {
-  Map(t, FreeAttr, NULL, false);
-  FREE(t->root);
-  t->root = NULL;
-}
+// void FreeAST(AST *t) {
+//   Map(t, FreeAttr, NULL, false);
+//   FREE(t->root);
+//   t->root = NULL;
+// }
+
+// TODO: try to implement tree command
+// Use ANSI to draw a tree like tree command.
+// static const char *HorizonLine = "─";
+// static const char *VerticalLine = "│";
+// static const char *Corner = "└";
+// static const char *Branch = "├";
 
 void SpecifyType(ASTNode *node, const char *baseType) {
   if (node == NULL) {

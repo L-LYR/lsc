@@ -9,4 +9,4 @@ static const char *ReservedSymbolList[] = {
     "]",      "{",     "}",        ";",      NULL,
 };
 
-void InitAtom() { AtomLoad(ReservedSymbolList); }
+void AtomInit() { AtomLoad(ReservedSymbolList); }

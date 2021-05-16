@@ -3,6 +3,6 @@
 
 #include "../lib/llsc.h"
 
-void InitAtom(void);
+void AtomInit(void);
 
 #endif

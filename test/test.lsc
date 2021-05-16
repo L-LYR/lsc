@@ -7,6 +7,13 @@ i32 fibonaci(i32 n) {
         return fibonaci(n - 1) + fibonaci(n - 2);
     }
 }
+
+i32 f(i32, i32, i32);
+
+i32 g(i32 i, f32 f, string s) {
+    return 0;
+}
+
 i32 main() {
     f32 f = 5.e-45;
     f32 __float__;
