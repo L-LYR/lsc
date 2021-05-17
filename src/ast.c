@@ -1,6 +1,8 @@
+#define PY_SSIZE_T_CLEAN
 #include "ast.h"
 #include "../lib/llsc.h"
 #include "exception.h"
+#include <python3.8/Python.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -94,8 +96,6 @@ void Map(AST *t, mapper m, void *cl, _Bool topDown) {
   _Map(t->root, m, cl);
 }
 
-static int UnitIndent = 2;
-static int Gap = 5;
 // TypeStr is corrsponding to ASTNodeType.
 static const char *TypeStr[] = {
     "Bool Constant",
@@ -118,7 +118,7 @@ static const char *TypeStr[] = {
     "Statement List",
     "Declarator List",
     "Initializer List",
-    "Global",
+    "Global List",
     "Parameter Declaration List",
     "Parameter Type List",
     "Postfix Expression",
@@ -129,34 +129,57 @@ static const char *TypeStr[] = {
     "Loop Statement",
     "Function Definition",
 };
-void Printer(ASTNode *node, void *cl) {
+static void _Printer(ASTNode *node, void *cl) {
 #define Attr(node, n) ((const char *)(node->attr[(n)]))
   Fmt *fmt = cl;
-  int indent = fmt->depth * UnitIndent;
   if (node->nType <= TypeSpecifier) {
-    fprintf(fmt->out, "%-*d%s: %s\n", Gap, indent, TypeStr[node->nType],
+    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType],
             Attr(node, 0));
   } else if (node->nType <= ArrayInitializer) {
-    fprintf(fmt->out, "%-*d%s\n", Gap, indent, TypeStr[node->nType]);
+    fprintf(fmt->out, "%-d %s\n", fmt->depth, TypeStr[node->nType]);
   } else if (node->nType <= UnaryExpr) {
-    fprintf(fmt->out, "%-*d%s: %s\n", Gap, indent, TypeStr[node->nType],
+    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType],
             Attr(node, 0));
   } else if (node->nType <= ParameterTypeList) {
-    fprintf(fmt->out, "%-*d%s\n", Gap, indent, TypeStr[node->nType]);
+    fprintf(fmt->out, "%-d %s\n", fmt->depth, TypeStr[node->nType]);
   } else if (node->nType <= BinaryExpr) {
-    fprintf(fmt->out, "%-*d%s: %s\n", Gap, indent, TypeStr[node->nType],
+    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType],
             Attr(node, 0));
   } else if (node->nType <= FunctionDef) {
-    fprintf(fmt->out, "%-*d%s\n", Gap, indent, TypeStr[node->nType]);
+    fprintf(fmt->out, "%-d %s\n", fmt->depth, TypeStr[node->nType]);
   } else {
     RAISE(UnknownNodeType);
   }
 #undef Attr
 }
 
+static const char *BeautifyAST_py = "./bin/BeautifyAST.py";
+
+static void _BeautifyAST(Fmt *fmt) {
+  wchar_t *program = Py_DecodeLocale("lscp", NULL);
+  ASSERT(program != NULL);
+  wchar_t *fileLoc = Py_DecodeLocale(fmt->fileLoc, NULL);
+  ASSERT(fileLoc != NULL);
+  wchar_t *argv[] = {program, fileLoc};
+
+  FILE *pyFp = fopen(BeautifyAST_py, "r");
+  ASSERT(pyFp != NULL);
+
+  Py_SetProgramName(program);
+  Py_Initialize();
+  PySys_SetArgv(2, argv);
+  PyRun_SimpleFile(pyFp, BeautifyAST_py);
+  int ret = Py_FinalizeEx();
+  ASSERT(ret == 0);
+
+  PyMem_RawFree(program);
+  PyMem_RawFree(fileLoc);
+}
+
 void DisplayAST(AST *t, Fmt *fmt) {
-  fprintf(fmt->out, "AST\n");
-  Map(t, Printer, fmt, true);
+  Map(t, _Printer, fmt, true);
+  fclose(fmt->out);
+  _BeautifyAST(fmt);
 }
 
 // void FreeAttr(ASTNode *node, void *cl) {

@@ -20,7 +20,7 @@ static void SetOpts(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
   SetOpts(argc, argv);
-  
+
   AtomInit();
   ArenaInit();
 
@@ -30,9 +30,7 @@ int main(int argc, char *argv[]) {
   }
 
   fclose(yyin);
-  if (fmt.out != stdout) {
-    fclose(fmt.out);
-  }
+
   yylex_destroy();
   ArenaClear();
   AtomReset();
@@ -66,6 +64,7 @@ void SetOpts(int argc, char *argv[]) {
       }
       break;
     case 'o':
+      fmt.fileLoc = optarg;
       fmt.out = fopen(optarg, "w");
       if (fmt.out == NULL) {
         RAISE(OutFileOpenErr);
@@ -76,10 +75,7 @@ void SetOpts(int argc, char *argv[]) {
       notify(Usage);
     }
   }
-  if (Filename == NULL) {
+  if (Filename == NULL || fmt.out == NULL) {
     notify(Usage);
-  }
-  if (fmt.out == NULL) {
-    fmt.out = stdout;
   }
 }

@@ -81,9 +81,9 @@ void Map(AST *t, mapper m, void *cl, _Bool topDown);
 typedef struct {
   int depth;
   FILE *out;
+  const char *fileLoc;
 } Fmt;
 
-void Printer(ASTNode *node, void *cl);
 void DisplayAST(AST *t, Fmt *fmt);
 
 /*

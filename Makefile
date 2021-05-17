@@ -11,6 +11,7 @@ clean:
 valgrind_flags := --leak-check=full
 valgrind_flags += --show-leak-kinds=all
 valgrind_flags += --track-origins=yes
+valgrind_flags += --log-file="./res/memcheck.log"
 
 test_input := ./test/test.lsc
 lexer_output := ./res/test.la
