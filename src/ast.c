@@ -1,8 +1,9 @@
-#define PY_SSIZE_T_CLEAN
+// #define PY_SSIZE_T_CLEAN
 #include "ast.h"
 #include "../lib/llsc.h"
 #include "exception.h"
-#include <python3.8/Python.h>
+#include <string.h>
+// #include <python3.8/Python.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,7 +11,7 @@ static size_t ASTNodeSize(int nChild) {
   return sizeof(ASTNode) + sizeof(void *) * nChild;
 }
 
-ASTNode *NewASTNode(ASTNodeType t) {
+ASTNode *NewASTNode(ASTNodeType t, int line) {
   ASTNode *r;
   if (t <= ArrayInitializer) {
     r = ArenaAllocFor(ASTNodeSize(1));
@@ -24,6 +25,7 @@ ASTNode *NewASTNode(ASTNodeType t) {
     RAISE(UnknownNodeType);
   }
   r->nType = t;
+  r->line = line;
   return r;
 }
 
@@ -98,36 +100,21 @@ void Map(AST *t, mapper m, void *cl, _Bool topDown) {
 
 // TypeStr is corrsponding to ASTNodeType.
 static const char *TypeStr[] = {
-    "Bool Constant",
-    "Integer Constant",
-    "Float Constant",
-    "String Constant",
-    "Identifier",
-    "Specified Type",
-    "Initializer",
-    "Expression Statement",
-    "Array Initializer",
-    "IO Statement",
-    "Jump Statement",
-    "Unary Expression",
-    "Declaration",
-    "Function Call",
-    "Compound Statement",
-    "Arugument List",
-    "Declaration List",
-    "Statement List",
-    "Declarator List",
-    "Initializer List",
-    "Global List",
-    "Parameter Declaration List",
-    "Parameter Type List",
-    "Postfix Expression",
-    "Bianry Expression",
-    "Selection Statement",
-    "Declarator",
-    "Function Declaration",
-    "Loop Statement",
-    "Function Definition",
+    "Bool Constant",       "Integer Constant",
+    "Float Constant",      "String Constant",
+    "Identifier",          "Specified Type",
+    "Initializer",         "Expression Statement",
+    "Array Initializer",   "IO Statement",
+    "Jump Statement",      "Unary Expression",
+    "Declaration",         "Function Call",
+    "Compound Statement",  "Arugument List",
+    "Declaration List",    "Statement List",
+    "Declarator List",     "Initializer List",
+    "Global List",         "Parameter Declaration List",
+    "Parameter Type List", "Postfix Expression",
+    "Bianry Expression",   "Selection Statement",
+    "Declarator",          "Function Declaration",
+    "Loop Statement",      "Function Definition",
 };
 static void _Printer(ASTNode *node, void *cl) {
 #define Attr(node, n) ((const char *)(node->attr[(n)]))
@@ -156,24 +143,34 @@ static void _Printer(ASTNode *node, void *cl) {
 static const char *BeautifyAST_py = "./bin/BeautifyAST.py";
 
 static void _BeautifyAST(Fmt *fmt) {
-  wchar_t *program = Py_DecodeLocale("lscp", NULL);
-  ASSERT(program != NULL);
-  wchar_t *fileLoc = Py_DecodeLocale(fmt->fileLoc, NULL);
-  ASSERT(fileLoc != NULL);
-  wchar_t *argv[] = {program, fileLoc};
+  char buffer[128];
 
-  FILE *pyFp = fopen(BeautifyAST_py, "r");
-  ASSERT(pyFp != NULL);
+  // memset(buffer, 0, sizeof(buffer));
+  // sprintf(buffer, "%s %s","sudo chmod +x", BeautifyAST_py);
+  // system(buffer);
 
-  Py_SetProgramName(program);
-  Py_Initialize();
-  PySys_SetArgv(2, argv);
-  PyRun_SimpleFile(pyFp, BeautifyAST_py);
-  int ret = Py_FinalizeEx();
-  ASSERT(ret == 0);
+  memset(buffer, 0, sizeof(buffer));
+  sprintf(buffer, "%s %s", BeautifyAST_py, fmt->fileLoc);
+  system(buffer);
 
-  PyMem_RawFree(program);
-  PyMem_RawFree(fileLoc);
+  // wchar_t *program = Py_DecodeLocale("lscp", NULL);
+  // ASSERT(program != NULL);
+  // wchar_t *fileLoc = Py_DecodeLocale(fmt->fileLoc, NULL);
+  // ASSERT(fileLoc != NULL);
+  // wchar_t *argv[] = {program, fileLoc};
+
+  // FILE *pyFp = fopen(BeautifyAST_py, "r");
+  // ASSERT(pyFp != NULL);
+
+  // Py_SetProgramName(program);
+  // Py_Initialize();
+  // PySys_SetArgv(2, argv);
+  // PyRun_SimpleFile(pyFp, BeautifyAST_py);
+  // int ret = Py_FinalizeEx();
+  // ASSERT(ret == 0);
+
+  // PyMem_RawFree(program);
+  // PyMem_RawFree(fileLoc);
 }
 
 void DisplayAST(AST *t, Fmt *fmt) {

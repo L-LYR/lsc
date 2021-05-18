@@ -34,7 +34,7 @@ static int Capacity = ATOM_BUCKET_DEFAULT_CAPCITY;
 // current size of atom table
 static int Size = 0;
 
-static unsigned long AtomHash(const char *str) {
+unsigned long AtomHash(const char *str) {
   ASSERT(str != NULL);
   unsigned long h = 0;
   for (int i = 0; str[i] != '\0'; i++) {
@@ -43,6 +43,8 @@ static unsigned long AtomHash(const char *str) {
 
   return h;
 }
+
+_Bool AtomEqual(const char *l, const char *r) { return l == r; }
 
 /*
     AtomFind:

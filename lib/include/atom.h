@@ -72,4 +72,7 @@ extern const char *AtomAppend(const char *dst, const char *src);
 
 extern const char *AtomConcatenate(const char *str, ...);
 
+extern unsigned long AtomHash(const char *str);
+extern _Bool AtomEqual(const char *l, const char *r);
+
 #endif

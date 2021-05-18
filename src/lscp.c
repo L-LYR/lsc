@@ -14,8 +14,10 @@ FILE *yyin;
 AST t; // lsc.y
 
 // static
-Fmt fmt;
-_Bool ShowAST; // print AST
+Fmt ASTDisplayFmt;
+Fmt SymbolTableDisplayFmt;
+_Bool ShowAST;         // print AST
+_Bool ShowSymbolTable; // print Symbol Table
 static void SetOpts(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
@@ -26,7 +28,13 @@ int main(int argc, char *argv[]) {
 
   int ret = yyparse();
   if (ret == 0 && ShowAST) {
-    DisplayAST(&t, &fmt);
+    DisplayAST(&t, &ASTDisplayFmt);
+    if (ShowSymbolTable) {
+      SymbolTable st = SymbolTableCreateFromAST(&t);
+      DisplaySymbolTable(st, &SymbolTableDisplayFmt);
+      FreeSymbolTable(st);
+      fclose(SymbolTableDisplayFmt.out);
+    }
   }
 
   fclose(yyin);
@@ -37,13 +45,13 @@ int main(int argc, char *argv[]) {
   return ret;
 }
 
-const char *OptFmt = ":vho:i:";
+const char *OptFmt = ":hv:i:s:";
 
 const char *Usage = "Usage: lscp [-vh] -i <filename> -o <filename>\n"
                     "Options:\n"
-                    "  -v           \tTurn on verbose mode, display AST.\n"
+                    "  -v <filename>\tTurn on verbose mode, display AST.\n"
                     "  -i <filename>\tInput file.\n"
-                    "  -o <filename>\tOutput file.\n"
+                    "  -s <filename>\tShow symbol table.\n"
                     "  -h           \tPrint this help.\n";
 void SetOpts(int argc, char *argv[]) {
   if (argc < 2) {
@@ -55,6 +63,11 @@ void SetOpts(int argc, char *argv[]) {
     switch (opt) {
     case 'v':
       ShowAST = true;
+      ASTDisplayFmt.fileLoc = optarg;
+      ASTDisplayFmt.out = fopen(optarg, "w");
+      if (ASTDisplayFmt.out == NULL) {
+        RAISE(OutFileOpenErr);
+      }
       break;
     case 'i':
       Filename = optarg;
@@ -63,10 +76,11 @@ void SetOpts(int argc, char *argv[]) {
         RAISE(InFileOpenErr);
       }
       break;
-    case 'o':
-      fmt.fileLoc = optarg;
-      fmt.out = fopen(optarg, "w");
-      if (fmt.out == NULL) {
+    case 's':
+      ShowSymbolTable = true;
+      SymbolTableDisplayFmt.fileLoc = optarg;
+      SymbolTableDisplayFmt.out = fopen(optarg, "w");
+      if (SymbolTableDisplayFmt.out == NULL) {
         RAISE(OutFileOpenErr);
       }
       break;
@@ -75,7 +89,16 @@ void SetOpts(int argc, char *argv[]) {
       notify(Usage);
     }
   }
-  if (Filename == NULL || fmt.out == NULL) {
+  if (Filename == NULL) {
+    notify(Usage);
+  }
+  if (ShowAST && ASTDisplayFmt.out == NULL) {
+    notify(Usage);
+  }
+  if (ShowSymbolTable && SymbolTableDisplayFmt.out == NULL) {
+    notify(Usage);
+  }
+  if (ShowSymbolTable && !ShowAST) {
     notify(Usage);
   }
 }

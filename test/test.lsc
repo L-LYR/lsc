@@ -8,6 +8,7 @@ i32 fibonaci(i32 n) {
     }
 }
 
+i32 gint;
 i32 f(i32, i32, i32);
 
 i32 g(i32 i, f32 f, string s) {
@@ -22,8 +23,18 @@ i32 main() {
     i32 x;
     
     for (x = 32; x != 0; --x) {
+        i32 i;
         print(fibonaci(x));
         continue;
+    }
+
+    {
+        i32 x, y;
+        f32 k, f;
+        {
+            i32 k;
+            f32 o;
+        }
     }
 
     // This is a test comment

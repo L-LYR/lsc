@@ -6,5 +6,7 @@ extern struct except_t InFileOpenErr;
 extern struct except_t OutFileOpenErr;
 extern struct except_t UnknownNodeType;
 extern struct except_t UnexpectedNodeType;
+extern struct except_t UnknownBaseType;
+extern struct except_t InvalidArraySize;
 
 #endif

@@ -9,7 +9,11 @@
 // Size of table
 // Table_create will choose the greatest value which is less than hint
 static int primes[] = {
-    509,
+    32,    //
+    32,    //
+    64,    //
+    128,   //
+    256,   //
     509,   // 512   = 2 ^ 9
     1021,  // 1025  = 2 ^ 10
     2039,  // 2048  = 2 ^ 11
@@ -21,9 +25,9 @@ static int primes[] = {
     INT_MAX,
 };
 
-struct table_t *TableCreate(int hint, cmp_t cmp, hash_t hash) {
+struct table_t *TableCreate(int hint, equal_t equal, hash_t hash) {
   ASSERT(hint >= 0);
-  ASSERT(cmp != NULL);
+  ASSERT(equal != NULL);
   ASSERT(hash != NULL);
 
   int i;
@@ -34,7 +38,7 @@ struct table_t *TableCreate(int hint, cmp_t cmp, hash_t hash) {
   struct table_t *table =
       ALLOC(sizeof(*table) + hint * sizeof(table->buckets[0]));
   table->capacity = hint;
-  table->cmp = cmp;
+  table->equal = equal;
   table->hash = hash;
   table->buckets = (struct binding **)(table + 1);
   memset(table->buckets, 0, sizeof(table->buckets[0]) * hint);
@@ -67,7 +71,7 @@ void *TablePut(struct table_t *table, const void *key, void *value) {
   void *prev;
   unsigned long h = table->hash(key) % table->capacity;
   for (p = table->buckets[h]; p != NULL; p = p->link) {
-    if (table->cmp(key, p->key) == 0)
+    if (table->equal(key, p->key))
       break;
   }
   if (p == NULL) {
@@ -91,7 +95,7 @@ void *TableGet(struct table_t *table, const void *key) {
   struct binding *p;
   unsigned long h = table->hash(key) % table->capacity;
   for (p = table->buckets[h]; p != NULL; p = p->link) {
-    if (table->cmp(key, p->key) == 0)
+    if (table->equal(key, p->key))
       break;
   }
 
@@ -106,7 +110,7 @@ void *TableRemove(struct table_t *table, const void *key) {
   void *prev = NULL;
   unsigned long h = table->hash(key) % table->capacity;
   for (pp = &table->buckets[h]; *pp != NULL; pp = &(*pp)->link) {
-    if (table->cmp(key, (*pp)->key) == 0) {
+    if (table->equal(key, (*pp)->key)) {
       p = *pp;
       prev = p->link;
       FREE(p);
@@ -121,4 +125,22 @@ void *TableRemove(struct table_t *table, const void *key) {
 int TableSize(struct table_t *table) {
   ASSERT(table != NULL);
   return table->size;
+}
+
+void **TableToArray(struct table_t *table, void *end) {
+  int i, j;
+  void **arr;
+  struct binding *p;
+
+  ASSERT(table != NULL);
+
+  arr = ALLOC((2 * table->size + 1) * sizeof(*arr));
+  for (i = 0, j = 0; i < table->capacity; i++) {
+    for (p = table->buckets[i]; p != NULL; p = p->link) {
+      arr[j++] = (void *)p->key; // cast const
+      arr[j++] = p->value;
+    }
+  }
+  arr[j] = end;
+  return arr;
 }

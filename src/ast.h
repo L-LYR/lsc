@@ -50,6 +50,7 @@ typedef struct AST AST;
 
 struct ASTNode {
   ASTNodeType nType; // node type
+  int line;          // line number
   void *attr[0];     // attribute
 };
 
@@ -61,7 +62,7 @@ struct AST {
   Create an AST node corresponding to the given type.
 */
 
-ASTNode *NewASTNode(ASTNodeType t);
+ASTNode *NewASTNode(ASTNodeType t, int line);
 
 /*
   Apply the mapper on each node in AST.

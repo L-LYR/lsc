@@ -10,6 +10,7 @@
     #include "../lib/llsc.h"
     void yyerror(const char *s);
     int yylex(void);
+    int yylineno;
 
     const char* yytext;
     AST t;
@@ -50,15 +51,17 @@
 
 %%
 
-program : global_list {t.root = $$;};
+program : global_list {
+    t.root = $$;
+};
 
 global_list
     : global_declaration_or_definition {
-        $$ = NewASTNode(GlobalDeclOrDefList);
+        $$ = NewASTNode(GlobalDeclOrDefList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| global_list global_declaration_or_definition {
-        $$ = NewASTNode(GlobalDeclOrDefList);
+        $$ = NewASTNode(GlobalDeclOrDefList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $2;
     };
@@ -70,14 +73,14 @@ global_declaration_or_definition
 
 declaration
     : type_specifiers init_declarator_list SEMICOLON {
-        $$ = NewASTNode(Declaration);
-        $$->attr[0] = NewASTNode(TypeSpecifier);
+        $$ = NewASTNode(Declaration, yylineno);
+        $$->attr[0] = NewASTNode(TypeSpecifier, yylineno);
         ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         SpecifyType($2, $1);
     }| type_specifiers identifier LB parameter_type_list RB SEMICOLON {
-        $$ = NewASTNode(FunctionDecl);
-        $$->attr[0] = NewASTNode(TypeSpecifier);
+        $$ = NewASTNode(FunctionDecl, yylineno);
+        $$->attr[0] = NewASTNode(TypeSpecifier, yylineno);
         ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         $$->attr[2] = $4;
@@ -85,7 +88,7 @@ declaration
 
 identifier
     : IDENTIFIER {
-        $$ = NewASTNode(Identifier);
+        $$ = NewASTNode(Identifier, yylineno);
         $$->attr[0] = (void*)AtomString(yytext);
     };
 
@@ -106,11 +109,11 @@ type_specifiers
 
 init_declarator_list
     : init_declarator {
-        $$ = NewASTNode(DeclaratorList);
+        $$ = NewASTNode(DeclaratorList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| init_declarator_list COMMA init_declarator {
-        $$ = NewASTNode(DeclaratorList);
+        $$ = NewASTNode(DeclaratorList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $3;
     };
@@ -125,8 +128,8 @@ init_declarator
 
 declarator
     : identifier {
-        $$ = NewASTNode(Declarator);
-        ASTNode* ts = NewASTNode(TypeSpecifier);
+        $$ = NewASTNode(Declarator, yylineno);
+        ASTNode* ts = NewASTNode(TypeSpecifier, yylineno);
         ts->attr[0] = NULL;
         $$->attr[0] = ts;
         $$->attr[1] = $1;
@@ -149,51 +152,51 @@ array_length
 
 initializer
     : assignment_expression {
-        $$ = NewASTNode(Initializer);
+        $$ = NewASTNode(Initializer, yylineno);
         $$->attr[0] = $1;
     }| LCB initializer_list RCB {
-        $$ = NewASTNode(ArrayInitializer);
+        $$ = NewASTNode(ArrayInitializer, yylineno);
         $$->attr[0] = $2;
     }| LCB initializer_list COMMA RCB {
-        $$ = NewASTNode(ArrayInitializer);
+        $$ = NewASTNode(ArrayInitializer, yylineno);
         $$->attr[0] = $2;
     };
 
 initializer_list
     : initializer {
-        $$ = NewASTNode(InitializerList);
+        $$ = NewASTNode(InitializerList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| initializer_list COMMA initializer {
-        $$ = NewASTNode(InitializerList);
+        $$ = NewASTNode(InitializerList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $3;
     };
 
 parameter_type_list
     : type_specifiers {
-        $$ = NewASTNode(ParameterTypeList);
+        $$ = NewASTNode(ParameterTypeList, yylineno);
         $$->attr[0] = NULL;
-        $$->attr[1] = NewASTNode(TypeSpecifier);
+        $$->attr[1] = NewASTNode(TypeSpecifier, yylineno);
         ((ASTNode*)($$->attr[1]))->attr[0] = (void*)$1;
     }| parameter_type_list COMMA type_specifiers {
-        $$ = NewASTNode(ParameterTypeList);
+        $$ = NewASTNode(ParameterTypeList, yylineno);
         $$->attr[0] = $1;
-        $$->attr[1] = NewASTNode(TypeSpecifier);
+        $$->attr[1] = NewASTNode(TypeSpecifier, yylineno);
         ((ASTNode*)($$->attr[1]))->attr[0] = (void*)$3;
     };
 
 function_definition
     : type_specifiers identifier LB RB compound_statement {
-        $$ = NewASTNode(FunctionDef);
-        $$->attr[0] = NewASTNode(TypeSpecifier);
+        $$ = NewASTNode(FunctionDef, yylineno);
+        $$->attr[0] = NewASTNode(TypeSpecifier, yylineno);
         ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         $$->attr[2] = NULL;
         $$->attr[3] = $5;
     }| type_specifiers identifier LB parameter_declarator_list RB compound_statement {
-        $$ = NewASTNode(FunctionDef);
-        $$->attr[0] = NewASTNode(TypeSpecifier);
+        $$ = NewASTNode(FunctionDef, yylineno);
+        $$->attr[0] = NewASTNode(TypeSpecifier, yylineno);
         ((ASTNode*)($$->attr[0]))->attr[0] = (void*)$1;
         $$->attr[1] = $2;
         $$->attr[2] = $4;
@@ -202,11 +205,11 @@ function_definition
 
 parameter_declarator_list
     : parameter_declarator {
-        $$ = NewASTNode(ParameterDeclList);
+        $$ = NewASTNode(ParameterDeclList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| parameter_declarator_list COMMA parameter_declarator {
-        $$ = NewASTNode(ParameterDeclList);
+        $$ = NewASTNode(ParameterDeclList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $3;
     };
@@ -225,40 +228,40 @@ parameter_declarator
 
 compound_statement
     : LCB RCB {
-        $$ = NewASTNode(CompoundStm);
+        $$ = NewASTNode(CompoundStm, yylineno);
         $$->attr[0] = $$->attr[1] = NULL;
     }| LCB statement_list RCB {
-        $$ = NewASTNode(CompoundStm);
+        $$ = NewASTNode(CompoundStm, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $2;
     }| LCB declaration_list RCB {
-        $$ = NewASTNode(CompoundStm);
+        $$ = NewASTNode(CompoundStm, yylineno);
         $$->attr[0] = $2;
         $$->attr[1] = NULL;
     }| LCB declaration_list statement_list RCB {
-        $$ = NewASTNode(CompoundStm);
+        $$ = NewASTNode(CompoundStm, yylineno);
         $$->attr[0] = $2;
         $$->attr[1] = $3;
     };
 
 statement_list
     : statement {
-        $$ = NewASTNode(StatementList);
+        $$ = NewASTNode(StatementList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| statement_list statement {
-        $$ = NewASTNode(StatementList);
+        $$ = NewASTNode(StatementList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $2;
     };
 
 declaration_list
     : declaration {
-        $$ = NewASTNode(DeclarationList);
+        $$ = NewASTNode(DeclarationList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| declaration_list declaration {
-        $$ = NewASTNode(DeclarationList);
+        $$ = NewASTNode(DeclarationList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $2;
     };
@@ -274,45 +277,45 @@ statement
 
 expression_statement 
     : SEMICOLON {
-        $$ = NewASTNode(ExpressionStm);
+        $$ = NewASTNode(ExpressionStm, yylineno);
         $$->attr[0] = NULL;
     }| expression SEMICOLON {
-        $$ = NewASTNode(ExpressionStm);
+        $$ = NewASTNode(ExpressionStm, yylineno);
         $$->attr[0] = $1;
     };
 
 jump_statement
     : CONTINUE SEMICOLON {
-        $$ = NewASTNode(JumpStm);
+        $$ = NewASTNode(JumpStm, yylineno);
         $$->attr[0] = (void*)AtomString("continue");
         $$->attr[1] = NULL;
     }| BREAK SEMICOLON {
-        $$ = NewASTNode(JumpStm);
+        $$ = NewASTNode(JumpStm, yylineno);
         $$->attr[0] = (void*)AtomString("break");
         $$->attr[1] = NULL;
     }| RETURN SEMICOLON {
-        $$ = NewASTNode(JumpStm);
+        $$ = NewASTNode(JumpStm, yylineno);
         $$->attr[0] = (void*)AtomString("return");
         $$->attr[1] = NULL;
     }| RETURN expression SEMICOLON {
-        $$ = NewASTNode(JumpStm);
+        $$ = NewASTNode(JumpStm, yylineno);
         $$->attr[0] = (void*)AtomString("return");
         $$->attr[1] = $2;
     };
 
 selection_statement
     : IF LB expression RB compound_statement {
-        $$ = NewASTNode(SelectionStm);
+        $$ = NewASTNode(SelectionStm, yylineno);
         $$->attr[0] = $3;
         $$->attr[1] = $5;
         $$->attr[2] = NULL;
     }| IF LB expression RB compound_statement ELSE compound_statement {
-        $$ = NewASTNode(SelectionStm);
+        $$ = NewASTNode(SelectionStm, yylineno);
         $$->attr[0] = $3;
         $$->attr[1] = $5;
         $$->attr[2] = $7;
     }| IF LB expression RB compound_statement ELSE selection_statement {
-        $$ = NewASTNode(SelectionStm);
+        $$ = NewASTNode(SelectionStm, yylineno);
         $$->attr[0] = $3;
         $$->attr[1] = $5;
         $$->attr[2] = $7;
@@ -320,13 +323,13 @@ selection_statement
 
 loop_statement
     : FOR LB expression_statement expression_statement RB compound_statement {
-        $$ = NewASTNode(LoopStm);
+        $$ = NewASTNode(LoopStm, yylineno);
         $$->attr[0] = $3;
         $$->attr[1] = $4;
         $$->attr[2] = NULL;
         $$->attr[3] = $6;
     }| FOR LB expression_statement expression_statement expression RB compound_statement {
-        $$ = NewASTNode(LoopStm);
+        $$ = NewASTNode(LoopStm, yylineno);
         $$->attr[0] = $3;
         $$->attr[1] = $4;
         $$->attr[2] = $5;
@@ -335,11 +338,11 @@ loop_statement
 
 io_statement
     : PRINT LB argument_list RB SEMICOLON {
-        $$ = NewASTNode(IOStm);
+        $$ = NewASTNode(IOStm, yylineno);
         $$->attr[0] = (void*)AtomString("print");
         $$->attr[1] = $3;
     }| SCAN LB argument_list RB SEMICOLON {
-        $$ = NewASTNode(IOStm);
+        $$ = NewASTNode(IOStm, yylineno);
         $$->attr[0] = (void*)AtomString("scan");
         $$->attr[1] = $3;
     };
@@ -347,7 +350,7 @@ io_statement
 expression 
     : assignment_expression                     
     | expression COMMA assignment_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString(",");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -356,7 +359,7 @@ expression
 assignment_expression
     : logical_or_expression
     | postfix_expression ASSIGN assignment_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("=");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -365,27 +368,27 @@ assignment_expression
 unary_expression
     : postfix_expression
     | INC unary_expression {
-        $$ = NewASTNode(UnaryExpr);
+        $$ = NewASTNode(UnaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("++");
         $$->attr[1] = $2;
     }| DEC unary_expression {
-        $$ = NewASTNode(UnaryExpr);
+        $$ = NewASTNode(UnaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("--");
         $$->attr[1] = $2;
     }| PLUS unary_expression {
-        $$ = NewASTNode(UnaryExpr);
+        $$ = NewASTNode(UnaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("+");
         $$->attr[1] = $2;
     }| MINUS unary_expression {
-        $$ = NewASTNode(UnaryExpr);
+        $$ = NewASTNode(UnaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("-");
         $$->attr[1] = $2;
     }| BNOT unary_expression {
-        $$ = NewASTNode(UnaryExpr);
+        $$ = NewASTNode(UnaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("~");
         $$->attr[1] = $2;
     }| NOT unary_expression {
-        $$ = NewASTNode(UnaryExpr);
+        $$ = NewASTNode(UnaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("!");
         $$->attr[1] = $2;
     };
@@ -393,35 +396,35 @@ unary_expression
 postfix_expression
     : primary_expression
     | postfix_expression LSB expression RSB {
-        $$ = NewASTNode(PostfixExpr);
+        $$ = NewASTNode(PostfixExpr, yylineno);
         $$->attr[0] = (void*)AtomString("[]");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| primary_expression LB RB {
-        $$ = NewASTNode(FunctionCall);
+        $$ = NewASTNode(FunctionCall, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = NULL;
     }| primary_expression LB argument_list RB {
-        $$ = NewASTNode(FunctionCall);
+        $$ = NewASTNode(FunctionCall, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $3;
     };
 
 primary_expression
     : IDENTIFIER {
-        $$ = NewASTNode(Identifier);
+        $$ = NewASTNode(Identifier, yylineno);
         $$->attr[0] = (void*)AtomString(yytext);
     }| BCONSTANT {
-        $$ = NewASTNode(BoolConst);
+        $$ = NewASTNode(BoolConst, yylineno);
         $$->attr[0] = (void*)AtomString(yytext);
     }| ICONSTANT {
-        $$ = NewASTNode(IntConst);
+        $$ = NewASTNode(IntConst, yylineno);
         $$->attr[0] = (void*)AtomString(yytext);
     }| FCONSTANT {
-        $$ = NewASTNode(FloatConst);
+        $$ = NewASTNode(FloatConst, yylineno);
         $$->attr[0] = (void*)AtomString(yytext);
     }| SCONSTANT {
-        $$ = NewASTNode(StrConst);
+        $$ = NewASTNode(StrConst, yylineno);
         $$->attr[0] = (void*)AtomString(yytext);
     }| LB expression RB {
         $$ = $2;
@@ -429,11 +432,11 @@ primary_expression
 
 argument_list
     : assignment_expression {
-        $$ = NewASTNode(ArguementList);
+        $$ = NewASTNode(ArguementList, yylineno);
         $$->attr[0] = NULL;
         $$->attr[1] = $1;
     }| argument_list COMMA assignment_expression {
-        $$ = NewASTNode(ArguementList);
+        $$ = NewASTNode(ArguementList, yylineno);
         $$->attr[0] = $1;
         $$->attr[1] = $3;
     };
@@ -441,7 +444,7 @@ argument_list
 logical_or_expression
     : logical_and_expression
     | logical_or_expression OR logical_and_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("||");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -450,7 +453,7 @@ logical_or_expression
 logical_and_expression
     : bitwise_or_expression
     | logical_and_expression AND bitwise_or_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("&&");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -459,7 +462,7 @@ logical_and_expression
 bitwise_or_expression
     : bitwise_xor_expression
     | bitwise_or_expression BOR bitwise_xor_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("|");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -468,7 +471,7 @@ bitwise_or_expression
 bitwise_xor_expression
     : bitwise_and_expression
     | bitwise_xor_expression BXOR bitwise_and_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("^");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -477,7 +480,7 @@ bitwise_xor_expression
 bitwise_and_expression
     : equality_expression
     | bitwise_and_expression BAND equality_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("&");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -486,12 +489,12 @@ bitwise_and_expression
 equality_expression
     : relational_expression
     | equality_expression EQ relational_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("==");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| equality_expression NE relational_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("!=");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -500,22 +503,22 @@ equality_expression
 relational_expression
     : shift_expression
     | relational_expression LT shift_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("<");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| relational_expression GT shift_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString(">");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| relational_expression LE shift_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("<=");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| relational_expression GE shift_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString(">=");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -524,12 +527,12 @@ relational_expression
 shift_expression
     : additive_expression
     | shift_expression SL additive_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("<<");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| shift_expression SR additive_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString(">>");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -538,12 +541,12 @@ shift_expression
 additive_expression
     : multiplicative_expression
     | additive_expression PLUS multiplicative_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("+");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| additive_expression MINUS multiplicative_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("-");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
@@ -552,17 +555,17 @@ additive_expression
 multiplicative_expression
     : unary_expression
     | multiplicative_expression MUL unary_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("*");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| multiplicative_expression DIV unary_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("/");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
     }| multiplicative_expression MOD unary_expression {
-        $$ = NewASTNode(BinaryExpr);
+        $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("%");
         $$->attr[1] = $1;
         $$->attr[2] = $3;
