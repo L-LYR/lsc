@@ -4,6 +4,7 @@
 #include "limit.h"
 #include "stdbool.h"
 #include "symbol_table.h"
+#include <stdlib.h>
 #include <string.h>
 
 static const char *ReservedSymbolList[] = {
@@ -20,10 +21,11 @@ void AtomInit() { AtomLoad(ReservedSymbolList); }
 SymbolTable GlobalSymbolTable = NULL;
 SymbolTable CurrentSymbolTable = NULL;
 static int DefaultTableSize = 32;
-
+static int CurID = 0;
 static Scope *_NewScope(Scope *peer, Scope *prev, int level,
                         struct table_t *tab) {
   Scope *s = ArenaAllocFor(sizeof(Scope));
+  s->id = CurID++;
   s->level = level;
   s->stkTop = 0;
   s->peer = peer;
@@ -283,38 +285,48 @@ static void _DisplayTable(struct table_t *t, Fmt *fmt) {
   void **arr = TableToArray(t, NULL);
   int i = 0;
   Attribute *a;
-  fprintf(fmt->out, "%10s %20s %8s %8s %8s\n", "identifier", "specified type",
-          "offset", "decLoc", "defLoc");
+  fprintf(fmt->out, "%s;%s;%s;%s;%s\n", "Identifier", "Specified Type",
+          "Offset", "Declaration Location", "Definition Location");
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
-    fprintf(fmt->out, "%10s %20s %8d %8d %8d\n", (const char *)(arr[i]),
-            a->type, a->address, a->declLoc, a->defLoc);
+    fprintf(fmt->out, "%s;%s;%d;%d;%d\n", (const char *)(arr[i]), a->type,
+            a->address, a->declLoc, a->defLoc);
     i += 2;
   }
   FREE(arr);
   putc('\n', fmt->out);
 }
 
-static void _PrintLine(int i, Fmt *fmt) {
-  while (i > 0) {
-    putc('-', fmt->out);
-    i--;
-  }
-  putc('\n', fmt->out);
-}
-
-void DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
+static void _DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
   if (st == NULL) {
     return;
   }
   // display peer;
   while (st != NULL) {
-    _PrintLine(64, fmt);
-    fprintf(fmt->out, "Scope Level %d:\n", st->level);
+    fprintf(fmt->out, "Scope %d, Level %d, ", st->id, st->level);
+    if (st->prev == NULL) {
+      fprintf(fmt->out, "Top Scope: \n");
+    } else {
+      fprintf(fmt->out, "Parent Scope %d: \n", st->prev->id);
+    }
     _DisplayTable(st->curTab, fmt);
-    DisplaySymbolTable(st->next, fmt);
+    _DisplaySymbolTable(st->next, fmt);
     st = st->peer;
   }
+}
+
+static const char *BeautifyST_py = "./bin/BeautifyST.py";
+static void _BeautifyST(Fmt *fmt) {
+  char buffer[128];
+  memset(buffer, 0, sizeof(buffer));
+  sprintf(buffer, "%s %s", BeautifyST_py, fmt->fileLoc);
+  system(buffer);
+}
+
+void DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
+  _DisplaySymbolTable(st, fmt);
+  fclose(fmt->out);
+  _BeautifyST(fmt);
 }
 
 void FreeSymbolTable(SymbolTable st) {

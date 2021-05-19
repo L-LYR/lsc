@@ -19,7 +19,7 @@ ast_output := ./res/test.ast
 sym_output := ./res/test.sym
 
 tests:
-	@echo "test lexer";
+	@echo "Test Lexer";
 	valgrind $(valgrind_flags) ./bin/lscl -v -i $(test_input) -o $(lexer_output);
-	@echo "test ast generator";
+	@echo "Test AST & Symbol Table Generator";
 	valgrind $(valgrind_flags) ./bin/lscp -v $(ast_output) -i $(test_input) -s $(sym_output);

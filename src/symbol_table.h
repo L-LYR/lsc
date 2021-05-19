@@ -22,6 +22,7 @@ typedef struct Scope Scope;
 typedef Scope *SymbolTable;
 struct Scope {
   int level;
+  int id;
   int32_t stkTop;         // stack top
   SymbolTable prev;       // previous layer
   SymbolTable peer;       // peer layer

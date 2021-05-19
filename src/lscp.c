@@ -33,7 +33,6 @@ int main(int argc, char *argv[]) {
       SymbolTable st = SymbolTableCreateFromAST(&t);
       DisplaySymbolTable(st, &SymbolTableDisplayFmt);
       FreeSymbolTable(st);
-      fclose(SymbolTableDisplayFmt.out);
     }
   }
 

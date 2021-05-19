@@ -9,8 +9,8 @@ lexer: lsc.yy.o lscl.o exception.o
 
 parser: lsc.yy.o lsc.tab.o ast.o lscp.o limit.o exception.o symbol_table.o 
 	clang -Wall -g $^ $(LLSC) -o ../bin/lscp;
-	cp ./BeautifyAST.py ../bin/;
-	chmod +x ../bin/BeautifyAST.py;
+	cp ./*.py ../bin/;
+	chmod +x ../bin/*.py;
 
 %.o: %.c
 	clang -g -c $^
