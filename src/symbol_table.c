@@ -1,19 +1,28 @@
+/*
+  Symbol Table is designed in a harry.
+  So the interfaces defined here are all bullshits.
+*/
+
 #include "symbol_table.h"
+
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../lib/llsc.h"
 #include "exception.h"
 #include "limit.h"
 #include "stdbool.h"
 #include "symbol_table.h"
-#include <stdlib.h>
-#include <string.h>
 
 static const char *ReservedSymbolList[] = {
-    "void",   "i32",   "f32",      "string", "bool", "if", "else", "for",
-    "return", "break", "continue", "print",  "scan", "+",  "-",    "++",
-    "--",     "~",     "!",        "*",      "/",    "%",  "<",    ">",
-    "<=",     ">=",    "==",       "!=",     "<<",   ">>", "&",    "|",
-    "^",      "&&",    "||",       "=",      ",",    "(",  ")",    "[",
-    "]",      "{",     "}",        ";",      NULL,
+    "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+", "-", "++", "--", "~", "!", "*", "/", "%",  "<",
+    ">",    "<=",  ">=",  "==",     "!=",   "<<", ">>",   "&",   "|",      "^",     "&&",       "||",    "=",    ",", "(", ")",  "[",  "]", "{", "}", ";", NULL,
+};
+
+static const char *SymbolTypeStrs[] = {
+    "Function",
+    "Variable",
 };
 
 void AtomInit() { AtomLoad(ReservedSymbolList); }
@@ -22,8 +31,8 @@ SymbolTable GlobalSymbolTable = NULL;
 SymbolTable CurrentSymbolTable = NULL;
 static int DefaultTableSize = 32;
 static int CurID = 0;
-static Scope *_NewScope(Scope *peer, Scope *prev, int level,
-                        struct table_t *tab) {
+
+static Scope *_NewScope(Scope *peer, Scope *prev, int level, struct table_t *tab) {
   Scope *s = ArenaAllocFor(sizeof(Scope));
   s->id = CurID++;
   s->level = level;
@@ -35,14 +44,13 @@ static Scope *_NewScope(Scope *peer, Scope *prev, int level,
   return s;
 }
 
-static Attribute *_NewAttribute(const char *type, const char *init,
-                                int32_t addr, int declLoc, int defLoc) {
+static Attribute *_NewAttribute(SymbolType t, const char *type, int32_t addr, int declLoc) {
   Attribute *a = ArenaAllocFor(sizeof(Attribute));
+  a->sType = t;
   a->type = type;
-  a->init = init;
   a->address = addr;
   a->declLoc = declLoc;
-  a->defLoc = defLoc;
+  a->aa.f = NULL;
   return a;
 }
 
@@ -54,44 +62,119 @@ static Scope *_NewDummyLayer(Scope *prev) {
   return s;
 }
 
+static FuncDefAttr *_NewFuncDefAttr() {
+  FuncDefAttr *a = ArenaAllocFor(sizeof(FuncDefAttr));
+  memset(a, 0, sizeof(FuncDefAttr));
+  return a;
+}
+
 static void _SymbolTableInit() {
-  CurrentSymbolTable = GlobalSymbolTable = _NewScope(
-      NULL, NULL, 0,
-      TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash));
+  struct table_t *t = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
+  GlobalSymbolTable = _NewScope(NULL, NULL, 0, t);
+  CurrentSymbolTable = GlobalSymbolTable;
 }
 
 static void _AddPeerScope() {
-  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev,
-                                       CurrentSymbolTable->level, NULL);
+  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, CurrentSymbolTable->level, NULL);
   CurrentSymbolTable = CurrentSymbolTable->peer;
 }
 
-static void _AddSymbol(struct table_t *t, const char *id, Attribute *attr) {
-  if (TableGet(t, id) == NULL) {
+// wrapper of fprintf for stderr
+static void _Notify(const char *fmt, ...) {
+  // generally notify
+  va_list args;
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+}
+
+static void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine) {
+  static const char *RedeclarationNotice = "Line %d: %s has been declared as %s at line %d.\n";
+  _Notify(RedeclarationNotice, curLine, id, SymbolTypeStrs[declareType], declareLine);
+}
+
+static void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int defineLine) {
+  static const char *RedefinitionNotice = "Line %d: %s has been defined as %s at line %d.\n";
+  _Notify(RedefinitionNotice, curLine, id, SymbolTypeStrs[defineType], defineLine);
+}
+
+static void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine) {
+  static const char *ConflictNotice = "Line %d: Conflicting types for %s, %s is no match for %s at line %d.\n";
+  _Notify(ConflictNotice, curLine, id, tNew, tOld, declareLine);
+}
+
+static void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
+  // for the way of management of memory,
+  // redefinition of function will not be notified here.
+  if (new->sType == Variable) {  // redeclaration
+    if (old->declLoc != -1) {
+      _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
+    } else if (old->aa.f != NULL) {
+      _NotifyRedefinition(new->declLoc, id, old->sType, old->aa.f->defLoc);
+    } else {
+      RAISE(Unreachable);
+    }
+  } else if (new->sType == Function) {
+    if (old->sType == Variable) {  // redeclaration
+      _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
+    } else if (old->sType == Function) {
+      _Bool isDecl = new->declLoc != -1;
+      _Bool hasDecl = old->declLoc != -1;
+      _Bool hasDef = old->aa.f != NULL;
+
+      if (hasDef) {  // redefinition
+        _NotifyRedefinition(new->declLoc, id, old->sType, old->aa.f->defLoc);
+      } else if (hasDecl && isDecl) {  // redeclaration
+        _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
+      }
+    }
+  }
+}
+
+static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
+  if (s->curTab == NULL) {
+    s->curTab = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
+  }
+  Attribute *a = TableGet(s->curTab, id);
+  if (a == NULL) {
     CurrentSymbolTable->stkTop += SizeOf(attr->type);
-    TablePut(t, id, attr);
+    TablePut(s->curTab, id, attr);
   } else {
-    // error!
-    // temporarily for unreachable
-    TRY RAISE(Unreachable);
-    EXCEPT(Unreachable)
-    printf("?\n");
-    END_TRY;
+    _NotifyRepetition(a, attr, id);
   }
 }
 
-static void _AddSymbolToCurScope(const char *id, Attribute *attr) {
-  if (CurrentSymbolTable->curTab == NULL) {
-    CurrentSymbolTable->curTab =
-        TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
+// called when it comes to a definition of function
+// return the corresponding attribute pointer
+// if the return value is NULL, it occurs an
+static Attribute *_CheckForFuncDef(ASTNode *id, const char *t) {
+  Attribute *a = NULL;
+  Scope *s = GlobalSymbolTable;
+  if (s->curTab != NULL) {
+    a = TableGet(s->curTab, id->attr[0]);
+  }  // s->curTable == NULL there must have a == NULL.
+  if (a == NULL) {
+    a = _NewAttribute(Function, t, 0, id->line);
+    _AddSymbol(s, id->attr[0], a);
+  } else {
+    if (a->sType == Variable) {
+      _NotifyRedefinition(id->line, id->attr[0], a->sType, a->aa.f->defLoc);
+      return NULL;
+    }
+
+    if (a->aa.f != NULL) {
+      _NotifyRedefinition(id->line, id->attr[0], a->sType, a->aa.f->defLoc);
+      return NULL;
+    }
+
+    // check function type
+    if (!AtomEqual(t, a->type)) {
+      _NotifyTypeConflict(id->line, id->attr[0], t, a->type, a->declLoc);
+      return NULL;
+    }
   }
-  _AddSymbol(CurrentSymbolTable->curTab, id, attr);
+  return a;
 }
-
-static void _AddSymbolToPrevScope(const char *id, Attribute *attr) {
-  _AddSymbol(CurrentSymbolTable->prev->curTab, id, attr);
-}
-
 static void _AddNewLayer() {
   CurrentSymbolTable->next = _NewDummyLayer(CurrentSymbolTable);
   CurrentSymbolTable = CurrentSymbolTable->next;
@@ -124,7 +207,9 @@ static void _HandleSelectionStm(ASTNode *n) {
   }
   // handle expression
   _AddPeerScope();
+  // if
   _HandleCompoundStm(n->attr[1]);
+  // else
   ASTNode *p = (ASTNode *)(n->attr[2]);
   if (p == NULL) {
     return;
@@ -155,35 +240,27 @@ static void _HandleStmList(ASTNode *n) {
     _HandleCompoundStm(p->attr[3]);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
-  } else if (p->nType == JumpStm || p->nType == IOStm ||
-             p->nType == ExpressionStm) {
+  } else if (p->nType == JumpStm || p->nType == IOStm || p->nType == ExpressionStm) {
     // hanle expression
   } else {
     RAISE(UnexpectedNodeType);
   }
 }
 
-static void _HandleDeclarator(ASTNode *n) {
+static void _HandleDeclarator(ASTNode *n, Scope *s) {
   ASTNode *t = n->attr[0];
   ASTNode *id = n->attr[1];
-  Attribute *a =
-      _NewAttribute(t->attr[0], NULL, CurrentSymbolTable->stkTop, id->line, -1);
-  _AddSymbolToCurScope(id->attr[0], a);
+  Attribute *a = _NewAttribute(Variable, t->attr[0], s->stkTop, id->line);
+  // _AddSymbolToCurScope(id->attr[0], a);
+  _AddSymbol(s, id->attr[0], a);
 }
 
-static void _HandleDeclaratorList(ASTNode *n) {
+static void _HandleDeclaratorList(ASTNode *n, Scope *s) {
   if (n == NULL) {
     return;
   }
-  _HandleDeclaratorList(n->attr[0]);
-  _HandleDeclarator(n->attr[1]);
-}
-
-static void _HandleDeclaration(ASTNode *n) {
-  if (n == NULL) {
-    return;
-  }
-  _HandleDeclaratorList(n->attr[1]);
+  _HandleDeclaratorList(n->attr[0], s);
+  _HandleDeclarator(n->attr[1], s);
 }
 
 static void _HandleDeclList(ASTNode *n) {
@@ -191,31 +268,27 @@ static void _HandleDeclList(ASTNode *n) {
     return;
   }
   _HandleDeclList(n->attr[0]);
-  _HandleDeclaration(n->attr[1]);
+  // Declaration Node is useless here.
+  // Specifying types is handled in the AST.
+  _HandleDeclaratorList(((ASTNode *)(n->attr[1]))->attr[1], CurrentSymbolTable);
 }
 
-static const char *_HandleParaTypeList(ASTNode *n) {
+static const char *_GernerateParaTypeList(ASTNode *n) {
   if (n == NULL) {
     return NULL;
   }
-  const char *p = _HandleParaTypeList(n->attr[0]);
-  const char *t = ((ASTNode *)(n->attr[1]))->attr[0];
-  if (p == NULL) {
-    return AtomAppend("(", t);
-  }
-  return AtomConcatenate(p, ",", t, NULL);
-}
-
-static const char *_HandleParaDeclList(ASTNode *n) {
-  if (n == NULL) {
-    return NULL;
-  }
-  const char *p = _HandleParaDeclList(n->attr[0]);
+  const char *p = _GernerateParaTypeList(n->attr[0]);
+  const char *t;
   ASTNode *d = (ASTNode *)(n->attr[1]);
-  _HandleDeclarator(d);
-  const char *t = ((ASTNode *)(d->attr[0]))->attr[0];
+
+  if (n->nType == ParameterTypeList) {
+    t = d->attr[0];
+  } else if (n->nType == ParameterDeclList) {
+    t = ((ASTNode *)(d->attr[0]))->attr[0];
+  }
+
   if (p == NULL) {
-    return AtomAppend("(", t);
+    return t;
   }
   return AtomConcatenate(p, ",", t, NULL);
 }
@@ -223,13 +296,7 @@ static const char *_HandleParaDeclList(ASTNode *n) {
 static const char *_SpecifyFuncType(ASTNode *st, ASTNode *p) {
   const char *t;
   if (p != NULL) {
-    const char *pl;
-    if (p->nType == ParameterTypeList) {
-      pl = _HandleParaTypeList(p);
-    } else if (p->nType == ParameterDeclList) {
-      pl = _HandleParaDeclList(p);
-    }
-    t = AtomConcatenate(st->attr[0], pl, ")", NULL);
+    t = AtomConcatenate(st->attr[0], "(", _GernerateParaTypeList(p), ")", NULL);
   } else {
     t = AtomAppend(st->attr[0], "(void)");
   }
@@ -245,25 +312,27 @@ static void _HandleGlobalList(ASTNode *n) {
   ASTNode *p = (ASTNode *)(n->attr[1]);
   if (p->nType == Declaration) {
     // insert and check
-    // Here we must change the scope...
-    SymbolTable tmp = CurrentSymbolTable;
-    CurrentSymbolTable = GlobalSymbolTable;
-    _HandleDeclaration(p);
-    CurrentSymbolTable = tmp;
+    _HandleDeclaratorList(p->attr[1], GlobalSymbolTable);
   } else if (p->nType == FunctionDecl) {
     // insert and check
     const char *t = _SpecifyFuncType(p->attr[0], p->attr[2]);
     ASTNode *id = p->attr[1];
-    Attribute *a = _NewAttribute(t, NULL, 0, id->line, -1);
-    _AddSymbolToPrevScope(id->attr[0], a);
+    Attribute *a = _NewAttribute(Function, t, 0, id->line);
+    _AddSymbol(GlobalSymbolTable, id->attr[0], a);
   } else if (p->nType == FunctionDef) {
     // insert and check
-    _AddPeerScope();
+
     const char *t = _SpecifyFuncType(p->attr[0], p->attr[2]);
     ASTNode *id = p->attr[1];
-    Attribute *a = _NewAttribute(t, NULL, 0, -1, id->line);
-    _AddSymbolToPrevScope(id->attr[0], a);
-    _HandleCompoundStm(p->attr[3]);
+    // Attribute *a = _NewAttribute(Function, t, 0, -1);
+
+    Attribute *a = _CheckForFuncDef(id, t);
+    if (a != NULL) {
+      a->aa.f = _NewFuncDefAttr();
+      a->aa.f->defLoc = id->line;
+      _AddPeerScope();
+      _HandleCompoundStm(p->attr[3]);
+    }
   } else {
     RAISE(UnexpectedNodeType);
   }
@@ -277,6 +346,18 @@ SymbolTable SymbolTableCreateFromAST(AST *ast) {
   return GlobalSymbolTable;
 }
 
+static void _DisplayTableHeaders(Fmt *fmt) {
+  static const char *TableHeaders[] = {
+      "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", NULL,
+  };
+  const char **p = TableHeaders;
+  fprintf(fmt->out, "%s", *p++);
+  while (*p != NULL) {
+    fprintf(fmt->out, ";%s", *p++);
+  }
+  fputc('\n', fmt->out);
+}
+
 static void _DisplayTable(struct table_t *t, Fmt *fmt) {
   if (t == NULL) {
     fprintf(fmt->out, "Empty Scope\n\n");
@@ -285,12 +366,10 @@ static void _DisplayTable(struct table_t *t, Fmt *fmt) {
   void **arr = TableToArray(t, NULL);
   int i = 0;
   Attribute *a;
-  fprintf(fmt->out, "%s;%s;%s;%s;%s\n", "Identifier", "Specified Type",
-          "Offset", "Declaration Location", "Definition Location");
+  _DisplayTableHeaders(fmt);
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
-    fprintf(fmt->out, "%s;%s;%d;%d;%d\n", (const char *)(arr[i]), a->type,
-            a->address, a->declLoc, a->defLoc);
+    fprintf(fmt->out, "%s;%s;%s;%d;%d\n", (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
     i += 2;
   }
   FREE(arr);

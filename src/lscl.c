@@ -1,10 +1,11 @@
-#include "../lib/llsc.h"
-#include "exception.h"
-#include "lsc.tab.h"
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "../lib/llsc.h"
+#include "exception.h"
+#include "lsc.tab.h"
 
 typedef enum {
   TK_T_KEYWORD,
@@ -26,7 +27,7 @@ FILE *yyout;
 FILE *yyin;
 char *yytext;
 int yylineno;
-_Bool Verbose; // lsc.l
+_Bool Verbose;  // lsc.l
 
 // static
 static void SetOpts(int argc, char *argv[]);
@@ -66,13 +67,14 @@ int main(int argc, char *argv[]) {
 
 const char *OptFmt = ":vho:i:";
 
-const char *Usage = "Usage: lscl [-vh] -i <filename> -o <filename>\n"
-                    "Options:\n"
-                    "  -v           \tTurn on verbose mode, display the "
-                    "lexical analysis results in pairs.\n"
-                    "  -i <filename>\tInput file.\n"
-                    "  -o <filename>\tOutput file.\n"
-                    "  -h           \tPrint this help.\n";
+const char *Usage =
+    "Usage: lscl [-vh] -i <filename> -o <filename>\n"
+    "Options:\n"
+    "  -v           \tTurn on verbose mode, display the "
+    "lexical analysis results in pairs.\n"
+    "  -i <filename>\tInput file.\n"
+    "  -o <filename>\tOutput file.\n"
+    "  -h           \tPrint this help.\n";
 void SetOpts(int argc, char *argv[]) {
   if (argc < 2) {
     notify(Usage);
@@ -81,25 +83,25 @@ void SetOpts(int argc, char *argv[]) {
   const char *Filename = NULL;
   while ((opt = getopt(argc, argv, OptFmt)) != -1) {
     switch (opt) {
-    case 'v':
-      Verbose = true;
-      break;
-    case 'i':
-      Filename = optarg;
-      yyin = fopen(optarg, "r");
-      if (yyin == NULL) {
-        RAISE(InFileOpenErr);
-      }
-      break;
-    case 'o':
-      yyout = fopen(optarg, "w");
-      if (yyout == NULL) {
-        RAISE(OutFileOpenErr);
-      }
-      break;
-    default:
-    case 'h':
-      notify(Usage);
+      case 'v':
+        Verbose = true;
+        break;
+      case 'i':
+        Filename = optarg;
+        yyin = fopen(optarg, "r");
+        if (yyin == NULL) {
+          RAISE(InFileOpenErr);
+        }
+        break;
+      case 'o':
+        yyout = fopen(optarg, "w");
+        if (yyout == NULL) {
+          RAISE(OutFileOpenErr);
+        }
+        break;
+      default:
+      case 'h':
+        notify(Usage);
     }
   }
   if (Filename == NULL) {

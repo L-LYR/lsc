@@ -16,7 +16,7 @@
 #ifndef EXCEPT_INCLUDE
 #define EXCEPT_INCLUDE
 
-#include <setjmp.h> // setjmp() & longjmp() & jmp_buf
+#include <setjmp.h>  // setjmp() & longjmp() & jmp_buf
 
 struct except_t {
   char *reason;
@@ -27,7 +27,7 @@ struct except_t {
 // so that their addresses identify them uniquely.
 
 struct ExceptFrame {
-  struct ExceptFrame *prev; // point to predecessor
+  struct ExceptFrame *prev;  // point to predecessor
   jmp_buf env;
   const char *file;
   int line;
@@ -57,9 +57,7 @@ void ExceptRaise(const struct except_t *e, const char *file, int line);
 
 #define RAISE(e) ExceptRaise(&(e), __FILE__, __LINE__)
 
-#define RE_RAISE                                                               \
-  ExceptRaise(_ExceptFrame.exception, _ExceptFrame.file,                       \
-              _ExceptFrame.line) // _ExceptFrame is a object in TRY block
+#define RE_RAISE ExceptRaise(_ExceptFrame.exception, _ExceptFrame.file, _ExceptFrame.line)  // _ExceptFrame is a object in TRY block
 
 /*
     It is a unchecked runtime error to execute the C return
@@ -70,9 +68,9 @@ void ExceptRaise(const struct except_t *e, const char *file, int line);
 
     Tricky: use comma expression here
 */
-#define MUST_RETURN                                                            \
-  switch (ExceptStack_POP, 0)                                                  \
-  default:                                                                     \
+#define MUST_RETURN           \
+  switch (ExceptStack_POP, 0) \
+  default:                    \
     return
 
 /*
@@ -136,40 +134,34 @@ void ExceptRaise(const struct except_t *e, const char *file, int line);
 
 #define ExceptStack_POP ExceptStack = ExceptStack->prev
 
-#define TRY                                                                    \
-  do {                                                                         \
-    volatile int _ExceptFlag;                                                  \
-    struct ExceptFrame _ExceptFrame;                                           \
-    _ExceptFrame.prev = ExceptStack;                                           \
-    ExceptStack = &_ExceptFrame;                                               \
-    _ExceptFlag = setjmp(_ExceptFrame.env);                                    \
+#define TRY                                 \
+  do {                                      \
+    volatile int _ExceptFlag;               \
+    struct ExceptFrame _ExceptFrame;        \
+    _ExceptFrame.prev = ExceptStack;        \
+    ExceptStack = &_ExceptFrame;            \
+    _ExceptFlag = setjmp(_ExceptFrame.env); \
     if (_ExceptFlag == EXCEPT_ENTERED) {
-#define EXCEPT(e)                                                              \
-  if (_ExceptFlag == EXCEPT_ENTERED)                                           \
-    ExceptStack_POP;                                                           \
-  }                                                                            \
-  else if (_ExceptFrame.exception == &(e)) {                                   \
+#define EXCEPT(e)                                     \
+  if (_ExceptFlag == EXCEPT_ENTERED) ExceptStack_POP; \
+  }                                                   \
+  else if (_ExceptFrame.exception == &(e)) {          \
     _ExceptFlag = EXCEPT_HANDLED;
-#define ELSE_DO                                                                \
-  if (_ExceptFlag == EXCEPT_ENTERED)                                           \
-    ExceptStack_POP;                                                           \
-  }                                                                            \
-  else {                                                                       \
+#define ELSE_DO                                       \
+  if (_ExceptFlag == EXCEPT_ENTERED) ExceptStack_POP; \
+  }                                                   \
+  else {                                              \
     _ExceptFlag = EXCEPT_HANDLED;
-#define FINALLY                                                                \
-  if (_ExceptFlag == EXCEPT_ENTERED)                                           \
-    ExceptStack_POP;                                                           \
-  }                                                                            \
-  {                                                                            \
-    if (_ExceptFlag == EXCEPT_ENTERED)                                         \
-      _ExceptFlag = EXCEPT_FINALIZED;
-#define END_TRY                                                                \
-  if (_ExceptFlag == EXCEPT_ENTERED)                                           \
-    ExceptStack_POP;                                                           \
-  }                                                                            \
-  if (_ExceptFlag == EXCEPT_RAISED)                                            \
-    RE_RAISE;                                                                  \
-  }                                                                            \
+#define FINALLY                                       \
+  if (_ExceptFlag == EXCEPT_ENTERED) ExceptStack_POP; \
+  }                                                   \
+  {                                                   \
+    if (_ExceptFlag == EXCEPT_ENTERED) _ExceptFlag = EXCEPT_FINALIZED;
+#define END_TRY                                       \
+  if (_ExceptFlag == EXCEPT_ENTERED) ExceptStack_POP; \
+  }                                                   \
+  if (_ExceptFlag == EXCEPT_RAISED) RE_RAISE;         \
+  }                                                   \
   while (0)
 
 #endif

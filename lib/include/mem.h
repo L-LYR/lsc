@@ -1,7 +1,7 @@
 #ifndef MEM_INCLUDE
 #define MEM_INCLUDE
 
-#include <stdio.h> // FILE
+#include <stdio.h>  // FILE
 
 /*
     MemAlloc:
@@ -57,8 +57,7 @@ extern void MemFree(void *ptr, const char *file, int line);
 */
 #define NEW(p) ((p) = ALLOC((long)sizeof(*(p))))
 
-#define RESIZE(ptr, nbytes)                                                    \
-  ((ptr) = MemResize((ptr), (nbytes), __FILE__, __LINE__))
+#define RESIZE(ptr, nbytes) ((ptr) = MemResize((ptr), (nbytes), __FILE__, __LINE__))
 
 // After being freed, ptr will be set to NULL for avoiding dangling pointers.
 #define FREE(ptr) ((void)(MemFree((ptr), __FILE__, __LINE__), (ptr) = 0))

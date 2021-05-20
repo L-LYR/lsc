@@ -1,4 +1,5 @@
 #include "exception.h"
+
 #include "../lib/llsc.h"
 struct except_t Unreachable = {"Unreachable!"};
 struct except_t InFileOpenErr = {"Can not open output file!"};

@@ -1,15 +1,15 @@
 // #define PY_SSIZE_T_CLEAN
 #include "ast.h"
+
+#include <string.h>
+
 #include "../lib/llsc.h"
 #include "exception.h"
-#include <string.h>
 // #include <python3.8/Python.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static size_t ASTNodeSize(int nChild) {
-  return sizeof(ASTNode) + sizeof(void *) * nChild;
-}
+static size_t ASTNodeSize(int nChild) { return sizeof(ASTNode) + sizeof(void *) * nChild; }
 
 ASTNode *NewASTNode(ASTNodeType t, int line) {
   ASTNode *r;
@@ -49,11 +49,11 @@ static void _Map(ASTNode *node, mapper m, void *cl) {
     return;
   }
   if (cl != NULL) {
-    (*((int *)cl))++; // down to the child node, depth++
+    (*((int *)cl))++;  // down to the child node, depth++
   }
   _GoDown(node, m, cl);
   if (cl != NULL) {
-    (*((int *)cl))--; // back to the father node, depth--
+    (*((int *)cl))--;  // back to the father node, depth--
   }
 }
 
@@ -72,7 +72,7 @@ static void _GoDown(ASTNode *node, mapper m, void *cl) {
     _Map((ASTNode *)(node->attr[1]), m, cl);
   } else if (node->nType <= ParameterTypeList) {
     _MapForList(node, m, cl);
-    return; // must return, or it may call mapper twice.
+    return;  // must return, or it may call mapper twice.
   } else if (node->nType <= BinaryExpr) {
     _Map((ASTNode *)(node->attr[1]), m, cl);
     _Map((ASTNode *)(node->attr[2]), m, cl);
@@ -120,18 +120,15 @@ static void _Printer(ASTNode *node, void *cl) {
 #define Attr(node, n) ((const char *)(node->attr[(n)]))
   Fmt *fmt = cl;
   if (node->nType <= TypeSpecifier) {
-    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType],
-            Attr(node, 0));
+    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType], Attr(node, 0));
   } else if (node->nType <= ArrayInitializer) {
     fprintf(fmt->out, "%-d %s\n", fmt->depth, TypeStr[node->nType]);
   } else if (node->nType <= UnaryExpr) {
-    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType],
-            Attr(node, 0));
+    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType], Attr(node, 0));
   } else if (node->nType <= ParameterTypeList) {
     fprintf(fmt->out, "%-d %s\n", fmt->depth, TypeStr[node->nType]);
   } else if (node->nType <= BinaryExpr) {
-    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType],
-            Attr(node, 0));
+    fprintf(fmt->out, "%-d %s: %s\n", fmt->depth, TypeStr[node->nType], Attr(node, 0));
   } else if (node->nType <= FunctionDef) {
     fprintf(fmt->out, "%-d %s\n", fmt->depth, TypeStr[node->nType]);
   } else {

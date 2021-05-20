@@ -12,10 +12,10 @@ extern void ASSERT(int e);
 
 // terminate the process with exit code 0.
 // inform the user about the correct usage.
-#define notify(str)                                                            \
-  do {                                                                         \
-    fprintf(stdout, "%s", str);                                                \
-    exit(0);                                                                   \
+#define notify(str)             \
+  do {                          \
+    fprintf(stdout, "%s", str); \
+    exit(0);                    \
   } while (0)
 
 #endif

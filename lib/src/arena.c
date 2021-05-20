@@ -1,6 +1,7 @@
 #include "../include/arena.h"
-#include <stdlib.h> // malloc() & free()
-#include <string.h> // memset()
+
+#include <stdlib.h>  // malloc() & free()
+#include <string.h>  // memset()
 
 #include "../include/align.h"
 #include "../include/assert.h"
@@ -16,9 +17,9 @@
 // new chunk.
 
 struct arena_t {
-  struct arena_t *prev; // previous chunk
-  char *avail;          // begin of chunk
-  char *limit;          // end of the chunk
+  struct arena_t *prev;  // previous chunk
+  char *avail;           // begin of chunk
+  char *limit;           // end of the chunk
 };
 
 union header {
@@ -37,15 +38,13 @@ static const struct except_t ArenaFailed = {"Arena Allocation Failed"};
 
 static struct arena_t *ArenaNew(void) {
   struct arena_t *arena = malloc(sizeof(*arena));
-  if (arena == NULL)
-    RAISE(ArenaNewFailed);
+  if (arena == NULL) RAISE(ArenaNewFailed);
   arena->prev = NULL;
   arena->avail = arena->limit = NULL;
   return arena;
 }
 
-static void *ArenaAllocImpl(struct arena_t *arena, long nbytes,
-                            const char *file, int line) {
+static void *ArenaAllocImpl(struct arena_t *arena, long nbytes, const char *file, int line) {
   ASSERT(arena != NULL);
   ASSERT(nbytes > 0);
 
@@ -84,8 +83,7 @@ static void *ArenaAllocImpl(struct arena_t *arena, long nbytes,
   return (arena->avail - nbytes);
 }
 
-static void *ArenaCallocImpl(struct arena_t *arena, long count, long nbytes,
-                             const char *file, int line) {
+static void *ArenaCallocImpl(struct arena_t *arena, long count, long nbytes, const char *file, int line) {
   ASSERT(count > 0);
   ASSERT(nbytes > 0);
   void *ptr = ArenaAllocImpl(arena, count * nbytes, file, line);
@@ -139,10 +137,6 @@ void ArenaClear() {
   ArenaClearImpl();
 }
 
-void *ArenaAlloc(long nbytes, const char *file, int line) {
-  return ArenaAllocImpl(GlobalAllocator, nbytes, file, line);
-}
+void *ArenaAlloc(long nbytes, const char *file, int line) { return ArenaAllocImpl(GlobalAllocator, nbytes, file, line); }
 
-void *ArenaCalloc(long count, long nbytes, const char *file, int line) {
-  return ArenaCallocImpl(GlobalAllocator, count, nbytes, file, line);
-}
+void *ArenaCalloc(long count, long nbytes, const char *file, int line) { return ArenaCallocImpl(GlobalAllocator, count, nbytes, file, line); }

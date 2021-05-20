@@ -23,19 +23,41 @@ typedef Scope *SymbolTable;
 struct Scope {
   int level;
   int id;
-  int32_t stkTop;         // stack top
-  SymbolTable prev;       // previous layer
-  SymbolTable peer;       // peer layer
-  SymbolTable next;       // next layer
-  struct table_t *curTab; // current table
+  int32_t stkTop;          // stack top
+  SymbolTable prev;        // previous layer
+  SymbolTable peer;        // peer layer
+  SymbolTable next;        // next layer
+  struct table_t *curTab;  // current table
 };
 
+typedef enum {
+  Function,
+  Variable,
+} SymbolType;
+
 typedef struct {
-  const char *type; // specified type
-  const char *init; // initializer be NULL
-  int32_t address;  // used in IR
-  int declLoc;
   int defLoc;
+  int paraNum;
+  const char *paraTypeList[0];
+} FuncDefAttr;
+
+typedef struct {
+  void *initializer;
+  int arrDimNum;
+  int *arrDim[0];
+} VarDeclAttr;
+
+typedef union {
+  FuncDefAttr *f;
+  VarDeclAttr *v;
+} AdditionalAttribute;
+
+typedef struct {
+  SymbolType sType;  // symbol type
+  const char *type;  // specified type
+  int32_t address;   // used in IR
+  int declLoc;
+  AdditionalAttribute aa;
 } Attribute;
 
 SymbolTable SymbolTableCreateFromAST(AST *ast);

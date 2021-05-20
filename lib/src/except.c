@@ -1,7 +1,7 @@
 #include "../include/except.h"
 
-#include <stdio.h>  // fprintf() & stderr & fflush()
-#include <stdlib.h> // abort()
+#include <stdio.h>   // fprintf() & stderr & fflush()
+#include <stdlib.h>  // abort()
 
 #include "../include/assert.h"
 
@@ -24,8 +24,7 @@ void ExceptRaise(const struct except_t *e, const char *file, int line) {
       fprintf(stderr, "%s", e->reason);
     else
       fprintf(stderr, " at 0x%p", e);
-    if (file != NULL && line > 0)
-      fprintf(stderr, " raised at %s:%d\n", file, line);
+    if (file != NULL && line > 0) fprintf(stderr, " raised at %s:%d\n", file, line);
     fprintf(stderr, "aborting...\n");
     fflush(stderr);
     abort();

@@ -1,8 +1,8 @@
 #include "../include/atom.h"
 
-#include <limits.h> // LONG_MAX & LONG_MIN
-#include <stdarg.h> // va_list & va_start() & va_end() & va_arg()
-#include <string.h> // strcmp() & strlen() & memset()
+#include <limits.h>  // LONG_MAX & LONG_MIN
+#include <stdarg.h>  // va_list & va_start() & va_end() & va_arg()
+#include <string.h>  // strcmp() & strlen() & memset()
 
 #include "../include/assert.h"
 #include "../include/mem.h"
@@ -16,12 +16,12 @@
 #define BKDR_HASH_SEED 131
 
 struct atom {
-  struct atom *link; // pointer to the next atom
-  int len;           // length of byte sequence
+  struct atom *link;  // pointer to the next atom
+  int len;            // length of byte sequence
   // char *str;
   // here use flexible array members (C99)
-  char str[]; // byte sequence (always string)
-              // struct atom *p = malloc(sizeof(*p) + len + 1);
+  char str[];  // byte sequence (always string)
+               // struct atom *p = malloc(sizeof(*p) + len + 1);
 };
 
 // bucket is an array of pointers tol lists of entries,
@@ -54,8 +54,7 @@ _Bool AtomEqual(const char *l, const char *r) { return l == r; }
 */
 static struct atom *AtomFind(const char *str, unsigned long h) {
   for (struct atom *p = Bucket[h]; p != NULL; p = p->link) {
-    if (p->str == str)
-      return p;
+    if (p->str == str) return p;
   }
   return NULL;
 }
@@ -66,17 +65,15 @@ static struct atom *AtomCheck(const char *str, unsigned long h) {
     if (len == p->len) {
       int i;
       for (i = 0; i < len; i++)
-        if (p->str[i] != str[i])
-          break;
-      if (i == len)
-        return p;
+        if (p->str[i] != str[i]) break;
+      if (i == len) return p;
     }
   }
   return NULL;
 }
 
 void AtomReserve(int hint) {
-  ASSERT(hint < Size); // invalid capacity
+  ASSERT(hint < Size);  // invalid capacity
   Capacity = hint;
 }
 
@@ -85,7 +82,7 @@ int AtomLength(const char *str) {
   // Here use assert(),
   // which means this function can
   // only accept an atom as an argument
-  ASSERT(p == NULL); // not found
+  ASSERT(p == NULL);  // not found
   return p->len;
 }
 
@@ -95,8 +92,7 @@ static const char *AtomNew(const char *str, int len) {
 
   unsigned long h = AtomHash(str) % ATOM_BUCKET_SIZE;
   struct atom *p = AtomCheck(str, h);
-  if (p != NULL)
-    return p->str;
+  if (p != NULL) return p->str;
 
   // no space for new atom
   Size++;
@@ -106,10 +102,9 @@ static const char *AtomNew(const char *str, int len) {
   p = ALLOC(sizeof(*p) + len + 1);
   p->len = len;
   // p->str = (char *)(p + 1);  // for non-flexible array member
-  if (len > 0)
-    memcpy(p->str, str, len);
+  if (len > 0) memcpy(p->str, str, len);
   p->str[len] = '\0';
-  p->link = Bucket[h]; // head-insertion
+  p->link = Bucket[h];  // head-insertion
   Bucket[h] = p;
 
   return p->str;
@@ -133,15 +128,14 @@ void AtomFree(const char *str) {
   unsigned long h = AtomHash(str) % ATOM_BUCKET_SIZE;
 
   struct atom *p = AtomFind(str, h);
-  ASSERT(p != NULL); // not found
+  ASSERT(p != NULL);  // not found
 
   if (Bucket[h] == p) {
     Bucket[h] = p->link;
   } else {
     struct atom *last;
     for (last = Bucket[h]; last; last = last->link) {
-      if (last->link == p)
-        break;
+      if (last->link == p) break;
     }
     last->link = p->link;
   }
@@ -173,7 +167,7 @@ const char *AtomAppend(const char *dst, const char *src) {
   ASSERT(dst != NULL || src != NULL);
   int dstLen = strlen(dst);
   int srcLen = strlen(src);
-  char *ret = ALLOC(dstLen + srcLen + 1); // buffer
+  char *ret = ALLOC(dstLen + srcLen + 1);  // buffer
   strcpy(ret, dst);
   strcpy(ret + dstLen, src);
   const char *p = AtomString(ret);
@@ -191,7 +185,7 @@ const char *AtomConcatenate(const char *str, ...) {
     dstLen += strlen(s);
   }
   va_end(strs);
-  char *dst = ALLOC(dstLen + 1); // buffer
+  char *dst = ALLOC(dstLen + 1);  // buffer
 
   va_start(strs, str);
   for (s = str; s != NULL; s = va_arg(strs, const char *)) {

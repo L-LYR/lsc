@@ -15,6 +15,14 @@ i32 g(i32 i, f32 f, string s) {
     return 0;
 }
 
+i32 g(i32, f32, string);
+f32 f;
+i32 gint(string);
+
+i32 f(i32 i, i32 j) {
+    return 0;
+}
+
 i32 main() {
     f32 f = 5.e-45;
     f32 __float__;
@@ -41,3 +49,8 @@ i32 main() {
     
     return 0;
 }
+
+i32 main(i32 argc, string argv) {
+    return 1;
+}
+i32 i,i,i;
