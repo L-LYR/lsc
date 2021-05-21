@@ -171,6 +171,10 @@ static void _BeautifyAST(Fmt *fmt) {
 }
 
 void DisplayAST(AST *t, Fmt *fmt) {
+  fmt->out = fopen(fmt->fileLoc, "w");
+  if (fmt->out == NULL) {
+    RAISE(OutFileOpenErr);
+  }
   Map(t, _Printer, fmt, true);
   fclose(fmt->out);
   _BeautifyAST(fmt);

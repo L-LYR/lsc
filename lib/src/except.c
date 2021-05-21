@@ -19,7 +19,7 @@ void ExceptRaise(const struct except_t *e, const char *file, int line) {
         which is functionally equivalent to the diagnostics issued by
         machine-specific versions of assert.h.
     */
-    fprintf(stderr, "Uncaught exception ");
+    fprintf(stderr, "Uncaught exception: ");
     if (e->reason)
       fprintf(stderr, "%s", e->reason);
     else

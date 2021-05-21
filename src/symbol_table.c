@@ -57,6 +57,7 @@ static Attribute *_NewAttribute(SymbolType t, const char *type, int32_t addr, in
 static Scope *_NewDummyLayer(Scope *prev) {
   Scope *s = ALLOC(sizeof(Scope));
   memset(s, 0, sizeof(Scope));
+  s->id = -1;
   s->prev = prev;
   s->level = prev->level + 1;
   return s;
@@ -89,17 +90,17 @@ static void _Notify(const char *fmt, ...) {
 }
 
 static void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine) {
-  static const char *RedeclarationNotice = "Line %d: %s has been declared as %s at line %d.\n";
+  static const char *RedeclarationNotice = "Line %d: %s has been declared as %s at line %d.\n\n";
   _Notify(RedeclarationNotice, curLine, id, SymbolTypeStrs[declareType], declareLine);
 }
 
 static void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int defineLine) {
-  static const char *RedefinitionNotice = "Line %d: %s has been defined as %s at line %d.\n";
+  static const char *RedefinitionNotice = "Line %d: %s has been defined as %s at line %d.\n\n";
   _Notify(RedefinitionNotice, curLine, id, SymbolTypeStrs[defineType], defineLine);
 }
 
 static void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine) {
-  static const char *ConflictNotice = "Line %d: Conflicting types for %s, %s is no match for %s at line %d.\n";
+  static const char *ConflictNotice = "Line %d: Conflicting types for %s, %s is no match for %s at line %d.\n\n";
   _Notify(ConflictNotice, curLine, id, tNew, tOld, declareLine);
 }
 
@@ -131,6 +132,17 @@ static void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
   }
 }
 
+extern _Bool Pause;
+extern Fmt SymbolTableDisplayFmt;
+static void _PauseForDisplay() {
+  if (Pause) {
+    fprintf(stdout, "Stop For Display Current Symbol Table.\n");
+    DisplaySymbolTable(GlobalSymbolTable, &SymbolTableDisplayFmt);
+    fprintf(stdout, "Press Any Key To Continue...\n");
+    getchar();
+  }
+}
+
 static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
   if (s->curTab == NULL) {
     s->curTab = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
@@ -139,6 +151,7 @@ static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
   if (a == NULL) {
     CurrentSymbolTable->stkTop += SizeOf(attr->type);
     TablePut(s->curTab, id, attr);
+    _PauseForDisplay();
   } else {
     _NotifyRepetition(a, attr, id);
   }
@@ -178,6 +191,7 @@ static Attribute *_CheckForFuncDef(ASTNode *id, const char *t) {
 static void _AddNewLayer() {
   CurrentSymbolTable->next = _NewDummyLayer(CurrentSymbolTable);
   CurrentSymbolTable = CurrentSymbolTable->next;
+  _PauseForDisplay();
 }
 
 static void _BackToPrevScope() {
@@ -382,6 +396,10 @@ static void _DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
   }
   // display peer;
   while (st != NULL) {
+    if (st->id == -1) {
+      st = st->peer;
+      continue;
+    }
     fprintf(fmt->out, "Scope %d, Level %d, ", st->id, st->level);
     if (st->prev == NULL) {
       fprintf(fmt->out, "Top Scope: \n");
@@ -403,6 +421,10 @@ static void _BeautifyST(Fmt *fmt) {
 }
 
 void DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
+  fmt->out = fopen(fmt->fileLoc, "w");
+  if (fmt->out == NULL) {
+    RAISE(OutFileOpenErr);
+  }
   _DisplaySymbolTable(st, fmt);
   fclose(fmt->out);
   _BeautifyST(fmt);

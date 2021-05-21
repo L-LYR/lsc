@@ -26,8 +26,9 @@ def beautifyST(lines, outfile):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         raise Exception("No input file!")
+
     file = open(sys.argv[1], "r+")
     lines = [""]
     lines.extend(file.read().splitlines())

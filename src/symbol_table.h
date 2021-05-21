@@ -20,6 +20,7 @@ Scope Layer:
 
 typedef struct Scope Scope;
 typedef Scope *SymbolTable;
+
 struct Scope {
   int level;
   int id;

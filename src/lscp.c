@@ -19,6 +19,7 @@ Fmt ASTDisplayFmt;
 Fmt SymbolTableDisplayFmt;
 _Bool ShowAST;          // print AST
 _Bool ShowSymbolTable;  // print Symbol Table
+_Bool Pause;            // pause
 static void SetOpts(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
   return ret;
 }
 
-const char *OptFmt = ":hv:i:s:";
+const char *OptFmt = ":hv:i:s:p";
 
 const char *Usage =
     "Usage: lscp [-vh] -i <filename> -o <filename>\n"
@@ -53,7 +54,8 @@ const char *Usage =
     "  -v <filename>\tTurn on verbose mode, display AST.\n"
     "  -i <filename>\tInput file.\n"
     "  -s <filename>\tShow symbol table.\n"
-    "  -h           \tPrint this help.\n";
+    "  -h           \tPrint this help.\n"
+    "  -p           \tPause for awhile when print symbol table.\n";
 void SetOpts(int argc, char *argv[]) {
   if (argc < 2) {
     notify(Usage);
@@ -65,10 +67,6 @@ void SetOpts(int argc, char *argv[]) {
       case 'v':
         ShowAST = true;
         ASTDisplayFmt.fileLoc = optarg;
-        ASTDisplayFmt.out = fopen(optarg, "w");
-        if (ASTDisplayFmt.out == NULL) {
-          RAISE(OutFileOpenErr);
-        }
         break;
       case 'i':
         Filename = optarg;
@@ -80,10 +78,9 @@ void SetOpts(int argc, char *argv[]) {
       case 's':
         ShowSymbolTable = true;
         SymbolTableDisplayFmt.fileLoc = optarg;
-        SymbolTableDisplayFmt.out = fopen(optarg, "w");
-        if (SymbolTableDisplayFmt.out == NULL) {
-          RAISE(OutFileOpenErr);
-        }
+        break;
+      case 'p':
+        Pause = true;
         break;
       default:
       case 'h':
@@ -93,10 +90,10 @@ void SetOpts(int argc, char *argv[]) {
   if (Filename == NULL) {
     notify(Usage);
   }
-  if (ShowAST && ASTDisplayFmt.out == NULL) {
+  if (ShowAST && ASTDisplayFmt.fileLoc == NULL) {
     notify(Usage);
   }
-  if (ShowSymbolTable && SymbolTableDisplayFmt.out == NULL) {
+  if (ShowSymbolTable && SymbolTableDisplayFmt.fileLoc == NULL) {
     notify(Usage);
   }
   if (ShowSymbolTable && !ShowAST) {
