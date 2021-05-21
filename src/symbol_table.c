@@ -41,6 +41,7 @@ static Scope *_NewScope(Scope *peer, Scope *prev, int level, struct table_t *tab
   s->prev = prev;
   s->next = NULL;
   s->curTab = tab;
+  s->isLoopBody = false;
   return s;
 }
 
@@ -90,18 +91,23 @@ static void _Notify(const char *fmt, ...) {
 }
 
 static void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine) {
-  static const char *RedeclarationNotice = "Line %d: %s has been declared as %s at line %d.\n\n";
-  _Notify(RedeclarationNotice, curLine, id, SymbolTypeStrs[declareType], declareLine);
+  static const char *Redeclaration = "Line %d: %s has been declared as %s at line %d.\n\n";
+  _Notify(Redeclaration, curLine, id, SymbolTypeStrs[declareType], declareLine);
 }
 
 static void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int defineLine) {
-  static const char *RedefinitionNotice = "Line %d: %s has been defined as %s at line %d.\n\n";
-  _Notify(RedefinitionNotice, curLine, id, SymbolTypeStrs[defineType], defineLine);
+  static const char *Redefinition = "Line %d: %s has been defined as %s at line %d.\n\n";
+  _Notify(Redefinition, curLine, id, SymbolTypeStrs[defineType], defineLine);
 }
 
 static void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine) {
-  static const char *ConflictNotice = "Line %d: Conflicting types for %s, %s is no match for %s at line %d.\n\n";
-  _Notify(ConflictNotice, curLine, id, tNew, tOld, declareLine);
+  static const char *Conflict = "Line %d: Conflicting types for %s, %s is no match for %s at line %d.\n\n";
+  _Notify(Conflict, curLine, id, tNew, tOld, declareLine);
+}
+
+static void _NotifyInvalidLocOfJumpStm(int curLine, const char *stm) {
+  static const char *InvalidLocOfJumpStm = "Line %d: %s statement is not in loop.\n\n";
+  _Notify(InvalidLocOfJumpStm, curLine, stm);
 }
 
 static void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
@@ -251,11 +257,25 @@ static void _HandleStmList(ASTNode *n) {
   } else if (p->nType == LoopStm) {
     // handle expressions
     _AddPeerScope();
+    CurrentSymbolTable->isLoopBody = true;
     _HandleCompoundStm(p->attr[3]);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
-  } else if (p->nType == JumpStm || p->nType == IOStm || p->nType == ExpressionStm) {
-    // hanle expression
+  } else if (p->nType == JumpStm) {
+    if (strncmp(p->attr[0], "continue", 8) == 0) {
+      if (!CurrentSymbolTable->prev->isLoopBody) {
+        _NotifyInvalidLocOfJumpStm(p->line, "continue");
+      }
+    } else if (strncmp(p->attr[0], "break", 5) == 0) {
+      if (!CurrentSymbolTable->prev->isLoopBody) {
+        _NotifyInvalidLocOfJumpStm(p->line, "break");
+      }
+    } else if (strncmp(p->attr[0], "return", 6) == 0) {
+
+    } else {
+      RAISE(Unreachable);
+    }
+  } else if (p->nType == IOStm || p->nType == ExpressionStm) {
   } else {
     RAISE(UnexpectedNodeType);
   }
@@ -396,7 +416,7 @@ static void _DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
   }
   // display peer;
   while (st != NULL) {
-    if (st->id == -1) {
+    if (st->id == -1) {  // skip dummy head
       st = st->peer;
       continue;
     }

@@ -29,13 +29,15 @@ i32 main() {
     i32 a[4][2] = {{1,2},{3,4},{5,6},{7,8}};
     string s = "Hello, World!";
     i32 x;
-    
+    continue;
     for (x = 32; x != 0; --x) {
         i32 i;
         print(fibonaci(x));
         continue;
+        break;
     }
 
+    break;
     {
         i32 x, y;
         f32 k, f;

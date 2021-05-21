@@ -22,8 +22,9 @@ typedef struct Scope Scope;
 typedef Scope *SymbolTable;
 
 struct Scope {
-  int level;
-  int id;
+  int level;               // scope level
+  int id;                  // to show the relationship between scopes
+  _Bool isLoopBody;        // distinguish loop bodies from simple ones
   int32_t stkTop;          // stack top
   SymbolTable prev;        // previous layer
   SymbolTable peer;        // peer layer

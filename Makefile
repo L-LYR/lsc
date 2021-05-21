@@ -2,7 +2,7 @@
 	all clean tests
 all:
 	cd lib && make all;
-	cd src && make lexer && make parser;
+	cd src && make lexer -j 8 && make parser -j 8;
 clean:
 	cd src && make clean;
 	cd lib && make clean;
