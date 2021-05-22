@@ -15,6 +15,10 @@
 #include "stdbool.h"
 #include "symbol_table.h"
 
+// from lscp.c
+extern _Bool Pause;
+extern Fmt SymbolTableDisplayFmt;
+
 static const char *ReservedSymbolList[] = {
     "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+", "-", "++", "--", "~", "!", "*", "/", "%",  "<",
     ">",    "<=",  ">=",  "==",     "!=",   "<<", ">>",   "&",   "|",      "^",     "&&",       "||",    "=",    ",", "(", ")",  "[",  "]", "{", "}", ";", NULL,
@@ -25,6 +29,13 @@ static const char *SymbolTypeStrs[] = {
     "Variable",
 };
 
+static const char *ScopeTypeStrs[] = {
+    "Global Scope",
+    "Inner Block",
+    "Loop Body",
+    "Function Body",
+};
+
 void AtomInit() { AtomLoad(ReservedSymbolList); }
 
 SymbolTable GlobalSymbolTable = NULL;
@@ -32,7 +43,7 @@ SymbolTable CurrentSymbolTable = NULL;
 static int DefaultTableSize = 32;
 static int CurID = 0;
 
-static Scope *_NewScope(Scope *peer, Scope *prev, int level, struct table_t *tab) {
+static Scope *_NewScope(Scope *peer, Scope *prev, ScopeType t, int level, struct table_t *tab) {
   Scope *s = ArenaAllocFor(sizeof(Scope));
   s->id = CurID++;
   s->level = level;
@@ -41,7 +52,7 @@ static Scope *_NewScope(Scope *peer, Scope *prev, int level, struct table_t *tab
   s->prev = prev;
   s->next = NULL;
   s->curTab = tab;
-  s->isLoopBody = false;
+  s->sType = t;
   return s;
 }
 
@@ -64,20 +75,24 @@ static Scope *_NewDummyLayer(Scope *prev) {
   return s;
 }
 
-static FuncDefAttr *_NewFuncDefAttr() {
-  FuncDefAttr *a = ArenaAllocFor(sizeof(FuncDefAttr));
-  memset(a, 0, sizeof(FuncDefAttr));
+static FuncDefAttr *_NewFuncDefAttr(int defLoc, const char *rt, int paraNum) {
+  int size = sizeof(FuncDefAttr) + sizeof(const char *) * paraNum;
+  FuncDefAttr *a = ArenaAllocFor(size);
+  memset(a, 0, size);
+  a->defLoc = defLoc;
+  a->returnType = rt;
+  a->paraNum = paraNum;
   return a;
 }
 
 static void _SymbolTableInit() {
   struct table_t *t = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
-  GlobalSymbolTable = _NewScope(NULL, NULL, 0, t);
+  GlobalSymbolTable = _NewScope(NULL, NULL, Global, 0, t);
   CurrentSymbolTable = GlobalSymbolTable;
 }
 
-static void _AddPeerScope() {
-  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, CurrentSymbolTable->level, NULL);
+static void _AddPeerScope(ScopeType type) {
+  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, type, CurrentSymbolTable->level, NULL);
   CurrentSymbolTable = CurrentSymbolTable->peer;
 }
 
@@ -138,8 +153,6 @@ static void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
   }
 }
 
-extern _Bool Pause;
-extern Fmt SymbolTableDisplayFmt;
 static void _PauseForDisplay() {
   if (Pause) {
     fprintf(stdout, "Stop For Display Current Symbol Table.\n");
@@ -194,6 +207,7 @@ static Attribute *_CheckForFuncDef(ASTNode *id, const char *t) {
   }
   return a;
 }
+
 static void _AddNewLayer() {
   CurrentSymbolTable->next = _NewDummyLayer(CurrentSymbolTable);
   CurrentSymbolTable = CurrentSymbolTable->next;
@@ -226,7 +240,7 @@ static void _HandleSelectionStm(ASTNode *n) {
     return;
   }
   // handle expression
-  _AddPeerScope();
+  _AddPeerScope(Simple);
   // if
   _HandleCompoundStm(n->attr[1]);
   // else
@@ -236,7 +250,7 @@ static void _HandleSelectionStm(ASTNode *n) {
   }
 
   if (p->nType == CompoundStm) {
-    _AddPeerScope();
+    _AddPeerScope(Simple);
     _HandleCompoundStm(n->attr[2]);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
@@ -252,26 +266,24 @@ static void _HandleStmList(ASTNode *n) {
   _HandleStmList(n->attr[0]);
   ASTNode *p = (ASTNode *)(n->attr[1]);
   if (p->nType == CompoundStm) {
-    _AddPeerScope();
+    _AddPeerScope(Simple);
     _HandleCompoundStm(p);
   } else if (p->nType == LoopStm) {
     // handle expressions
-    _AddPeerScope();
-    CurrentSymbolTable->isLoopBody = true;
+    _AddPeerScope(LoopBody);
     _HandleCompoundStm(p->attr[3]);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
   } else if (p->nType == JumpStm) {
     if (strncmp(p->attr[0], "continue", 8) == 0) {
-      if (!CurrentSymbolTable->prev->isLoopBody) {
+      if (CurrentSymbolTable->prev->sType != LoopBody) {
         _NotifyInvalidLocOfJumpStm(p->line, "continue");
       }
     } else if (strncmp(p->attr[0], "break", 5) == 0) {
-      if (!CurrentSymbolTable->prev->isLoopBody) {
+      if (CurrentSymbolTable->prev->sType != LoopBody) {
         _NotifyInvalidLocOfJumpStm(p->line, "break");
       }
     } else if (strncmp(p->attr[0], "return", 6) == 0) {
-
     } else {
       RAISE(Unreachable);
     }
@@ -337,6 +349,22 @@ static const char *_SpecifyFuncType(ASTNode *st, ASTNode *p) {
   return t;
 }
 
+static int _GetFuncParaCount(ASTNode *n) {
+  if (n == NULL) {
+    return 0;
+  }
+  return 1 + _GetFuncParaCount(n->attr[0]);
+}
+
+static void _FillFuncDefParaType(ASTNode *n, const char *ptl[], int i) {
+  if (n == NULL) {
+    return;
+  }
+  _FillFuncDefParaType(n->attr[0], ptl, i - 1);
+  ASTNode *p = (ASTNode *)(n->attr[1]);
+  ptl[i] = ((ASTNode *)(p->attr[0]))->attr[0];
+}
+
 static void _HandleGlobalList(ASTNode *n) {
   if (n == NULL) {
     return;
@@ -355,16 +383,25 @@ static void _HandleGlobalList(ASTNode *n) {
     _AddSymbol(GlobalSymbolTable, id->attr[0], a);
   } else if (p->nType == FunctionDef) {
     // insert and check
-
-    const char *t = _SpecifyFuncType(p->attr[0], p->attr[2]);
+    ASTNode *rt = (ASTNode *)(p->attr[0]);
     ASTNode *id = p->attr[1];
+    ASTNode *pl = p->attr[2];
+    const char *t = _SpecifyFuncType(rt, pl);
     // Attribute *a = _NewAttribute(Function, t, 0, -1);
 
     Attribute *a = _CheckForFuncDef(id, t);
     if (a != NULL) {
-      a->aa.f = _NewFuncDefAttr();
-      a->aa.f->defLoc = id->line;
-      _AddPeerScope();
+      int paraNum = _GetFuncParaCount(pl);
+      a->aa.f = _NewFuncDefAttr(id->line, rt->attr[0], paraNum);
+      _FillFuncDefParaType(pl, a->aa.f->paraTypeList, paraNum - 1);
+
+      if (strncmp(id->attr[0], "main", 4) == 0) {
+        a->aa.f->isMain = true;
+      }
+
+      _AddPeerScope(FuncBody);
+      _HandleDeclaratorList(pl, CurrentSymbolTable);
+      // parameter declarator list is also a declarator list...LOL
       _HandleCompoundStm(p->attr[3]);
     }
   } else {
@@ -380,19 +417,48 @@ SymbolTable SymbolTableCreateFromAST(AST *ast) {
   return GlobalSymbolTable;
 }
 
-static void _DisplayTableHeaders(Fmt *fmt) {
-  static const char *TableHeaders[] = {
-      "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", NULL,
-  };
-  const char **p = TableHeaders;
+static const char *SymbolTableHeaders[] = {
+    "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", NULL,
+};
+static const char *FuncDefDetailHeaders[] = {
+    "Function Name", "Definition Location", "Number of Parameters", "Main Function?", "Return Type", "Parameter Type List", NULL,
+};
+
+static void _DisplayTableHeaders(Fmt *fmt, const char *p[]) {
   fprintf(fmt->out, "%s", *p++);
   while (*p != NULL) {
     fprintf(fmt->out, ";%s", *p++);
   }
   fputc('\n', fmt->out);
 }
+static void _DisplayFuncDefDetail(Fmt *fmt) {
+  void **arr = TableToArray(GlobalSymbolTable->curTab, NULL);
+  int i = 0;
+  Attribute *a;
+  FuncDefAttr *f;
+  fprintf(fmt->out, "Function Definition Detail:\n");
+  _DisplayTableHeaders(fmt, FuncDefDetailHeaders);
+  while (arr[i] != NULL) {
+    a = ((Attribute *)(arr[i + 1]));
+    f = a->aa.f;
+    if (f != NULL) {
+      fprintf(fmt->out, "%s;%d;%d;%s;%s;", arr[i], f->defLoc, f->paraNum, f->isMain ? "True" : "False", f->returnType);
+      if (f->paraNum > 0) {
+        for (int j = 0; j < f->paraNum; ++j) {
+          fprintf(fmt->out, "[%d]%s ", j + 1, f->paraTypeList[j]);
+        }
+        fputc('\n', fmt->out);
+      } else {
+        fprintf(fmt->out, "void\n");
+      }
+    }
+    i += 2;
+  }
+  FREE(arr);
+  putc('\n', fmt->out);
+}
 
-static void _DisplayTable(struct table_t *t, Fmt *fmt) {
+static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   if (t == NULL) {
     fprintf(fmt->out, "Empty Scope\n\n");
     return;
@@ -400,7 +466,7 @@ static void _DisplayTable(struct table_t *t, Fmt *fmt) {
   void **arr = TableToArray(t, NULL);
   int i = 0;
   Attribute *a;
-  _DisplayTableHeaders(fmt);
+  _DisplayTableHeaders(fmt, SymbolTableHeaders);
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
     fprintf(fmt->out, "%s;%s;%s;%d;%d\n", (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
@@ -410,7 +476,7 @@ static void _DisplayTable(struct table_t *t, Fmt *fmt) {
   putc('\n', fmt->out);
 }
 
-static void _DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
+static void _DisplaySymbolTableTree(SymbolTable st, Fmt *fmt) {
   if (st == NULL) {
     return;
   }
@@ -420,20 +486,20 @@ static void _DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
       st = st->peer;
       continue;
     }
-    fprintf(fmt->out, "Scope %d, Level %d, ", st->id, st->level);
+    fprintf(fmt->out, "Scope %d, Level %d, %s", st->id, st->level, ScopeTypeStrs[st->sType]);
     if (st->prev == NULL) {
-      fprintf(fmt->out, "Top Scope: \n");
+      fputc('\n', fmt->out);
     } else {
-      fprintf(fmt->out, "Parent Scope %d: \n", st->prev->id);
+      fprintf(fmt->out, ", Parent Scope %d: \n", st->prev->id);
     }
-    _DisplayTable(st->curTab, fmt);
-    _DisplaySymbolTable(st->next, fmt);
+    _DisplaySymbolTable(st->curTab, fmt);
+    _DisplaySymbolTableTree(st->next, fmt);
     st = st->peer;
   }
 }
 
-static const char *BeautifyST_py = "./bin/BeautifyST.py";
 static void _BeautifyST(Fmt *fmt) {
+  static const char *BeautifyST_py = "./bin/BeautifyST.py";
   char buffer[128];
   memset(buffer, 0, sizeof(buffer));
   sprintf(buffer, "%s %s", BeautifyST_py, fmt->fileLoc);
@@ -445,7 +511,8 @@ void DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
   if (fmt->out == NULL) {
     RAISE(OutFileOpenErr);
   }
-  _DisplaySymbolTable(st, fmt);
+  _DisplaySymbolTableTree(st, fmt);
+  _DisplayFuncDefDetail(fmt);
   fclose(fmt->out);
   _BeautifyST(fmt);
 }

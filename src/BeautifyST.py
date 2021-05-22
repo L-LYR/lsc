@@ -5,8 +5,11 @@ import sys
 import pandas as pd
 import io
 
-first_key = "Declaration Location"
-second_key = "Offset"
+keys = [
+    "Declaration Location",
+    "Offset",
+    "Definition Location"
+]
 
 
 def beautifyST(lines, outfile):
@@ -17,9 +20,15 @@ def beautifyST(lines, outfile):
     print(file=outfile)
     csv = io.StringIO("\n".join(lines[1:]))
     df = pd.read_csv(csv, delimiter=";")
-    df[first_key] = pd.to_numeric(df[first_key])
-    df[second_key] = pd.to_numeric(df[second_key])
-    df = df.sort_values(by=[first_key, second_key])
+
+    curKey = []
+    for key in keys:
+        if key in df:
+            df[key] = pd.to_numeric(df[key])
+            curKey.append(key)
+
+    df = df.sort_values(by=curKey)
+
     tb = pt.from_csv(io.StringIO(df.to_csv(index=False)))
     tb.align = "r"
     print(tb, file=outfile, end="\n\n")

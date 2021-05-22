@@ -12,7 +12,7 @@
 static size_t ASTNodeSize(int nChild) { return sizeof(ASTNode) + sizeof(void *) * nChild; }
 
 ASTNode *NewASTNode(ASTNodeType t, int line) {
-  ASTNode *r;
+  ASTNode *r = NULL;
   if (t <= ArrayInitializer) {
     r = ArenaAllocFor(ASTNodeSize(1));
   } else if (t <= ParameterTypeList) {

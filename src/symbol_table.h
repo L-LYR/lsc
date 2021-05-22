@@ -21,10 +21,17 @@ Scope Layer:
 typedef struct Scope Scope;
 typedef Scope *SymbolTable;
 
+typedef enum {
+  Global,
+  Simple,
+  LoopBody,
+  FuncBody,
+} ScopeType;
+
 struct Scope {
-  int level;               // scope level
-  int id;                  // to show the relationship between scopes
-  _Bool isLoopBody;        // distinguish loop bodies from simple ones
+  int level;  // scope level
+  int id;     // to show the relationship between scopes
+  ScopeType sType;
   int32_t stkTop;          // stack top
   SymbolTable prev;        // previous layer
   SymbolTable peer;        // peer layer
@@ -40,6 +47,8 @@ typedef enum {
 typedef struct {
   int defLoc;
   int paraNum;
+  _Bool isMain;
+  const char *returnType;
   const char *paraTypeList[0];
 } FuncDefAttr;
 
