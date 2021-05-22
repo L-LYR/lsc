@@ -74,7 +74,6 @@ typedef struct {
 } Attribute;
 
 SymbolTable SymbolTableCreateFromAST(AST *ast);
-void DisplaySymbolTable(SymbolTable st, Fmt *fmt);
 void FreeSymbolTable(SymbolTable st);
 
 #endif

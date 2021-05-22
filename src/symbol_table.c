@@ -10,23 +10,15 @@
 #include <string.h>
 
 #include "../lib/llsc.h"
+#include "display.h"
 #include "exception.h"
 #include "limit.h"
 #include "stdbool.h"
 #include "symbol_table.h"
 
-// from lscp.c
-extern _Bool Pause;
-extern Fmt SymbolTableDisplayFmt;
-
 static const char *ReservedSymbolList[] = {
     "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+", "-", "++", "--", "~", "!", "*", "/", "%",  "<",
     ">",    "<=",  ">=",  "==",     "!=",   "<<", ">>",   "&",   "|",      "^",     "&&",       "||",    "=",    ",", "(", ")",  "[",  "]", "{", "}", ";", NULL,
-};
-
-static const char *SymbolTypeStrs[] = {
-    "Function",
-    "Variable",
 };
 
 void AtomInit() { AtomLoad(ReservedSymbolList); }
@@ -88,82 +80,6 @@ static void _SymbolTableInit() {
 static void _AddPeerScope(ScopeType type, const char *name) {
   CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, type, name, CurrentSymbolTable->level, NULL);
   CurrentSymbolTable = CurrentSymbolTable->peer;
-}
-
-// wrapper of fprintf for stderr
-static void _Notify(const char *fmt, ...) {
-  // generally notify
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-}
-
-static void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine) {
-  static const char *Redeclaration = "Line %d: '%s' has been declared as '%s' at line %d.\n\n";
-  _Notify(Redeclaration, curLine, id, SymbolTypeStrs[declareType], declareLine);
-}
-
-static void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int defineLine) {
-  static const char *Redefinition = "Line %d: '%s' has been defined as '%s' at line %d.\n\n";
-  _Notify(Redefinition, curLine, id, SymbolTypeStrs[defineType], defineLine);
-}
-
-static void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine) {
-  static const char *Conflict = "Line %d: Conflicting types for '%s', '%s' is no match for '%s' at line %d.\n\n";
-  _Notify(Conflict, curLine, id, tNew, tOld, declareLine);
-}
-
-static void _NotifyInvalidLocOfJumpStm(int curLine, const char *stm, const char *loc) {
-  static const char *InvalidLocOfJumpStm = "Line %d: '%s' statement is not in %s.\n\n";
-  _Notify(InvalidLocOfJumpStm, curLine, stm, loc);
-}
-
-static void _NotifyWrongReturnStm(int curLine, const char *id, _Bool needReturn) {
-  static const char *VoidFunctionShouldNotReturn = "Line %d: void function '%s' should not return a value.\n\n";
-  static const char *NonVoidFunctionMustReturn = "Line %d: non-void function '%s' need return a value.\n\n";
-  if (!needReturn) {
-    _Notify(VoidFunctionShouldNotReturn, curLine, id);
-  } else {
-    _Notify(NonVoidFunctionMustReturn, curLine, id);
-  }
-}
-
-static void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
-  // for the way of management of memory,
-  // redefinition of function will not be notified here.
-  if (new->sType == Variable) {  // redeclaration
-    if (old->declLoc != -1) {
-      _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
-    } else if (old->aa.f != NULL) {
-      _NotifyRedefinition(new->declLoc, id, old->sType, old->aa.f->defLoc);
-    } else {
-      RAISE(Unreachable);
-    }
-  } else if (new->sType == Function) {
-    if (old->sType == Variable) {  // redeclaration
-      _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
-    } else if (old->sType == Function) {
-      _Bool isDecl = new->declLoc != -1;
-      _Bool hasDecl = old->declLoc != -1;
-      _Bool hasDef = old->aa.f != NULL;
-
-      if (hasDef) {  // redefinition
-        _NotifyRedefinition(new->declLoc, id, old->sType, old->aa.f->defLoc);
-      } else if (hasDecl && isDecl) {  // redeclaration
-        _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
-      }
-    }
-  }
-}
-
-static void _PauseForDisplay() {
-  if (Pause) {
-    fprintf(stdout, "Stop For Display Current Symbol Table.\n");
-    DisplaySymbolTable(GlobalSymbolTable, &SymbolTableDisplayFmt);
-    fprintf(stdout, "Press Any Key To Continue...\n");
-    getchar();
-  }
 }
 
 static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
@@ -445,107 +361,6 @@ SymbolTable SymbolTableCreateFromAST(AST *ast) {
   _HandleGlobalList(ast->root);
   _BackToPrevScope();
   return GlobalSymbolTable;
-}
-
-static const char *SymbolTableHeaders[] = {
-    "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", NULL,
-};
-static const char *FuncDefDetailHeaders[] = {
-    "Function Name", "Definition Location", "Parameter Number", "Main Function?", "Return Type", "Parameter Type List", NULL,
-};
-
-static void _DisplayTableHeaders(Fmt *fmt, const char *p[]) {
-  fprintf(fmt->out, "%s", *p++);
-  while (*p != NULL) {
-    fprintf(fmt->out, ";%s", *p++);
-  }
-  fputc('\n', fmt->out);
-}
-static void _DisplayFuncDefDetail(Fmt *fmt) {
-  void **arr = TableToArray(GlobalSymbolTable->curTab, NULL);
-  int i = 0;
-  Attribute *a;
-  FuncDefAttr *f;
-  fprintf(fmt->out, "Function Definition Detail:\n");
-  _DisplayTableHeaders(fmt, FuncDefDetailHeaders);
-  while (arr[i] != NULL) {
-    a = ((Attribute *)(arr[i + 1]));
-    f = a->aa.f;
-    if (f != NULL) {
-      fprintf(fmt->out, "%s;%d;%d;%s;%s;", arr[i], f->defLoc, f->paraNum, f->isMain ? "True" : "False", f->returnType);
-      if (f->paraNum > 0) {
-        for (int j = 0; j < f->paraNum; ++j) {
-          // fprintf(fmt->out, "[%d]%s ", j + 1, f->paraTypeList[j]);
-          fprintf(fmt->out, "%s ", f->paraTypeList[j]);
-        }
-        fputc('\n', fmt->out);
-      } else {
-        fprintf(fmt->out, "void\n");
-      }
-    }
-    i += 2;
-  }
-  FREE(arr);
-  putc('\n', fmt->out);
-}
-
-static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
-  if (t == NULL) {
-    fprintf(fmt->out, "empty\n\n");
-    return;
-  }
-  void **arr = TableToArray(t, NULL);
-  int i = 0;
-  Attribute *a;
-  _DisplayTableHeaders(fmt, SymbolTableHeaders);
-  while (arr[i] != NULL) {
-    a = ((Attribute *)(arr[i + 1]));
-    fprintf(fmt->out, "%s;%s;%s;%d;%d\n", (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
-    i += 2;
-  }
-  FREE(arr);
-  putc('\n', fmt->out);
-}
-
-static void _DisplaySymbolTableTree(SymbolTable st, Fmt *fmt) {
-  if (st == NULL) {
-    return;
-  }
-  // display peer;
-  while (st != NULL) {
-    if (st->id == -1) {  // skip dummy head
-      st = st->peer;
-      continue;
-    }
-    fprintf(fmt->out, "%s: scope %d, level %d", st->name, st->id, st->level);
-    if (st->prev == NULL) {
-      fputc('\n', fmt->out);
-    } else {
-      fprintf(fmt->out, ", parent scope %d: \n", st->prev->id);
-    }
-    _DisplaySymbolTable(st->curTab, fmt);
-    _DisplaySymbolTableTree(st->next, fmt);
-    st = st->peer;
-  }
-}
-
-static void _BeautifyST(Fmt *fmt) {
-  static const char *BeautifyST_py = "./bin/BeautifyST.py";
-  char buffer[128];
-  memset(buffer, 0, sizeof(buffer));
-  sprintf(buffer, "%s %s", BeautifyST_py, fmt->fileLoc);
-  system(buffer);
-}
-
-void DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
-  fmt->out = fopen(fmt->fileLoc, "w");
-  if (fmt->out == NULL) {
-    RAISE(OutFileOpenErr);
-  }
-  _DisplaySymbolTableTree(st, fmt);
-  _DisplayFuncDefDetail(fmt);
-  fclose(fmt->out);
-  _BeautifyST(fmt);
 }
 
 void FreeSymbolTable(SymbolTable st) {

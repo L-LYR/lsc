@@ -71,21 +71,17 @@ ASTNode *NewASTNode(ASTNodeType t, int line);
   The struct's first field must be an integer named depth.
 */
 
-typedef void (*mapper)(ASTNode *, void *);
-void Map(AST *t, mapper m, void *cl, _Bool topDown);
+// typedef void (*mapper)(ASTNode *, void *);
+// void Map(AST *t, mapper m, void *cl, _Bool topDown);
 
 /*
   Printer is a mapper, which prints the AST Node.
   cl should be a Fmt pointer, which controls the indent and redirection.
 */
 
-typedef struct {
-  int depth;
-  FILE *out;
-  const char *fileLoc;
-} Fmt;
 
-void DisplayAST(AST *t, Fmt *fmt);
+
+// void DisplayAST(AST *t, Fmt *fmt);
 
 /*
   FreeAttr is a mapper, which free each AST Node.
