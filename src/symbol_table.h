@@ -29,9 +29,10 @@ typedef enum {
 } ScopeType;
 
 struct Scope {
-  int level;  // scope level
-  int id;     // to show the relationship between scopes
-  ScopeType sType;
+  int level;               // scope level
+  const char *name;        // name of scope
+  int id;                  // to show the relationship between scopes
+  ScopeType sType;         // scope type
   int32_t stkTop;          // stack top
   SymbolTable prev;        // previous layer
   SymbolTable peer;        // peer layer
@@ -48,6 +49,7 @@ typedef struct {
   int defLoc;
   int paraNum;
   _Bool isMain;
+  _Bool hasReturnValue;
   const char *returnType;
   const char *paraTypeList[0];
 } FuncDefAttr;

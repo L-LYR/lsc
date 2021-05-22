@@ -14,7 +14,7 @@ keys = [
 
 def beautifyST(lines, outfile):
     print(lines[0], end="", file=outfile)
-    if lines[1] == "Empty Scope":
+    if lines[1] == "empty":
         print(lines[1], end="\n\n", file=outfile)
         return
     print(file=outfile)

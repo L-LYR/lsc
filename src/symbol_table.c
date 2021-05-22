@@ -29,13 +29,6 @@ static const char *SymbolTypeStrs[] = {
     "Variable",
 };
 
-static const char *ScopeTypeStrs[] = {
-    "Global Scope",
-    "Inner Block",
-    "Loop Body",
-    "Function Body",
-};
-
 void AtomInit() { AtomLoad(ReservedSymbolList); }
 
 SymbolTable GlobalSymbolTable = NULL;
@@ -43,10 +36,11 @@ SymbolTable CurrentSymbolTable = NULL;
 static int DefaultTableSize = 32;
 static int CurID = 0;
 
-static Scope *_NewScope(Scope *peer, Scope *prev, ScopeType t, int level, struct table_t *tab) {
+static Scope *_NewScope(Scope *peer, Scope *prev, ScopeType t, const char *name, int level, struct table_t *tab) {
   Scope *s = ArenaAllocFor(sizeof(Scope));
   s->id = CurID++;
   s->level = level;
+  s->name = name;
   s->stkTop = 0;
   s->peer = peer;
   s->prev = prev;
@@ -87,12 +81,12 @@ static FuncDefAttr *_NewFuncDefAttr(int defLoc, const char *rt, int paraNum) {
 
 static void _SymbolTableInit() {
   struct table_t *t = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
-  GlobalSymbolTable = _NewScope(NULL, NULL, Global, 0, t);
+  GlobalSymbolTable = _NewScope(NULL, NULL, Global, "Global Scope", 0, t);
   CurrentSymbolTable = GlobalSymbolTable;
 }
 
-static void _AddPeerScope(ScopeType type) {
-  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, type, CurrentSymbolTable->level, NULL);
+static void _AddPeerScope(ScopeType type, const char *name) {
+  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, type, name, CurrentSymbolTable->level, NULL);
   CurrentSymbolTable = CurrentSymbolTable->peer;
 }
 
@@ -106,23 +100,33 @@ static void _Notify(const char *fmt, ...) {
 }
 
 static void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine) {
-  static const char *Redeclaration = "Line %d: %s has been declared as %s at line %d.\n\n";
+  static const char *Redeclaration = "Line %d: '%s' has been declared as '%s' at line %d.\n\n";
   _Notify(Redeclaration, curLine, id, SymbolTypeStrs[declareType], declareLine);
 }
 
 static void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int defineLine) {
-  static const char *Redefinition = "Line %d: %s has been defined as %s at line %d.\n\n";
+  static const char *Redefinition = "Line %d: '%s' has been defined as '%s' at line %d.\n\n";
   _Notify(Redefinition, curLine, id, SymbolTypeStrs[defineType], defineLine);
 }
 
 static void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine) {
-  static const char *Conflict = "Line %d: Conflicting types for %s, %s is no match for %s at line %d.\n\n";
+  static const char *Conflict = "Line %d: Conflicting types for '%s', '%s' is no match for '%s' at line %d.\n\n";
   _Notify(Conflict, curLine, id, tNew, tOld, declareLine);
 }
 
-static void _NotifyInvalidLocOfJumpStm(int curLine, const char *stm) {
-  static const char *InvalidLocOfJumpStm = "Line %d: %s statement is not in loop.\n\n";
-  _Notify(InvalidLocOfJumpStm, curLine, stm);
+static void _NotifyInvalidLocOfJumpStm(int curLine, const char *stm, const char *loc) {
+  static const char *InvalidLocOfJumpStm = "Line %d: '%s' statement is not in %s.\n\n";
+  _Notify(InvalidLocOfJumpStm, curLine, stm, loc);
+}
+
+static void _NotifyWrongReturnStm(int curLine, const char *id, _Bool needReturn) {
+  static const char *VoidFunctionShouldNotReturn = "Line %d: void function '%s' should not return a value.\n\n";
+  static const char *NonVoidFunctionMustReturn = "Line %d: non-void function '%s' need return a value.\n\n";
+  if (!needReturn) {
+    _Notify(VoidFunctionShouldNotReturn, curLine, id);
+  } else {
+    _Notify(NonVoidFunctionMustReturn, curLine, id);
+  }
 }
 
 static void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
@@ -179,7 +183,7 @@ static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
 // called when it comes to a definition of function
 // return the corresponding attribute pointer
 // if the return value is NULL, it occurs an
-static Attribute *_CheckForFuncDef(ASTNode *id, const char *t) {
+static Attribute *_CheckFuncDef(ASTNode *id, const char *t) {
   Attribute *a = NULL;
   Scope *s = GlobalSymbolTable;
   if (s->curTab != NULL) {
@@ -240,7 +244,7 @@ static void _HandleSelectionStm(ASTNode *n) {
     return;
   }
   // handle expression
-  _AddPeerScope(Simple);
+  _AddPeerScope(Simple, "if");
   // if
   _HandleCompoundStm(n->attr[1]);
   // else
@@ -250,7 +254,7 @@ static void _HandleSelectionStm(ASTNode *n) {
   }
 
   if (p->nType == CompoundStm) {
-    _AddPeerScope(Simple);
+    _AddPeerScope(Simple, "else");
     _HandleCompoundStm(n->attr[2]);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
@@ -266,28 +270,48 @@ static void _HandleStmList(ASTNode *n) {
   _HandleStmList(n->attr[0]);
   ASTNode *p = (ASTNode *)(n->attr[1]);
   if (p->nType == CompoundStm) {
-    _AddPeerScope(Simple);
+    _AddPeerScope(Simple, "Compound Statement");
     _HandleCompoundStm(p);
   } else if (p->nType == LoopStm) {
     // handle expressions
-    _AddPeerScope(LoopBody);
+    _AddPeerScope(LoopBody, "Loop Statement");
     _HandleCompoundStm(p->attr[3]);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
   } else if (p->nType == JumpStm) {
     if (strncmp(p->attr[0], "continue", 8) == 0) {
       if (CurrentSymbolTable->prev->sType != LoopBody) {
-        _NotifyInvalidLocOfJumpStm(p->line, "continue");
+        _NotifyInvalidLocOfJumpStm(p->line, "continue", "loop body");
       }
     } else if (strncmp(p->attr[0], "break", 5) == 0) {
       if (CurrentSymbolTable->prev->sType != LoopBody) {
-        _NotifyInvalidLocOfJumpStm(p->line, "break");
+        _NotifyInvalidLocOfJumpStm(p->line, "break", "loop body");
       }
     } else if (strncmp(p->attr[0], "return", 6) == 0) {
+      Scope *s = CurrentSymbolTable;
+      while (s != NULL && s->sType != FuncBody) {
+        s = s->prev;
+      }
+      if (s == NULL) {
+        RAISE(Unreachable);
+      }
+      struct table_t *t = GlobalSymbolTable->curTab;
+      Attribute *a = TableGet(t, s->name);
+      const char *rt = a->aa.f->returnType;
+      _Bool needReturn = strncmp(rt, "void", 4) != 0;
+
+      if ((needReturn && p->attr[1] == NULL) || (!needReturn && p->attr[1] != NULL)) {
+        _NotifyWrongReturnStm(p->line, s->name, needReturn);
+      }
+      if (p->attr[1] != NULL) {
+        // _CheckExpressionType();
+        a->aa.f->hasReturnValue = true;
+      }
     } else {
       RAISE(Unreachable);
     }
-  } else if (p->nType == IOStm || p->nType == ExpressionStm) {
+  } else if (p->nType == IOStm) {
+  } else if (p->nType == ExpressionStm) {
   } else {
     RAISE(UnexpectedNodeType);
   }
@@ -389,7 +413,7 @@ static void _HandleGlobalList(ASTNode *n) {
     const char *t = _SpecifyFuncType(rt, pl);
     // Attribute *a = _NewAttribute(Function, t, 0, -1);
 
-    Attribute *a = _CheckForFuncDef(id, t);
+    Attribute *a = _CheckFuncDef(id, t);
     if (a != NULL) {
       int paraNum = _GetFuncParaCount(pl);
       a->aa.f = _NewFuncDefAttr(id->line, rt->attr[0], paraNum);
@@ -399,10 +423,16 @@ static void _HandleGlobalList(ASTNode *n) {
         a->aa.f->isMain = true;
       }
 
-      _AddPeerScope(FuncBody);
+      _AddPeerScope(FuncBody, id->attr[0]);
       _HandleDeclaratorList(pl, CurrentSymbolTable);
       // parameter declarator list is also a declarator list...LOL
       _HandleCompoundStm(p->attr[3]);
+
+      _Bool needReturn = strncmp(rt->attr[0], "void", 4) != 0;
+
+      if (needReturn && !a->aa.f->hasReturnValue) {
+        _NotifyWrongReturnStm(p->line, id->attr[0], needReturn);
+      }
     }
   } else {
     RAISE(UnexpectedNodeType);
@@ -421,7 +451,7 @@ static const char *SymbolTableHeaders[] = {
     "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", NULL,
 };
 static const char *FuncDefDetailHeaders[] = {
-    "Function Name", "Definition Location", "Number of Parameters", "Main Function?", "Return Type", "Parameter Type List", NULL,
+    "Function Name", "Definition Location", "Parameter Number", "Main Function?", "Return Type", "Parameter Type List", NULL,
 };
 
 static void _DisplayTableHeaders(Fmt *fmt, const char *p[]) {
@@ -445,7 +475,8 @@ static void _DisplayFuncDefDetail(Fmt *fmt) {
       fprintf(fmt->out, "%s;%d;%d;%s;%s;", arr[i], f->defLoc, f->paraNum, f->isMain ? "True" : "False", f->returnType);
       if (f->paraNum > 0) {
         for (int j = 0; j < f->paraNum; ++j) {
-          fprintf(fmt->out, "[%d]%s ", j + 1, f->paraTypeList[j]);
+          // fprintf(fmt->out, "[%d]%s ", j + 1, f->paraTypeList[j]);
+          fprintf(fmt->out, "%s ", f->paraTypeList[j]);
         }
         fputc('\n', fmt->out);
       } else {
@@ -460,7 +491,7 @@ static void _DisplayFuncDefDetail(Fmt *fmt) {
 
 static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   if (t == NULL) {
-    fprintf(fmt->out, "Empty Scope\n\n");
+    fprintf(fmt->out, "empty\n\n");
     return;
   }
   void **arr = TableToArray(t, NULL);
@@ -486,11 +517,11 @@ static void _DisplaySymbolTableTree(SymbolTable st, Fmt *fmt) {
       st = st->peer;
       continue;
     }
-    fprintf(fmt->out, "Scope %d, Level %d, %s", st->id, st->level, ScopeTypeStrs[st->sType]);
+    fprintf(fmt->out, "%s: scope %d, level %d", st->name, st->id, st->level);
     if (st->prev == NULL) {
       fputc('\n', fmt->out);
     } else {
-      fprintf(fmt->out, ", Parent Scope %d: \n", st->prev->id);
+      fprintf(fmt->out, ", parent scope %d: \n", st->prev->id);
     }
     _DisplaySymbolTable(st->curTab, fmt);
     _DisplaySymbolTableTree(st->next, fmt);
