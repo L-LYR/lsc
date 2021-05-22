@@ -16,6 +16,9 @@ void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int
 void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine);
 void _NotifyInvalidLocOfJumpStm(int curLine, const char *stm, const char *loc);
 void _NotifyWrongReturnStm(int curLine, const char *id, _Bool needReturn);
+void _NotifyInvalidTypeOfVar(int curLine, const char *id, const char *type);
+void _NotifyArrayDimTooBig(int curLine, const char *id, int dim, int lim);
+void _NotifyInvalidArrayDim(int curLine);
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id);
 void _PauseForDisplay();
 

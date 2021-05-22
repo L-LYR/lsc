@@ -17,7 +17,7 @@ static const char *SymbolTypeStrs[] = {
 };
 
 static const char *SymbolTableHeaders[] = {
-    "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", NULL,
+    "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", "Has Initializer?", NULL,
 };
 
 static const char *FuncDefDetailHeaders[] = {
@@ -85,6 +85,20 @@ void _NotifyWrongReturnStm(int curLine, const char *id, _Bool needReturn) {
   }
 }
 
+void _NotifyInvalidTypeOfVar(int curLine, const char *id, const char *type) {
+  static const char *InvalidTypeOfVar = "Line %d: variable '%s' has invalid (base) type '%s'.\n\n";
+  _Notify(InvalidTypeOfVar, curLine, id, type);
+}
+
+void _NotifyArrayDimTooBig(int curLine, const char *id, int dim, int lim) {
+  static const char *ArrayDimTooBig = "Line %d: array '%s' has %d dimensions (MAX Dimension is %d).\n\n";
+  _Notify(ArrayDimTooBig, curLine, id, dim, lim);
+}
+
+void _NotifyInvalidArrayDim(int curLine) {
+  static const char *InvalidArrayDim = "Line %d: dimension of array must be positive integer.\n\n";
+  _Notify(InvalidArrayDim, curLine);
+}
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
   // for the way of management of memory,
   // redefinition of function will not be notified here.
@@ -130,6 +144,8 @@ static void _DisplayTableHeaders(Fmt *fmt, const char *p[]) {
   fputc('\n', fmt->out);
 }
 
+static const char *_DisplayBool(_Bool b) { return b ? "True" : "False"; }
+
 static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   if (t == NULL) {
     fprintf(fmt->out, "empty\n\n");
@@ -141,7 +157,11 @@ static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   _DisplayTableHeaders(fmt, SymbolTableHeaders);
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
-    fprintf(fmt->out, "%s;%s;%s;%d;%d\n", (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
+    if (a->sType == Function) {
+      fprintf(fmt->out, "%s;%s;%s;%d;%d;(null)\n", (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
+    } else if (a->sType == Variable) {
+      fprintf(fmt->out, "%s;%s;%s;%d;%d;%s\n", (const char *)arr[i], SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc, _DisplayBool(a->aa.v->initializer != NULL));
+    }
     i += 2;
   }
   FREE(arr);
@@ -158,8 +178,8 @@ static void _DisplayFuncDefDetail(Fmt *fmt) {
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
     f = a->aa.f;
-    if (f != NULL) {
-      fprintf(fmt->out, "%s;%d;%d;%s;%s;", arr[i], f->defLoc, f->paraNum, f->isMain ? "True" : "False", f->returnType);
+    if (f != NULL && a->sType == Function) {
+      fprintf(fmt->out, "%s;%d;%d;%s;%s;", arr[i], f->defLoc, f->paraNum, _DisplayBool(f->isMain), f->returnType);
       if (f->paraNum > 0) {
         for (int j = 0; j < f->paraNum; ++j) {
           // fprintf(fmt->out, "[%d]%s ", j + 1, f->paraTypeList[j]);

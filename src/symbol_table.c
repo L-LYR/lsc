@@ -12,7 +12,6 @@
 #include "../lib/llsc.h"
 #include "display.h"
 #include "exception.h"
-#include "limit.h"
 #include "stdbool.h"
 #include "symbol_table.h"
 
@@ -27,6 +26,9 @@ SymbolTable GlobalSymbolTable = NULL;
 SymbolTable CurrentSymbolTable = NULL;
 static int DefaultTableSize = 32;
 static int CurID = 0;
+static const int MAX_ARRAY_DIM = 256;
+static char InnerStrBuffer[128];
+static int InnerBuffer[MAX_ARRAY_DIM];
 
 static Scope *_NewScope(Scope *peer, Scope *prev, ScopeType t, const char *name, int level, struct table_t *tab) {
   Scope *s = ArenaAllocFor(sizeof(Scope));
@@ -71,6 +73,15 @@ static FuncDefAttr *_NewFuncDefAttr(int defLoc, const char *rt, int paraNum) {
   return a;
 }
 
+static VarDeclAttr *_NewVarDeclAttr(void *initializer, int arrDimNum, int *arrDim) {
+  int size = sizeof(VarDeclAttr) + sizeof(int) * arrDimNum;
+  VarDeclAttr *a = ArenaAllocFor(size);
+  a->initializer = initializer;
+  a->arrDimNum = arrDimNum;
+  memcpy(a->arrDim, arrDim, sizeof(int) * arrDimNum);
+  return a;
+}
+
 static void _SymbolTableInit() {
   struct table_t *t = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
   GlobalSymbolTable = _NewScope(NULL, NULL, Global, "Global Scope", 0, t);
@@ -88,12 +99,24 @@ static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
   }
   Attribute *a = TableGet(s->curTab, id);
   if (a == NULL) {
-    CurrentSymbolTable->stkTop += SizeOf(attr->type);
     TablePut(s->curTab, id, attr);
     _PauseForDisplay();
   } else {
     _NotifyRepetition(a, attr, id);
   }
+}
+
+static void _AddNewLayer() {
+  CurrentSymbolTable->next = _NewDummyLayer(CurrentSymbolTable);
+  CurrentSymbolTable = CurrentSymbolTable->next;
+  _PauseForDisplay();
+}
+
+static void _BackToPrevScope() {
+  CurrentSymbolTable = CurrentSymbolTable->prev;
+  Scope *dummy = CurrentSymbolTable->next;
+  CurrentSymbolTable->next = dummy->peer;
+  FREE(dummy);
 }
 
 // called when it comes to a definition of function
@@ -128,17 +151,31 @@ static Attribute *_CheckFuncDef(ASTNode *id, const char *t) {
   return a;
 }
 
-static void _AddNewLayer() {
-  CurrentSymbolTable->next = _NewDummyLayer(CurrentSymbolTable);
-  CurrentSymbolTable = CurrentSymbolTable->next;
-  _PauseForDisplay();
+// TODO: staic type check
+// must be treat as a special expression
+// to judge a lvalue
+static void _CheckAssignment() {}
+
+static void _CheckExpression() {}
+
+static void _CheckInitializerList(ASTNode *n, const char *baseType);
+static void _CheckInitializer(ASTNode *n, const char *baseType) {
+  // Before this function is called, InnerBuffer will get the dimensions of Array.
+  if (n->nType == Initializer) {
+    _CheckExpression();
+  } else if (n->nType == ArrayInitializer) {
+    _CheckInitializerList(n->attr[0], baseType);
+  } else {
+    RAISE(UnknownNodeType);
+  }
 }
 
-static void _BackToPrevScope() {
-  CurrentSymbolTable = CurrentSymbolTable->prev;
-  Scope *dummy = CurrentSymbolTable->next;
-  CurrentSymbolTable->next = dummy->peer;
-  FREE(dummy);
+static void _CheckInitializerList(ASTNode *n, const char *baseType) {
+  if (n == NULL) {
+    return;
+  }
+  _CheckInitializerList(n->attr[0], baseType);
+  _CheckInitializer(n->attr[1], baseType);
 }
 
 // static void _GoDownAndCheck(ASTNode *n) {}
@@ -156,9 +193,6 @@ static void _HandleCompoundStm(ASTNode *n) {
 }
 
 static void _HandleSelectionStm(ASTNode *n) {
-  if (n == NULL) {
-    return;
-  }
   // handle expression
   _AddPeerScope(Simple, "if");
   // if
@@ -179,6 +213,34 @@ static void _HandleSelectionStm(ASTNode *n) {
   }
 }
 
+static void _HandleLoopStm(ASTNode *n) {
+  // handle expressions
+  _AddPeerScope(LoopBody, "Loop Statement");
+  _HandleCompoundStm(n->attr[3]);
+}
+
+static void _HandleReturnStm(ASTNode *n) {
+  Scope *s = CurrentSymbolTable;
+  while (s != NULL && s->sType != FuncBody) {
+    s = s->prev;
+  }
+  if (s == NULL) {
+    RAISE(Unreachable);
+  }
+  struct table_t *t = GlobalSymbolTable->curTab;
+  Attribute *a = TableGet(t, s->name);
+  const char *rt = a->aa.f->returnType;
+  _Bool needReturn = strncmp(rt, "void", 4) != 0;
+
+  if ((needReturn && n->attr[1] == NULL) || (!needReturn && n->attr[1] != NULL)) {
+    _NotifyWrongReturnStm(n->line, s->name, needReturn);
+  }
+  if (n->attr[1] != NULL) {
+    // _CheckExpression(n->attr[1]);
+    a->aa.f->hasReturnValue = true;
+  }
+}
+
 static void _HandleStmList(ASTNode *n) {
   if (n == NULL) {
     return;
@@ -189,9 +251,7 @@ static void _HandleStmList(ASTNode *n) {
     _AddPeerScope(Simple, "Compound Statement");
     _HandleCompoundStm(p);
   } else if (p->nType == LoopStm) {
-    // handle expressions
-    _AddPeerScope(LoopBody, "Loop Statement");
-    _HandleCompoundStm(p->attr[3]);
+    _HandleLoopStm(p);
   } else if (p->nType == SelectionStm) {
     _HandleSelectionStm(p);
   } else if (p->nType == JumpStm) {
@@ -204,40 +264,108 @@ static void _HandleStmList(ASTNode *n) {
         _NotifyInvalidLocOfJumpStm(p->line, "break", "loop body");
       }
     } else if (strncmp(p->attr[0], "return", 6) == 0) {
-      Scope *s = CurrentSymbolTable;
-      while (s != NULL && s->sType != FuncBody) {
-        s = s->prev;
-      }
-      if (s == NULL) {
-        RAISE(Unreachable);
-      }
-      struct table_t *t = GlobalSymbolTable->curTab;
-      Attribute *a = TableGet(t, s->name);
-      const char *rt = a->aa.f->returnType;
-      _Bool needReturn = strncmp(rt, "void", 4) != 0;
-
-      if ((needReturn && p->attr[1] == NULL) || (!needReturn && p->attr[1] != NULL)) {
-        _NotifyWrongReturnStm(p->line, s->name, needReturn);
-      }
-      if (p->attr[1] != NULL) {
-        // _CheckExpressionType();
-        a->aa.f->hasReturnValue = true;
-      }
+      _HandleReturnStm(p);
     } else {
       RAISE(Unreachable);
     }
   } else if (p->nType == IOStm) {
   } else if (p->nType == ExpressionStm) {
+    // _CheckExpression(p->attr[0]);
   } else {
     RAISE(UnexpectedNodeType);
   }
 }
 
+static const char *_GetBaseType(ASTNode *n, const char *id) {
+  const char *type = n->attr[0];
+  if (strncmp(type, "bool", 4) == 0) {
+    return AtomString("bool");
+  } else if (strncmp(type, "i32", 3) == 0) {
+    return AtomString("i32");
+  } else if (strncmp(type, "f32", 3) == 0) {
+    return AtomString("f32");
+  } else if (strncmp(type, "string", 5) == 0) {
+    return AtomString("string");
+  } else if (strncmp(type, "void", 4) == 0) {
+    _NotifyInvalidTypeOfVar(n->line, id, "void");
+    return NULL;
+  } else {
+    RAISE(Unreachable);
+  }
+  return NULL;
+}
+
+// return the dimension
+// InnerBuffer will hold the details.
+static int _GetArrayDimList(const char *type, int curLine) {
+  const char *p = type;
+  int *buffer = InnerBuffer;
+  int dim = 0;
+  while (*p != '\0') {
+    if (*p == '[') {
+      const char *q = strchr(p, ']');
+      int len = q - p - 1;
+      strncpy(InnerStrBuffer, p + 1, len);
+      InnerStrBuffer[len] = '\0';
+      int curDim = atoi(InnerStrBuffer);
+      if (curDim <= 0) {
+        _NotifyInvalidArrayDim(curLine);
+        return -1;
+      }
+      *buffer++ = curDim;
+      p = q + 1;
+      dim++;
+    } else {
+      p++;
+    }
+  }
+  return dim;
+}
+
+// The backend VM will be constructed by C.
+// So return the corresponding size.
+static int _GetBaseTypeSize(const char *t) {
+  if (strncmp(t, "bool", 4) == 0) {
+    return sizeof(_Bool);
+  } else if (strncmp(t, "i32", 3) == 0) {
+    return sizeof(int32_t);
+  } else if (strncmp(t, "f32", 3) == 0) {
+    return sizeof(float);
+  } else if (strncmp(t, "string", 5) == 0) {
+    return sizeof(const char *);
+  } else {
+    RAISE(Unreachable);
+  }
+  return -1;
+}
+
 static void _HandleDeclarator(ASTNode *n, Scope *s) {
   ASTNode *t = n->attr[0];
   ASTNode *id = n->attr[1];
+  // Get base type
+  const char *bt = _GetBaseType(t, id->attr[0]);
+  if (bt == NULL) {  // void ..invalid
+    return;
+  }
+  // get array dim
+  int dim = _GetArrayDimList(t->attr[0], n->line);
+  if (dim > MAX_ARRAY_DIM) {  // too big
+    _NotifyArrayDimTooBig(n->line, id->attr[0], dim, MAX_ARRAY_DIM);
+    return;
+  }
+  // calculate variable size
+  int varSize = _GetBaseTypeSize(bt);
+  for (int i = 0; i < dim; ++i) {
+    varSize *= InnerBuffer[i];
+  }
+  // check initializer
+  if (n->attr[2] != NULL) {
+    _CheckInitializer(n->attr[2], bt);
+  }
+  // insert into symbol table
   Attribute *a = _NewAttribute(Variable, t->attr[0], s->stkTop, id->line);
-  // _AddSymbolToCurScope(id->attr[0], a);
+  s->stkTop += varSize;
+  a->aa.v = _NewVarDeclAttr(n->attr[2], dim, InnerBuffer);
   _AddSymbol(s, id->attr[0], a);
 }
 
