@@ -52,17 +52,17 @@ typedef struct {
   _Bool hasReturnValue;
   const char *returnType;
   const char *paraTypeList[0];
-} FuncDefAttr;
+} FuncAttr;
 
 typedef struct {
   void *initializer;
   int arrDimNum;
   int *arrDim[0];
-} VarDeclAttr;
+} VarAttr;
 
 typedef union {
-  FuncDefAttr *f;
-  VarDeclAttr *v;
+  FuncAttr *f;
+  VarAttr *v;
 } AdditionalAttribute;
 
 typedef struct {
@@ -72,6 +72,12 @@ typedef struct {
   int declLoc;
   AdditionalAttribute aa;
 } Attribute;
+
+typedef struct {
+  const char *type;
+  int dim;  // only use for array type
+  _Bool isLvalue;
+} ExprAttr;
 
 SymbolTable SymbolTableCreateFromAST(AST *ast);
 void FreeSymbolTable(SymbolTable st);

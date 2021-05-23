@@ -34,8 +34,8 @@ typedef enum {
   ParameterDeclList,    // [0]next [1]parameter declarator
   ParameterTypeList,    // [0]next [1]type specifier
 
-  PostfixExpr,   // [0]expression [1]const char* operator [2]expression
-  BinaryExpr,    // [0]expression [1]const char* operator [2]expression
+  PostfixExpr,   // [0]const char* operator [1]expression [2]expression
+  BinaryExpr,    // [0]const char* operator [1]expression [2]expression
   SelectionStm,  // [0]condition expression [1]branch1 [2]branch2
   Declarator,    // [0]type specifier [1]identifier [2]initializer
   FunctionDecl,  // [0]return type [1]identifier [2]parameter list
@@ -78,8 +78,6 @@ ASTNode *NewASTNode(ASTNodeType t, int line);
   Printer is a mapper, which prints the AST Node.
   cl should be a Fmt pointer, which controls the indent and redirection.
 */
-
-
 
 // void DisplayAST(AST *t, Fmt *fmt);
 

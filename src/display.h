@@ -19,6 +19,18 @@ void _NotifyWrongReturnStm(int curLine, const char *id, _Bool needReturn);
 void _NotifyInvalidTypeOfVar(int curLine, const char *id, const char *type);
 void _NotifyArrayDimTooBig(int curLine, const char *id, int dim, int lim);
 void _NotifyInvalidArrayDim(int curLine);
+void _NotifyUndefinedReference(int curLine, const char *id);
+void _NotifyInvalidArgumentType(int curLine, const char *type, const char *what, const char *detail);
+void _NotifyUnassignable(int curLine);
+void _NotifyUnsubscriptable(int curLine);
+void _NotifyNonIntegerSubscript(int curLine);
+void _NotifyTypeUnmatch(int curLine, const char *lType, const char *rType, const char *op);
+void _NotifyUncallable(int curLine, const char *id, const char *type);
+void _NotifyFuncCallUnmatch(int curLine, const char *want, const char *get, int i);
+void _NotifyParaNumberUnmatch(int curLine, const char *id, int want, int get);
+void _NotifyConditionExprNeedBoolType(int curLine);
+void _NotifyReturnTypeUnmatch(int curLine, const char *want, const char *get, const char *id);
+void _NotifyIOStmMustGetBaseType(int curLine, const char *get);
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id);
 void _PauseForDisplay();
 

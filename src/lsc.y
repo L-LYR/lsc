@@ -358,7 +358,7 @@ expression
 
 assignment_expression
     : logical_or_expression
-    | postfix_expression ASSIGN assignment_expression {
+    | unary_expression ASSIGN assignment_expression {
         $$ = NewASTNode(BinaryExpr, yylineno);
         $$->attr[0] = (void*)AtomString("=");
         $$->attr[1] = $1;

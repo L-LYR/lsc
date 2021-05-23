@@ -99,6 +99,67 @@ void _NotifyInvalidArrayDim(int curLine) {
   static const char *InvalidArrayDim = "Line %d: dimension of array must be positive integer.\n\n";
   _Notify(InvalidArrayDim, curLine);
 }
+
+void _NotifyUndefinedReference(int curLine, const char *id) {
+  static const char *UndefinedReference = "Line %d: use undefined reference '%s'.\n\n";
+  _Notify(UndefinedReference, curLine, id);
+}
+
+void _NotifyInvalidArgumentType(int curLine, const char *type, const char *what, const char *detail) {
+  static const char *InvalidArgumentType = "Line %d: invalid argument type '%s' to %s %s.\n\n";
+  _Notify(InvalidArgumentType, curLine, type, what, detail);
+}
+
+void _NotifyUnassignable(int curLine) {
+  static const char *Unassignable = "Line %d: expression is unassignable.\n\n";
+  _Notify(Unassignable, curLine);
+}
+
+void _NotifyUnsubscriptable(int curLine) {
+  static const char *Unsubscriptable = "Line %d: expression unsubscriptable.\n\n";
+  _Notify(Unsubscriptable, curLine);
+}
+
+void _NotifyNonIntegerSubscript(int curLine) {
+  static const char *NonIntegerSubscript = "Line %d: array subscript is not an integer.\n\n";
+  _Notify(NonIntegerSubscript, curLine);
+}
+
+void _NotifyTypeUnmatch(int curLine, const char *lType, const char *rType, const char *op) {
+  static const char *TypeUnmatch = "Line %d: inconsistent of operands type in binary expression: '%s' %s '%s'.\n\n";
+  _Notify(TypeUnmatch, curLine, lType, op, rType);
+}
+
+void _NotifyUncallable(int curLine, const char *id, const char *type) {
+  static const char *Uncallable = "Line %d: identifier '%s' has type '%s', which is un-callable.\n\n";
+  _Notify(Uncallable, curLine, id, type);
+}
+
+void _NotifyFuncCallUnmatch(int curLine, const char *want, const char *get, int i) {
+  static const char *FuncCallUnmatch = "Line %d: parameter %d wants type '%s', gets type '%s'.\n\n";
+  _Notify(FuncCallUnmatch, curLine, i, want, get);
+}
+
+void _NotifyParaNumberUnmatch(int curLine, const char *id, int want, int get) {
+  static const char *ParaNumberUnmatch = "Line %d: function '%s' wants %d parameter(s), gets %d parameter(s).\n\n";
+  _Notify(ParaNumberUnmatch, curLine, id, want, get);
+}
+
+void _NotifyConditionExprNeedBoolType(int curLine) {
+  static const char *ConditionExprNeedBoolType = "Line %d: condition expression needs bool type.\n\n";
+  _Notify(ConditionExprNeedBoolType, curLine);
+}
+
+void _NotifyReturnTypeUnmatch(int curLine, const char *want, const char *get, const char *id) {
+  static const char *ReturnTypeUnmatch = "Line %d: function '%s' wants return type '%s', gets type '%s'.\n\n";
+  _Notify(ReturnTypeUnmatch, curLine, id, want, get);
+}
+
+void _NotifyIOStmMustGetBaseType(int curLine, const char *get) {
+  static const char *IOStmMustGetBaseType = "Line %d: IO statement must get base type as arguments, but gets type '%s'.\n\n";
+  _Notify(IOStmMustGetBaseType, curLine, get);
+}
+
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
   // for the way of management of memory,
   // redefinition of function will not be notified here.
@@ -172,7 +233,7 @@ static void _DisplayFuncDefDetail(Fmt *fmt) {
   void **arr = TableToArray(GlobalSymbolTable->curTab, NULL);
   int i = 0;
   Attribute *a;
-  FuncDefAttr *f;
+  FuncAttr *f;
   fprintf(fmt->out, "Function Definition Detail:\n");
   _DisplayTableHeaders(fmt, FuncDefDetailHeaders);
   while (arr[i] != NULL) {

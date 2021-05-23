@@ -1,12 +1,21 @@
 i32 fibonaci(i32 n) {
     // if and else if scopes
-    if (n <= 0) {
+    if (n) {
         return 0;
     } else if (n == 1) {
         return 1;    
     } else {
         return fibonaci(n - 1) + fibonaci(n - 2);
     }
+}
+
+i32 fg() {
+    return 1;
+}
+
+i32[2] returnArray() {
+    i32 a[2][2];
+    return a[0][1];
 }
 
 i32 main() {
@@ -17,16 +26,28 @@ i32 main() {
     string s = "Hello, World!";
     i32 x;
 
-    continue; // wrong location of continue
+    // continue; // wrong location of continue
+    ++x;
+    ++x = 2;
+    fibonaci(x);
+    fibonaci(f);
+    fibonaci();
+    x = f[0];
+    x = a[2][1];
+    x = a[f][f];
+    a[1] = a[2];
+    x = fg + x;
+    fg(x);
+    f();
 
-    for (x = 32; x != 0; --x) {
+    for (x = 32; x; --x) {
         i32 i; // loop statement scope
-        print(fibonaci(x));
+        print(fibonaci(x), a);
         continue;
         break;
     }
 
-    break; // wrong location of break;
+    // break; // wrong location of break;
     // nested compound statement
     {
         i32 x, y;
@@ -43,19 +64,20 @@ i32 main() {
 }
 
 i32 var;
-i32 var; // redefinition variable
-i32 var(f32); // redefinition function
+// i32 var; // redefinition variable
+// i32 var(f32); // redefinition function
 
 f32 func(i32, string[5], f32[3][4]);
 
 f32 func(i32 i, string s[5], f32 mat[3][4]) {
     // need return
     if (i == 0) {
-        return;
+        // return;
     }
+    return 0;
 }
 
 void voidFunc(i32 i) {
-    return i;
+    // return i;
 }
 
