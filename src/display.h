@@ -9,6 +9,15 @@ typedef struct {
   const char *fileLoc;
 } Fmt;
 
+#define RED "\x1B[31m"
+#define GRN "\x1B[32m"
+#define YEL "\x1B[33m"
+#define BLU "\x1B[34m"
+#define MAG "\x1B[35m"
+#define CYN "\x1B[36m"
+#define WHT "\x1B[37m"
+#define RESET "\x1B[0m"
+
 // internal
 void _Notify(const char *fmtStr, ...);
 void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine);

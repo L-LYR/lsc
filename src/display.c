@@ -49,6 +49,9 @@ extern Fmt SymbolTableDisplayFmt;
 // wrapper of fprintf for stderr
 void _Notify(const char *fmtStr, ...) {
   // generally notify
+
+  fprintf(stderr, "%sError: %s", RED, RESET);
+
   va_list args;
   va_start(args, fmtStr);
   vfprintf(stderr, fmtStr, args);
@@ -116,7 +119,7 @@ void _NotifyUnassignable(int curLine) {
 }
 
 void _NotifyUnsubscriptable(int curLine) {
-  static const char *Unsubscriptable = "Line %d: expression unsubscriptable.\n\n";
+  static const char *Unsubscriptable = "Line %d: expression is unsubscriptable.\n\n";
   _Notify(Unsubscriptable, curLine);
 }
 

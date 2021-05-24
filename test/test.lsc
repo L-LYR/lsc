@@ -1,6 +1,6 @@
 i32 fibonaci(i32 n) {
     // if and else if scopes
-    if (n) {
+    if (n) { // need bool type
         return 0;
     } else if (n == 1) {
         return 1;    
@@ -15,7 +15,7 @@ i32 fg() {
 
 i32[2] returnArray() {
     i32 a[2][2];
-    return a[0][1];
+    return a[0][1]; // return array type
 }
 
 i32 main() {
@@ -26,7 +26,7 @@ i32 main() {
     string s = "Hello, World!";
     i32 x;
 
-    // continue; // wrong location of continue
+    continue; // wrong location of continue
     ++x;
     ++x = 2;
     fibonaci(x);
@@ -47,7 +47,7 @@ i32 main() {
         break;
     }
 
-    // break; // wrong location of break;
+    break; // wrong location of break;
     // nested compound statement
     {
         i32 x, y;
@@ -64,8 +64,8 @@ i32 main() {
 }
 
 i32 var;
-// i32 var; // redefinition variable
-// i32 var(f32); // redefinition function
+i32 var; // redefinition variable
+i32 var(f32); // redefinition function
 
 f32 func(i32, string[5], f32[3][4]);
 
@@ -74,10 +74,10 @@ f32 func(i32 i, string s[5], f32 mat[3][4]) {
     if (i == 0) {
         // return;
     }
-    return 0;
+    // return 0;
 }
 
 void voidFunc(i32 i) {
-    // return i;
+    return i; // no return
 }
 
