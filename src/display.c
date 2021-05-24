@@ -163,6 +163,31 @@ void _NotifyIOStmMustGetBaseType(int curLine, const char *get) {
   _Notify(IOStmMustGetBaseType, curLine, get);
 }
 
+void _NotifyAssignmentBetweenArray(int curLine) {
+  static const char *AssignmentBetweenArray = "Line %d: assignment must not apply on arrays.\n\n";
+  _Notify(AssignmentBetweenArray, curLine);
+}
+
+void _NotifyArrayInitializerOnBaseType(int curLine) {
+  static const char *ArrayInitializerOnBaseType = "Line %d: cannot apply array initializer on base type.\n\n";
+  _Notify(ArrayInitializerOnBaseType, curLine);
+}
+
+void _NotifyExpectArrayInitializer(int curLine) {
+  static const char *ExpectArrayInitializer = "Line %d: expect array initializer.\n\n";
+  _Notify(ExpectArrayInitializer, curLine);
+}
+
+void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get) {
+  static const char *ArrayInitializerDimUnmatch = "Line %d: array initializer wants %d element(s), gets %d element(s).\n\n";
+  _Notify(ArrayInitializerDimUnmatch, curLine, want, get);
+}
+
+void _NotifyTypeUnmatchInitializer(int curLine, const char *want, const char *get) {
+  static const char *TypeUnmatchInitializer = "Line %d: initialize type '%s' with type '%s'.\n\n";
+  _Notify(TypeUnmatchInitializer, curLine, want, get);
+}
+
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
   // for the way of management of memory,
   // redefinition of function will not be notified here.

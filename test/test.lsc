@@ -19,30 +19,42 @@ i32[2] returnArray() {
 }
 
 i32 main() {
-    bool b = {false};
+    bool b = {false}; // error apply
     f32 f = 5.e-45;
+    i32 y = f; // error type
     f32 __float__;
-    i32 a[4][2] = {{1,2},{3,4},{5,6},{7,8}};
+    i32 a[4][2] = {
+        {1,2},
+        {3}, // dim unmatch
+        {5,6},
+        {7,8,9}, // dim unmatch
+    };
+    i32 b[2] = 2; // error apply
     string s = "Hello, World!";
-    i32 x;
+    i32 x = fg; // error type
+
+    f32 ff[4] = {1,2,3,4}; // error type
+    fibonaci(x);
+
+    x = f ^ s; // error type
 
     continue; // wrong location of continue
     ++x;
-    ++x = 2;
-    fibonaci(x);
-    fibonaci(f);
-    fibonaci();
-    x = f[0];
+    ++x = 2; // non lvalue
+    fibonaci(f); // parameter type unmatch
+    fibonaci(); // number of parameter unmatch
+    1 + 2.0; // error type
+    x = f[0]; // unsubscriptable
     x = a[2][1];
-    x = a[f][f];
-    a[1] = a[2];
-    x = fg + x;
-    fg(x);
-    f();
+    x = a[f][f]; // subscriptable must be integer
+    a[1] = a[2]; // assignment between arrays
+    x = fg + x; // function and variable
+    fg(x);  // number of parameter unmatch
 
-    for (x = 32; x; --x) {
+    f(); // uncallable
+    for (x = 32; x; --x) { // error condition
         i32 i; // loop statement scope
-        print(fibonaci(x), a);
+        print(fibonaci(x), a); // can only print base type
         continue;
         break;
     }
@@ -74,8 +86,9 @@ f32 func(i32 i, string s[5], f32 mat[3][4]) {
     if (i == 0) {
         // return;
     }
+    func(i, s, mat); // parameter type unmatch
     // return 0;
-}
+} // need return value
 
 void voidFunc(i32 i) {
     return i; // no return

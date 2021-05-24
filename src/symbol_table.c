@@ -239,6 +239,12 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
       FREE(rhs);
       return NULL;
     }
+    if (lhs->dim != 0) {
+      _NotifyAssignmentBetweenArray(n->line);
+      FREE(lhs);
+      FREE(rhs);
+      return NULL;
+    }
     FREE(lhs);
     return rhs;
   }
@@ -432,9 +438,9 @@ static ExprAttr *_CheckExpressionType(ASTNode *n) {
 
 static _Bool _CheckFuncParaList(ASTNode *n, FuncAttr *fa, const char *id, int line) {
   ASTNode *p = n;
-  int i = 0;
+  int i = fa->paraNum - 1;
   _Bool match = true;
-  while (p != NULL && i < fa->paraNum) {
+  while (p != NULL && i >= 0) {
     ExprAttr *a = _CheckExpressionType(p->attr[1]);
     const char *t = NULL;
     if (a != NULL) {
@@ -445,19 +451,19 @@ static _Bool _CheckFuncParaList(ASTNode *n, FuncAttr *fa, const char *id, int li
       _NotifyFuncCallUnmatch(line, fa->paraTypeList[i], t, i + 1);
       match = false;
     }
-    i++;
+    i--;
     p = p->attr[0];
   }
   if (p != NULL) {
     while (p != NULL) {
-      i++;
+      i--;
       p = p->attr[0];
     }
-    _NotifyParaNumberUnmatch(line, id, fa->paraNum, i);
+    _NotifyParaNumberUnmatch(line, id, fa->paraNum, fa->paraNum - i - 1);
     return false;
   }
-  if (i != fa->paraNum) {
-    _NotifyParaNumberUnmatch(line, id, fa->paraNum, i);
+  if (i + 1 != 0) {
+    _NotifyParaNumberUnmatch(line, id, fa->paraNum, fa->paraNum - i - 1);
     return false;
   }
   return match;
@@ -486,23 +492,53 @@ static void _CheckIOArgList(ASTNode *n, int line) {
   }
 }
 
-static void _CheckInitializerList(ASTNode *n, const char *baseType);
-static void _CheckInitializer(ASTNode *n, const char *baseType) {
+static _Bool _CheckInitializerList(ASTNode *n, const char *t, int maxDim, int curDim, int cnt, int line);
+static _Bool _CheckInitializer(ASTNode *n, const char *t, int maxDim, int curDim) {
   // Before this function is called, InnerBuffer will get the dimensions of Array.
   if (n->nType == Initializer) {
+    if (maxDim > curDim) {
+      _NotifyExpectArrayInitializer(n->line);
+      return false;
+    }
+    ExprAttr *ea = _CheckExpressionType(n->attr[0]);
+    if (ea != NULL) {
+      if (ea->type != t) {
+        _NotifyTypeUnmatchInitializer(n->line, t, ea->type);
+        FREE(ea);
+        return false;
+      }
+      FREE(ea);
+      return true;
+    } else {
+      return false;
+    }
   } else if (n->nType == ArrayInitializer) {
-    _CheckInitializerList(n->attr[0], baseType);
+    if (maxDim <= curDim) {
+      _NotifyArrayInitializerOnBaseType(n->line);
+      return false;
+    }
+    return _CheckInitializerList(n->attr[0], t, maxDim, curDim, 0, n->line);
   } else {
     RAISE(UnknownNodeType);
   }
+  return true;
 }
 
-static void _CheckInitializerList(ASTNode *n, const char *baseType) {
+static _Bool _CheckInitializerList(ASTNode *n, const char *t, int maxDim, int curDim, int cnt, int line) {
   if (n == NULL) {
-    return;
+    if (cnt != InnerBuffer[curDim]) {
+      _NotifyArrayInitializerDimUnmatch(line, InnerBuffer[curDim], cnt);
+      return false;
+    }
+    return true;
   }
-  _CheckInitializerList(n->attr[0], baseType);
-  _CheckInitializer(n->attr[1], baseType);
+  if (!_CheckInitializerList(n->attr[0], t, maxDim, curDim, cnt + 1, line)) {
+    return false;
+  }
+  if (!_CheckInitializer(n->attr[1], t, maxDim, curDim + 1)) {
+    return false;
+  }
+  return true;
 }
 
 // static void _GoDownAndCheck(ASTNode *n) {}
@@ -727,14 +763,15 @@ static void _HandleDeclarator(ASTNode *n, Scope *s) {
   for (int i = 0; i < dim; ++i) {
     varSize *= InnerBuffer[i];
   }
-  // check initializer
-  if (n->attr[2] != NULL) {
-    _CheckInitializer(n->attr[2], bt);
-  }
-  // insert into symbol table
   Attribute *a = _NewAttribute(Variable, t->attr[0], s->stkTop, id->line);
   s->stkTop += varSize;
-  a->aa.v = _NewVarDeclAttr(n->attr[2], dim, InnerBuffer);
+  // check initializer
+  if (n->attr[2] != NULL && !_CheckInitializer(n->attr[2], bt, dim, 0)) {
+    a->aa.v = _NewVarDeclAttr(NULL, dim, InnerBuffer);
+  } else {
+    a->aa.v = _NewVarDeclAttr(n->attr[2], dim, InnerBuffer);
+  }
+  // insert into symbol table
   _AddSymbol(s, id->attr[0], a);
 }
 

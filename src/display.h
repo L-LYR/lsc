@@ -34,12 +34,17 @@ void _NotifyUnassignable(int curLine);
 void _NotifyUnsubscriptable(int curLine);
 void _NotifyNonIntegerSubscript(int curLine);
 void _NotifyTypeUnmatch(int curLine, const char *lType, const char *rType, const char *op);
+void _NotifyTypeUnmatchInitializer(int curLine, const char *want, const char *get);
 void _NotifyUncallable(int curLine, const char *id, const char *type);
 void _NotifyFuncCallUnmatch(int curLine, const char *want, const char *get, int i);
 void _NotifyParaNumberUnmatch(int curLine, const char *id, int want, int get);
 void _NotifyConditionExprNeedBoolType(int curLine);
 void _NotifyReturnTypeUnmatch(int curLine, const char *want, const char *get, const char *id);
 void _NotifyIOStmMustGetBaseType(int curLine, const char *get);
+void _NotifyAssignmentBetweenArray(int curLine);
+void _NotifyArrayInitializerOnBaseType(int curLine);
+void _NotifyExpectArrayInitializer(int curLine);
+void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get);
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id);
 void _PauseForDisplay();
 
