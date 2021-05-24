@@ -20,6 +20,7 @@ typedef struct {
 
 // internal
 void _Notify(const char *fmtStr, ...);
+
 void _NotifyRedeclaration(int curLine, const char *id, SymbolType declareType, int declareLine);
 void _NotifyRedefinition(int curLine, const char *id, SymbolType defineType, int defineLine);
 void _NotifyTypeConflict(int curLine, const char *id, const char *tNew, const char *tOld, int declareLine);
@@ -45,6 +46,7 @@ void _NotifyAssignmentBetweenArray(int curLine);
 void _NotifyArrayInitializerOnBaseType(int curLine);
 void _NotifyExpectArrayInitializer(int curLine);
 void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get);
+
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id);
 void _PauseForDisplay();
 

@@ -250,20 +250,31 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
   }
   // in other binary expression, operands must not be string
   if (lhs->type == BaseTypeStrs[STRING]) {
-    _NotifyInvalidArgumentType(l->line, lhs->type, "binary expression", op);
+    _NotifyInvalidArgumentType(l->line, lhs->type, "binary expression lhs", op);
     FREE(lhs);
     FREE(rhs);
     return NULL;
   }
   if (rhs->type == BaseTypeStrs[STRING]) {
-    _NotifyInvalidArgumentType(r->line, rhs->type, "binary expression", op);
+    _NotifyInvalidArgumentType(r->line, rhs->type, "binary expression rhs", op);
     FREE(lhs);
     FREE(rhs);
     return NULL;
   }
   // return bool
-  if (op == AtomString("||") || op == AtomString("&&") || op == AtomString("==") || op == AtomString("!=") || op == AtomString("<") || op == AtomString(">") || op == AtomString("<=") ||
-      op == AtomString(">=")) {
+  if (op == AtomString("||") || op == AtomString("&&")) {
+    if (lhs->type != BaseTypeStrs[BOOL] || rhs->type != BaseTypeStrs[BOOL]) {
+      _NotifyInvalidArgumentType(l->line, lhs->type, "binary expression lhs", op);
+      _NotifyInvalidArgumentType(r->line, rhs->type, "binary expression rhs", op);
+      FREE(lhs);
+      FREE(rhs);
+      return NULL;
+    }
+    FREE(lhs);
+    FREE(rhs);
+    return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
+  }
+  if (op == AtomString("==") || op == AtomString("!=") || op == AtomString("<") || op == AtomString(">") || op == AtomString("<=") || op == AtomString(">=")) {
     FREE(lhs);
     FREE(rhs);
     return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
@@ -271,11 +282,13 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
   // must be i32
   if (op == AtomString("&") || op == AtomString("|") || op == AtomString("^") || op == AtomString("%")) {
     if (lhs->type != BaseTypeStrs[I32]) {
+      _NotifyInvalidArgumentType(l->line, lhs->type, "binary expression lhs", op);
       FREE(lhs);
       FREE(rhs);
       return NULL;
     }
     if (rhs->type != BaseTypeStrs[I32]) {
+      _NotifyInvalidArgumentType(r->line, rhs->type, "binary expression rhs", op);
       FREE(lhs);
       FREE(rhs);
       return NULL;
@@ -584,6 +597,7 @@ static void _HandleSelectionStm(ASTNode *n) {
     RAISE(UnexpectedNodeType);
   }
 }
+
 static void _HandleLoopStm(ASTNode *n) {
   // handle expressions
   ASTNode *init = n->attr[0];  // Expr Stm
@@ -639,6 +653,17 @@ static void _HandleReturnStm(ASTNode *n) {
   }
 }
 
+static _Bool _IsInLoop() {
+  Scope *s = CurrentSymbolTable->prev;
+  while (s != NULL) {
+    if (s->sType == LoopBody) {
+      return true;
+    }
+    s = s->prev;
+  }
+  return false;
+}
+
 static void _HandleStm(ASTNode *n) {
   if (n->nType == CompoundStm) {
     _AddPeerScope(Simple, "Compound Statement");
@@ -649,11 +674,11 @@ static void _HandleStm(ASTNode *n) {
     _HandleSelectionStm(n);
   } else if (n->nType == JumpStm) {
     if (strncmp(n->attr[0], "continue", 8) == 0) {
-      if (CurrentSymbolTable->prev->sType != LoopBody) {
+      if (!_IsInLoop()) {
         _NotifyInvalidLocOfJumpStm(n->line, "continue", "loop body");
       }
     } else if (strncmp(n->attr[0], "break", 5) == 0) {
-      if (CurrentSymbolTable->prev->sType != LoopBody) {
+      if (!_IsInLoop()) {
         _NotifyInvalidLocOfJumpStm(n->line, "break", "loop body");
       }
     } else if (strncmp(n->attr[0], "return", 6) == 0) {

@@ -52,10 +52,13 @@ i32 main() {
     fg(x);  // number of parameter unmatch
 
     f(); // uncallable
-    for (x = 32; x; --x) { // error condition
+    for (x = 32; x || x; --x) { // error condition
         i32 i; // loop statement scope
         print(fibonaci(x), a); // can only print base type
         continue;
+        {
+            continue;
+        }
         break;
     }
 
