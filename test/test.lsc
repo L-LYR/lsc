@@ -18,7 +18,7 @@ i32[2] returnArray() {
     return a[0][1]; // return array type
 }
 
-i32 main() {
+i32 mian() {
     bool b = {false}; // error apply
     f32 f = 5.e-45;
     i32 y = f; // error type

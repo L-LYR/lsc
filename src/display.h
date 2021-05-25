@@ -46,6 +46,7 @@ void _NotifyAssignmentBetweenArray(int curLine);
 void _NotifyArrayInitializerOnBaseType(int curLine);
 void _NotifyExpectArrayInitializer(int curLine);
 void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get);
+void _NotifyNoMainFunction(int curLine);
 
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id);
 void _PauseForDisplay();

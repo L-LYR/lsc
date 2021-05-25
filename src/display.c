@@ -9,6 +9,8 @@
 
 extern Scope *GlobalSymbolTable;
 
+int ErrorCount = 0;
+
 static char TmpInnerBuffer[128];
 
 static const char *SymbolTypeStrs[] = {
@@ -49,9 +51,8 @@ extern Fmt SymbolTableDisplayFmt;
 // wrapper of fprintf for stderr
 void _Notify(const char *fmtStr, ...) {
   // generally notify
-
+  ErrorCount++;
   fprintf(stderr, "%sError: %s", RED, RESET);
-
   va_list args;
   va_start(args, fmtStr);
   vfprintf(stderr, fmtStr, args);
@@ -186,6 +187,11 @@ void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get) {
 void _NotifyTypeUnmatchInitializer(int curLine, const char *want, const char *get) {
   static const char *TypeUnmatchInitializer = "Line %d: initialize type '%s' with type '%s'.\n\n";
   _Notify(TypeUnmatchInitializer, curLine, want, get);
+}
+
+void _NotifyNoMainFunction(int curLine) {
+  static const char *NoMainFunction = "Line %d: main function is not detected.\n\n";
+  _Notify(NoMainFunction, curLine);
 }
 
 void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {

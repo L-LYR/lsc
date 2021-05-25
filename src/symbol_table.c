@@ -15,6 +15,8 @@
 #include "stdbool.h"
 #include "symbol_table.h"
 
+extern int ErrorCount;
+
 static const char *ReservedSymbolList[] = {
     "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+", "-", "++", "--", "~", "!", "*", "/", "%",  "<",
     ">",    "<=",  ">=",  "==",     "!=",   "<<", ">>",   "&",   "|",      "^",     "&&",       "||",    "=",    ",", "(", ")",  "[",  "]", "{", "}", ";", NULL,
@@ -870,6 +872,13 @@ static void _FillFuncParaType(ASTNode *n, const char *ptl[], int i) {
   }
 }
 
+static void _DetectMainFunction() {
+  Attribute *a = TableGet(GlobalSymbolTable->curTab, AtomString("main"));
+  if (a == NULL) {
+    _NotifyNoMainFunction(0);
+  }
+}
+
 static void _HandleGlobalList(ASTNode *n) {
   if (n == NULL) {
     return;
@@ -930,6 +939,8 @@ SymbolTable SymbolTableCreateFromAST(AST *ast) {
   _AddNewLayer();
   _HandleGlobalList(ast->root);
   _BackToPrevScope();
+  _DetectMainFunction();
+  fprintf(stderr, "%d errors detected.\n", ErrorCount);
   return GlobalSymbolTable;
 }
 
