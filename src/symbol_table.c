@@ -5,15 +5,19 @@
 
 #include "symbol_table.h"
 
+#include <errno.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../lib/llsc.h"
+#include "ast.h"
 #include "display.h"
 #include "exception.h"
 #include "stdbool.h"
 #include "symbol_table.h"
+#include "to_str.h"
 
 extern int ErrorCount;
 
@@ -23,7 +27,8 @@ static const char *ReservedSymbolList[] = {
 };
 
 typedef enum { VOID, I32, F32, STRING, BOOL } BaseType;
-static const char *BaseTypeStrs[] = {NULL, NULL, NULL, NULL, NULL};
+// typedef int32_t pointer_t;
+const char *BaseTypeStrs[] = {NULL, NULL, NULL, NULL, NULL};
 
 void AtomInit() {
   AtomLoad(ReservedSymbolList);
@@ -35,8 +40,9 @@ void AtomInit() {
   BaseTypeStrs[BOOL] = AtomString("bool");
 }
 
-SymbolTable GlobalSymbolTable = NULL;
-SymbolTable CurrentSymbolTable = NULL;
+struct table_t *ConstTable = NULL;
+Scope *GlobalScope = NULL;
+static Scope *CurrentScope = NULL;
 static int DefaultTableSize = 32;
 static int CurID = 0;
 static const int MAX_ARRAY_DIM = 8;
@@ -105,13 +111,14 @@ static ExprAttr *_NewExprAttr(const char *type, _Bool assignable, int dim) {
 
 static void _SymbolTableInit() {
   struct table_t *t = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
-  GlobalSymbolTable = _NewScope(NULL, NULL, Global, "Global Scope", 0, t);
-  CurrentSymbolTable = GlobalSymbolTable;
+  GlobalScope = _NewScope(NULL, NULL, Global, "Global Scope", 0, t);
+  CurrentScope = GlobalScope;
+  ConstTable = TableCreate(DefaultTableSize, (equal_t)AtomEqual, (hash_t)AtomHash);
 }
 
 static void _AddPeerScope(ScopeType type, const char *name) {
-  CurrentSymbolTable->peer = _NewScope(NULL, CurrentSymbolTable->prev, type, name, CurrentSymbolTable->level, NULL);
-  CurrentSymbolTable = CurrentSymbolTable->peer;
+  CurrentScope->peer = _NewScope(NULL, CurrentScope->prev, type, name, CurrentScope->level, NULL);
+  CurrentScope = CurrentScope->peer;
 }
 
 static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
@@ -120,23 +127,25 @@ static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
   }
   Attribute *a = TableGet(s->curTab, id);
   if (a == NULL) {
+    attr->id = TableSize(s->curTab);
     TablePut(s->curTab, id, attr);
     _PauseForDisplay();
   } else {
     _NotifyRepetition(a, attr, id);
+    s->stkTop -= 4;
   }
 }
 
 static void _AddNewLayer() {
-  CurrentSymbolTable->next = _NewDummyLayer(CurrentSymbolTable);
-  CurrentSymbolTable = CurrentSymbolTable->next;
+  CurrentScope->next = _NewDummyLayer(CurrentScope);
+  CurrentScope = CurrentScope->next;
   _PauseForDisplay();
 }
 
 static void _BackToPrevScope() {
-  CurrentSymbolTable = CurrentSymbolTable->prev;
-  Scope *dummy = CurrentSymbolTable->next;
-  CurrentSymbolTable->next = dummy->peer;
+  CurrentScope = CurrentScope->prev;
+  Scope *dummy = CurrentScope->next;
+  CurrentScope->next = dummy->peer;
   FREE(dummy);
 }
 
@@ -145,7 +154,7 @@ static void _BackToPrevScope() {
 // if the return value is NULL, it occurs an
 static Attribute *_CheckFuncDef(ASTNode *id, const char *t) {
   Attribute *a = NULL;
-  Scope *s = GlobalSymbolTable;
+  Scope *s = GlobalScope;
   if (s->curTab != NULL) {
     a = TableGet(s->curTab, id->attr[0]);
   }  // s->curTable == NULL there must have a == NULL.
@@ -175,7 +184,7 @@ static Attribute *_CheckFuncDef(ASTNode *id, const char *t) {
 static ExprAttr *_CheckExpressionType(ASTNode *n);
 
 static Attribute *_LocateIdentifier(const char *id) {
-  Scope *s = CurrentSymbolTable;
+  Scope *s = CurrentScope;
   Attribute *a = NULL;
   while (s != NULL) {
     if (s->curTab != NULL) {
@@ -438,10 +447,24 @@ static ExprAttr *_CheckExpressionType(ASTNode *n) {
     }
     return _NewExprAttr(a->type, dim == 0, dim);
   } else if (n->nType == StrConst) {
+    const char *val = TableGet(ConstTable, n->attr[0]);
+    if (val == NULL) {
+      TablePut(ConstTable, n->attr[0], (void *)AtomAppend("s", Itoa(TableSize(ConstTable))));
+    }
     return _NewExprAttr(BaseTypeStrs[STRING], false, 0);
   } else if (n->nType == FloatConst) {
+    if (strtof(n->attr[0], NULL) == HUGE_VALF) {
+      _NotifyConstantOutOfRange(n->line, n->attr[0], BaseTypeStrs[F32]);
+      return NULL;
+    }
     return _NewExprAttr(BaseTypeStrs[F32], false, 0);
   } else if (n->nType == IntConst) {
+    errno = 0;
+    int64_t l = strtol(n->attr[0], NULL, 0);
+    if (errno == ERANGE || l < INT32_MIN || l > INT32_MAX) {
+      _NotifyConstantOutOfRange(n->line, n->attr[0], BaseTypeStrs[I32]);
+      return NULL;
+    }
     return _NewExprAttr(BaseTypeStrs[I32], false, 0);
   } else if (n->nType == BoolConst) {
     return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
@@ -494,12 +517,17 @@ static _Bool _IsBaseType(const char *t) {
 }
 
 static void _CheckIOArgList(ASTNode *n, int line) {
-  ASTNode *p = n;
+  _Bool isScan = n->attr[0] == AtomString("scan");
+  ASTNode *p = n->attr[1], *e;
   while (p != NULL) {
-    ExprAttr *a = _CheckExpressionType(p->attr[1]);
+    e = p->attr[1];
+    ExprAttr *a = _CheckExpressionType(e);
     if (a != NULL) {
       if (!_IsBaseType(a->type)) {
         _NotifyIOStmMustGetBaseType(line, a->type);
+      }
+      if (isScan && !a->isLvalue) {
+        _NotifyUnassignable(line);
       }
       FREE(a);
     }
@@ -534,7 +562,7 @@ static _Bool _CheckInitializer(ASTNode *n, const char *t, int maxDim, int curDim
     }
     return _CheckInitializerList(n->attr[0], t, maxDim, curDim, 0, n->line);
   } else {
-    RAISE(UnknownNodeType);
+    RAISE(UnexpectedNodeType);
   }
   return true;
 }
@@ -628,14 +656,14 @@ static void _HandleLoopStm(ASTNode *n) {
 }
 
 static void _HandleReturnStm(ASTNode *n) {
-  Scope *s = CurrentSymbolTable;
+  Scope *s = CurrentScope;
   while (s != NULL && s->sType != FuncBody) {
     s = s->prev;
   }
   if (s == NULL) {
     RAISE(Unreachable);
   }
-  struct table_t *t = GlobalSymbolTable->curTab;
+  struct table_t *t = GlobalScope->curTab;
   Attribute *a = TableGet(t, s->name);
   const char *rt = a->aa.f->returnType;
   _Bool needReturn = rt != BaseTypeStrs[VOID];
@@ -656,7 +684,7 @@ static void _HandleReturnStm(ASTNode *n) {
 }
 
 static _Bool _IsInLoop() {
-  Scope *s = CurrentSymbolTable->prev;
+  Scope *s = CurrentScope->prev;
   while (s != NULL) {
     if (s->sType == LoopBody) {
       return true;
@@ -675,21 +703,21 @@ static void _HandleStm(ASTNode *n) {
   } else if (n->nType == SelectionStm) {
     _HandleSelectionStm(n);
   } else if (n->nType == JumpStm) {
-    if (strncmp(n->attr[0], "continue", 8) == 0) {
+    if (n->attr[0] == AtomString("continue")) {
       if (!_IsInLoop()) {
         _NotifyInvalidLocOfJumpStm(n->line, "continue", "loop body");
       }
-    } else if (strncmp(n->attr[0], "break", 5) == 0) {
+    } else if (n->attr[0] == AtomString("break")) {
       if (!_IsInLoop()) {
         _NotifyInvalidLocOfJumpStm(n->line, "break", "loop body");
       }
-    } else if (strncmp(n->attr[0], "return", 6) == 0) {
+    } else if (n->attr[0] == AtomString("return")) {
       _HandleReturnStm(n);
     } else {
       RAISE(Unreachable);
     }
   } else if (n->nType == IOStm) {
-    _CheckIOArgList(n->attr[1], n->line);
+    _CheckIOArgList(n, n->line);
   } else if (n->nType == ExpressionStm) {
     ExprAttr *a = _CheckExpressionType(n->attr[0]);
     if (a != NULL) {
@@ -756,20 +784,22 @@ static int _GetArrayDimList(const char *type, int curLine) {
 
 // The backend VM will be constructed by C.
 // So return the corresponding size.
-static int _GetBaseTypeSize(const char *type) {
-  if (type == BaseTypeStrs[BOOL]) {
-    return sizeof(_Bool);
-  } else if (type == BaseTypeStrs[I32]) {
-    return sizeof(int32_t);
-  } else if (type == BaseTypeStrs[F32]) {
-    return sizeof(float);
-  } else if (type == BaseTypeStrs[STRING]) {
-    return sizeof(const char *);
-  } else {
-    RAISE(Unreachable);
-  }
-  return -1;
-}
+// ATTENTION! unused
+// size of each type will be sizeof(int32_t)
+// static int _GetBaseTypeSize(const char *type) {
+//   if (type == BaseTypeStrs[BOOL]) {
+//     return sizeof(_Bool);
+//   } else if (type == BaseTypeStrs[I32]) {
+//     return sizeof(int32_t);
+//   } else if (type == BaseTypeStrs[F32]) {
+//     return sizeof(float);
+//   } else if (type == BaseTypeStrs[STRING]) {
+//     return sizeof(pointer_t);
+//   } else {
+//     RAISE(Unreachable);
+//   }
+//   return -1;
+// }
 
 static void _HandleDeclarator(ASTNode *n, Scope *s) {
   ASTNode *t = n->attr[0];
@@ -786,12 +816,18 @@ static void _HandleDeclarator(ASTNode *n, Scope *s) {
     return;
   }
   // calculate variable size
-  int varSize = _GetBaseTypeSize(bt);
-  for (int i = 0; i < dim; ++i) {
-    varSize *= InnerBuffer[i];
-  }
+  // int varSize;
+  // if (dim == 0) {
+  //   varSize = _GetBaseTypeSize(bt);
+  // } else {
+  //   varSize = sizeof(pointer_t);
+  // }
+  // for (int i = 0; i < dim; ++i) {
+  //   varSize *= InnerBuffer[i];
+  // }
   Attribute *a = _NewAttribute(Variable, t->attr[0], s->stkTop, id->line);
-  s->stkTop += varSize;
+  // s->stkTop += varSize;
+  s->stkTop += 4;  // aligned 4 byte
   // check initializer
   if (n->attr[2] != NULL && !_CheckInitializer(n->attr[2], bt, dim, 0)) {
     a->aa.v = _NewVarDeclAttr(NULL, dim, InnerBuffer);
@@ -817,7 +853,7 @@ static void _HandleDeclList(ASTNode *n) {
   _HandleDeclList(n->attr[0]);
   // Declaration Node is useless here.
   // Specifying types is handled in the AST.
-  _HandleDeclaratorList(((ASTNode *)(n->attr[1]))->attr[1], CurrentSymbolTable);
+  _HandleDeclaratorList(((ASTNode *)(n->attr[1]))->attr[1], CurrentScope);
 }
 
 static const char *_GernerateParaTypeList(ASTNode *n) {
@@ -873,7 +909,7 @@ static void _FillFuncParaType(ASTNode *n, const char *ptl[], int i) {
 }
 
 static void _DetectMainFunction() {
-  Attribute *a = TableGet(GlobalSymbolTable->curTab, AtomString("main"));
+  Attribute *a = TableGet(GlobalScope->curTab, AtomString("main"));
   if (a == NULL) {
     _NotifyNoMainFunction(0);
   }
@@ -888,7 +924,7 @@ static void _HandleGlobalList(ASTNode *n) {
   ASTNode *p = (ASTNode *)(n->attr[1]);
   if (p->nType == Declaration) {
     // insert and check
-    _HandleDeclaratorList(p->attr[1], GlobalSymbolTable);
+    _HandleDeclaratorList(p->attr[1], GlobalScope);
   } else if (p->nType == FunctionDecl) {
     // insert and check
     ASTNode *rt = p->attr[0];
@@ -901,7 +937,7 @@ static void _HandleGlobalList(ASTNode *n) {
     a->aa.f = _NewFuncAttr(-1, rt->attr[0], paraNum);
     _FillFuncParaType(pl, a->aa.f->paraTypeList, paraNum - 1);
 
-    _AddSymbol(GlobalSymbolTable, id->attr[0], a);
+    _AddSymbol(GlobalScope, id->attr[0], a);
   } else if (p->nType == FunctionDef) {
     // insert and check
     ASTNode *rt = p->attr[0];
@@ -917,11 +953,15 @@ static void _HandleGlobalList(ASTNode *n) {
       }
 
       a->aa.f->defLoc = p->line;
-      if (strncmp(id->attr[0], "main", 4) == 0) {
+      if (id->attr[0] == AtomString("main")) {
         a->aa.f->isMain = true;
+        if (a->aa.f->paraNum != 0) {
+          _NotifyMainFuncHasParam(p->line);
+        }
       }
+      a->aa.f->defNode = p;
       _AddPeerScope(FuncBody, id->attr[0]);
-      _HandleDeclaratorList(pl, CurrentSymbolTable);
+      _HandleDeclaratorList(pl, CurrentScope);
       // parameter declarator list is also a declarator list...LOL
       _HandleCompoundStm(p->attr[3]);
       _Bool needReturn = rt->attr[0] != BaseTypeStrs[VOID];
@@ -934,25 +974,38 @@ static void _HandleGlobalList(ASTNode *n) {
   }
 }
 
-SymbolTable SymbolTableCreateFromAST(AST *ast) {
+SymbolTable *SymbolTableCreateFromAST(AST *ast) {
+  ErrorCount = 0;
   _SymbolTableInit();
   _AddNewLayer();
   _HandleGlobalList(ast->root);
   _BackToPrevScope();
   _DetectMainFunction();
-  fprintf(stderr, "%d errors detected.\n", ErrorCount);
-  return GlobalSymbolTable;
+  if (ErrorCount > 0) {
+    fprintf(stderr, "%d errors detected.\n", ErrorCount);
+  }
+  SymbolTable *st = ArenaAllocFor(sizeof(SymbolTable));
+  st->s = GlobalScope;
+  st->constTable = ConstTable;
+  ConstTable = NULL;
+  GlobalScope = NULL;
+  return st;
 }
 
-void FreeSymbolTable(SymbolTable st) {
-  if (st == NULL) {
+static void _FreeScopeTree(Scope *s) {
+  if (s == NULL) {
     return;
   }
-  while (st != NULL) {
-    if (st->curTab != NULL) {
-      TableFree(&(st->curTab));
+  while (s != NULL) {
+    if (s->curTab != NULL) {
+      TableFree(&(s->curTab));
     }
-    FreeSymbolTable(st->next);
-    st = st->peer;
+    _FreeScopeTree(s->next);
+    s = s->peer;
   }
+}
+
+void FreeSymbolTable(SymbolTable *st) {
+  _FreeScopeTree(st->s);
+  TableFree(&(st->constTable));
 }

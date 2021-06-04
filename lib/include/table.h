@@ -5,7 +5,7 @@
 
 #ifndef TABLE_INCLUDE
 #define TABLE_INCLUDE
-
+#include <stdbool.h>
 typedef _Bool (*equal_t)(const void *, const void *);
 typedef unsigned long (*hash_t)(const void *);
 

@@ -19,7 +19,6 @@ Scope Layer:
 */
 
 typedef struct Scope Scope;
-typedef Scope *SymbolTable;
 
 typedef enum {
   Global,
@@ -30,13 +29,13 @@ typedef enum {
 
 struct Scope {
   int level;               // scope level
-  const char *name;        // name of scope
   int id;                  // to show the relationship between scopes
-  ScopeType sType;         // scope type
   int32_t stkTop;          // stack top
-  SymbolTable prev;        // previous layer
-  SymbolTable peer;        // peer layer
-  SymbolTable next;        // next layer
+  ScopeType sType;         // scope type
+  const char *name;        // name of scope
+  Scope *prev;             // previous layer
+  Scope *peer;             // peer layer
+  Scope *next;             // next layer
   struct table_t *curTab;  // current table
 };
 
@@ -50,6 +49,7 @@ typedef struct {
   int paraNum;
   _Bool isMain;
   _Bool hasReturnValue;
+  ASTNode *defNode;
   const char *returnType;
   const char *paraTypeList[0];
 } FuncAttr;
@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
   void *initializer;
   int arrDimNum;
-  int *arrDim[0];
+  int arrDim[0];
 } VarAttr;
 
 typedef union {
@@ -68,7 +68,8 @@ typedef union {
 typedef struct {
   SymbolType sType;  // symbol type
   const char *type;  // specified type
-  int32_t address;   // used in IR
+  int32_t address;
+  int id;  // the sequence of declaration, global scope will not need this
   int declLoc;
   AdditionalAttribute aa;
 } Attribute;
@@ -79,7 +80,12 @@ typedef struct {
   _Bool isLvalue;
 } ExprAttr;
 
-SymbolTable SymbolTableCreateFromAST(AST *ast);
-void FreeSymbolTable(SymbolTable st);
+typedef struct Symboltable {
+  Scope *s;
+  struct table_t *constTable;
+} SymbolTable;
+
+SymbolTable *SymbolTableCreateFromAST(AST *ast);
+void FreeSymbolTable(SymbolTable *st);
 
 #endif

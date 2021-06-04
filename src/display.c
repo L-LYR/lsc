@@ -6,8 +6,9 @@
 
 #include "../lib/llsc.h"
 #include "exception.h"
+#include "generate_code.h"
 
-extern Scope *GlobalSymbolTable;
+extern Scope *GlobalScope;
 
 int ErrorCount = 0;
 
@@ -19,7 +20,7 @@ static const char *SymbolTypeStrs[] = {
 };
 
 static const char *SymbolTableHeaders[] = {
-    "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", "Has Initializer?", NULL,
+    "ID", "Identifier", "Type", "Specified Type", "Offset", "Declaration Location", "Has Initializer?", NULL,
 };
 
 static const char *FuncDefDetailHeaders[] = {
@@ -42,6 +43,11 @@ static const char *TypeStr[] = {
     "Bianry Expression",   "Selection Statement",
     "Declarator",          "Function Declaration",
     "Loop Statement",      "Function Definition",
+};
+
+static const char *IRTypeStr[] = {
+    "function", "label",   "malloc",  "param",   "copy",   "goto",   "jump_if", "arg",    "call",   "return", "scan",   "print",  "",         "uop_bnot", "uop_not",  "uop_minus", "bop_mul",
+    "bop_div",  "bop_mod", "bop_add", "bop_sub", "bop_lt", "bop_le", "bop_gt",  "bop_ge", "bop_eq", "bop_ne", "bop_sr", "bop_sl", "bop_band", "bop_bor",  "bop_bxor", "bop_and",   "bop_or",
 };
 
 // from lscp.c
@@ -194,40 +200,41 @@ void _NotifyNoMainFunction(int curLine) {
   _Notify(NoMainFunction, curLine);
 }
 
-void _NotifyRepetition(Attribute *old, Attribute *new, const char *id) {
+void _NotifyConstantOutOfRange(int curLine, const char *constVal, const char *type) {
+  static const char *ConstantOutOfRange = "Line %d: constant '%s' is out of range as type '%s'.\n\n";
+  _Notify(ConstantOutOfRange, curLine, constVal, type);
+}
+
+void _NotifyMainFuncHasParam(int curLine) {
+  static const char *MainFuncHasParam = "Line %d: function main should not has params\n\n";
+  _Notify(MainFuncHasParam, curLine);
+}
+
+void _NotifyRepetition(Attribute *old, Attribute *newAttr, const char *id) {
   // for the way of management of memory,
   // redefinition of function will not be notified here.
-  if (new->sType == Variable) {  // redeclaration
+  if (newAttr->sType == Variable) {  // redeclaration
     if (old->declLoc != -1) {
-      _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
+      _NotifyRedeclaration(newAttr->declLoc, id, old->sType, old->declLoc);
     } else if (old->aa.f != NULL) {
-      _NotifyRedefinition(new->declLoc, id, old->sType, old->aa.f->defLoc);
+      _NotifyRedefinition(newAttr->declLoc, id, old->sType, old->aa.f->defLoc);
     } else {
       RAISE(Unreachable);
     }
-  } else if (new->sType == Function) {
+  } else if (newAttr->sType == Function) {
     if (old->sType == Variable) {  // redeclaration
-      _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
+      _NotifyRedeclaration(newAttr->declLoc, id, old->sType, old->declLoc);
     } else if (old->sType == Function) {
-      _Bool isDecl = new->declLoc != -1;
+      _Bool isDecl = newAttr->declLoc != -1;
       _Bool hasDecl = old->declLoc != -1;
       _Bool hasDef = old->aa.f != NULL;
 
       if (hasDef) {  // redefinition
-        _NotifyRedefinition(new->declLoc, id, old->sType, old->aa.f->defLoc);
+        _NotifyRedefinition(newAttr->declLoc, id, old->sType, old->aa.f->defLoc);
       } else if (hasDecl && isDecl) {  // redeclaration
-        _NotifyRedeclaration(new->declLoc, id, old->sType, old->declLoc);
+        _NotifyRedeclaration(newAttr->declLoc, id, old->sType, old->declLoc);
       }
     }
-  }
-}
-
-void _PauseForDisplay() {
-  if (Pause) {
-    fprintf(stdout, "Stop For Display Current Symbol Table.\n");
-    DisplaySymbolTable(GlobalSymbolTable, &SymbolTableDisplayFmt);
-    fprintf(stdout, "Press Any Key To Continue...\n");
-    getchar();
   }
 }
 
@@ -253,9 +260,9 @@ static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
     if (a->sType == Function) {
-      fprintf(fmt->out, "%s;%s;%s;%d;%d;(null)\n", (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
+      fprintf(fmt->out, "%d;%s;%s;%s;%d;%d;(null)\n", a->id, (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
     } else if (a->sType == Variable) {
-      fprintf(fmt->out, "%s;%s;%s;%d;%d;%s\n", (const char *)arr[i], SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc, _DisplayBool(a->aa.v->initializer != NULL));
+      fprintf(fmt->out, "%d;%s;%s;%s;%d;%d;%s\n", a->id, (const char *)arr[i], SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc, _DisplayBool(a->aa.v->initializer != NULL));
     }
     i += 2;
   }
@@ -263,8 +270,8 @@ static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   putc('\n', fmt->out);
 }
 
-static void _DisplayFuncDefDetail(Fmt *fmt) {
-  void **arr = TableToArray(GlobalSymbolTable->curTab, NULL);
+static void _DisplayFuncDefDetail(Scope *global, Fmt *fmt) {
+  void **arr = TableToArray(global->curTab, NULL);
   int i = 0;
   Attribute *a;
   FuncAttr *f;
@@ -291,25 +298,25 @@ static void _DisplayFuncDefDetail(Fmt *fmt) {
   putc('\n', fmt->out);
 }
 
-static void _DisplaySymbolTableTree(SymbolTable st, Fmt *fmt) {
-  if (st == NULL) {
+static void _DisplayScopeTree(Scope *s, Fmt *fmt) {
+  if (s == NULL) {
     return;
   }
   // display peer;
-  while (st != NULL) {
-    if (st->id == -1) {  // skip dummy head
-      st = st->peer;
+  while (s != NULL) {
+    if (s->id == -1) {  // skip dummy head
+      s = s->peer;
       continue;
     }
-    fprintf(fmt->out, "%s: scope %d, level %d", st->name, st->id, st->level);
-    if (st->prev == NULL) {
+    fprintf(fmt->out, "%s: scope %d, level %d", s->name, s->id, s->level);
+    if (s->prev == NULL) {
       fputc('\n', fmt->out);
     } else {
-      fprintf(fmt->out, ", parent scope %d: \n", st->prev->id);
+      fprintf(fmt->out, ", parent scope %d: \n", s->prev->id);
     }
-    _DisplaySymbolTable(st->curTab, fmt);
-    _DisplaySymbolTableTree(st->next, fmt);
-    st = st->peer;
+    _DisplaySymbolTable(s->curTab, fmt);
+    _DisplayScopeTree(s->next, fmt);
+    s = s->peer;
   }
 }
 
@@ -320,15 +327,24 @@ static void _BeautifyST(Fmt *fmt) {
   system(TmpInnerBuffer);
 }
 
-void DisplaySymbolTable(SymbolTable st, Fmt *fmt) {
+void DisplaySymbolTable(SymbolTable *st, Fmt *fmt) {
   fmt->out = fopen(fmt->fileLoc, "w");
   if (fmt->out == NULL) {
     RAISE(OutFileOpenErr);
   }
-  _DisplaySymbolTableTree(st, fmt);
-  _DisplayFuncDefDetail(fmt);
+  _DisplayScopeTree(st->s, fmt);
+  _DisplayFuncDefDetail(st->s, fmt);
   fclose(fmt->out);
   _BeautifyST(fmt);
+}
+
+void _PauseForDisplay() {
+  if (Pause) {
+    fprintf(stdout, "Stop For Display Current Symbol Table.\n");
+    _DisplayScopeTree(GlobalScope, &SymbolTableDisplayFmt);
+    fprintf(stdout, "Press Any Key To Continue...\n");
+    getchar();
+  }
 }
 
 static void _DisplayNode(ASTNode *node, Fmt *fmt) {
@@ -415,4 +431,24 @@ void DisplayAST(AST *t, Fmt *fmt) {
   _DisplayAST(t->root, fmt);
   fclose(fmt->out);
   _BeautifyAST(fmt);
+}
+
+void DisplayIR(IR I, Fmt *fmt) {
+  fmt->out = fopen(fmt->fileLoc, "w");
+  if (fmt->out == NULL) {
+    RAISE(OutFileOpenErr);
+  }
+  for (int i = 0; i < I.curInsIdx; ++i) {
+    if (I.ins[i]->type != IR_LABEL && I.ins[i]->type != IR_FUNCTION) {
+      fputs("  ", fmt->out);
+    }
+    fprintf(fmt->out, "%s", IRTypeStr[I.ins[i]->type]);
+    for (int j = 0; j < 3; ++j) {
+      if (I.ins[i]->attr[j] != NULL) {
+        fprintf(fmt->out, " %s", I.ins[i]->attr[j]);
+      }
+    }
+    fputc('\n', fmt->out);
+  }
+  fclose(fmt->out);
 }

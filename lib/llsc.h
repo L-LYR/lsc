@@ -6,5 +6,6 @@
 #include "./include/atom.h"
 #include "./include/except.h"
 #include "./include/mem.h"
+#include "./include/stack.h"
 #include "./include/table.h"
 #endif

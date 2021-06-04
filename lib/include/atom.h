@@ -6,7 +6,7 @@
 
 #ifndef ATOM_INCLUDE
 #define ATOM_INCLUDE
-
+#include <stdbool.h>
 /*
     AtomReseve:
         1. Change the atom table capacity.

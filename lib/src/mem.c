@@ -41,7 +41,6 @@ void MemFree(void *ptr, const char *file, int line) {
 }
 
 void *MemResize(void *ptr, long nbytes, const char *file, int line) {
-  ASSERT(ptr != NULL);
   ASSERT(nbytes > 0);
 
   ptr = realloc(ptr, nbytes);

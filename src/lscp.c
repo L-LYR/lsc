@@ -14,13 +14,16 @@ int yylex_destroy(void);
 FILE *yyin;
 
 AST t;  // lsc.y
+extern int ErrorCount;
 
 // static
 Fmt ASTDisplayFmt;
 Fmt SymbolTableDisplayFmt;
+Fmt IRDisplayFmt;
 _Bool ShowAST;          // print AST
 _Bool ShowSymbolTable;  // print Symbol Table
 _Bool Pause;            // pause
+_Bool ShowIR;           // print IR
 static void SetOpts(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
@@ -33,8 +36,13 @@ int main(int argc, char *argv[]) {
   if (ret == 0 && ShowAST) {
     DisplayAST(&t, &ASTDisplayFmt);
     if (ShowSymbolTable) {
-      SymbolTable st = SymbolTableCreateFromAST(&t);
+      SymbolTable *st = SymbolTableCreateFromAST(&t);
       DisplaySymbolTable(st, &SymbolTableDisplayFmt);
+      if (ShowIR && ErrorCount == 0) {
+        IR ir = GenerateIR(st);
+        DisplayIR(ir, &IRDisplayFmt);
+        FREE(ir.ins);
+      }
       FreeSymbolTable(st);
     }
   }
@@ -47,7 +55,7 @@ int main(int argc, char *argv[]) {
   return ret;
 }
 
-const char *OptFmt = ":hv:i:s:p";
+const char *OptFmt = ":v:i:s:g:hp";
 
 const char *Usage =
     "Usage: lscp [-vh] -i <filename> -o <filename>\n"
@@ -55,6 +63,7 @@ const char *Usage =
     "  -v <filename>\tTurn on verbose mode, display AST.\n"
     "  -i <filename>\tInput file.\n"
     "  -s <filename>\tShow symbol table.\n"
+    "  -g <filename>\tGenerate IR.\n"
     "  -h           \tPrint this help.\n"
     "  -p           \tPause for awhile when print symbol table.\n";
 void SetOpts(int argc, char *argv[]) {
@@ -80,6 +89,10 @@ void SetOpts(int argc, char *argv[]) {
         ShowSymbolTable = true;
         SymbolTableDisplayFmt.fileLoc = optarg;
         break;
+      case 'g':
+        ShowIR = true;
+        IRDisplayFmt.fileLoc = optarg;
+        break;
       case 'p':
         Pause = true;
         break;
@@ -97,7 +110,13 @@ void SetOpts(int argc, char *argv[]) {
   if (ShowSymbolTable && SymbolTableDisplayFmt.fileLoc == NULL) {
     notify(Usage);
   }
+  if (ShowIR && IRDisplayFmt.fileLoc == NULL) {
+    notify(Usage);
+  }
   if (ShowSymbolTable && !ShowAST) {
+    notify(Usage);
+  }
+  if (ShowIR && !ShowSymbolTable) {
     notify(Usage);
   }
 }

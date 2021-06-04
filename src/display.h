@@ -1,6 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include "generate_code.h"
 #include "symbol_table.h"
 
 typedef struct {
@@ -47,12 +48,14 @@ void _NotifyArrayInitializerOnBaseType(int curLine);
 void _NotifyExpectArrayInitializer(int curLine);
 void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get);
 void _NotifyNoMainFunction(int curLine);
+void _NotifyConstantOutOfRange(int curLine, const char *constVal, const char *type);
+void _NotifyMainFuncHasParam(int curLine);
 
-void _NotifyRepetition(Attribute *old, Attribute *new, const char *id);
+void _NotifyRepetition(Attribute *old, Attribute *newAttr, const char *id);
 void _PauseForDisplay();
 
 // external
 void DisplayAST(AST *t, Fmt *fmt);
-void DisplaySymbolTable(SymbolTable st, Fmt *fmt);
-
+void DisplaySymbolTable(SymbolTable *st, Fmt *fmt);
+void DisplayIR(IR i, Fmt *fmt);
 #endif
