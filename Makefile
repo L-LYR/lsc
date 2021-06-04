@@ -1,11 +1,17 @@
 .PHONY:
 	all clean tests
-all:
-	cd lib && make all;
-	cd src && make lexer -j 8 && make parser -j 8;
+all: backend frontend
+
+frontend: lib
+	cd ./src/frontend && make lexer && make parser
+lib:
+	cd ./src/lib/src && make lib -j 8;
+
+backend:
+
 clean:
-	cd src && make clean;
-	cd lib && make clean;
+	cd ./src/frontend && make clean;
+	cd ./src/lib/src && make clean;
 	rm -rf ./res/*;
 
 valgrind_flags := --leak-check=full
