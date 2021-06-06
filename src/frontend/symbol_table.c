@@ -22,8 +22,9 @@
 extern int ErrorCount;
 
 static const char *ReservedSymbolList[] = {
-    "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+", "-", "++", "--", "~", "!", "*", "/", "%",  "<",
-    ">",    "<=",  ">=",  "==",     "!=",   "<<", ">>",   "&",   "|",      "^",     "&&",       "||",    "=",    ",", "(", ")",  "[",  "]", "{", "}", ";", NULL,
+    "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+",   "-",   "++",  "--", "~", "!",
+    "*",    "/",   "%",   "<",      ">",    "<=", ">=",   "==",  "!=",     "<<",    ">>",       "&",     "|",    "^",   "&&",  "||",  "=",  ",", "(",
+    ")",    "[",   "]",   "{",      "}",    ";",  "f+",   "f-",  "f*",     "f/",    "f<",       "f>",    "f<=",  "f>=", "f==", "f!=", NULL,
 };
 
 typedef enum { VOID, I32, F32, STRING, BOOL } BaseType;
@@ -286,6 +287,9 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
     return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
   }
   if (op == AtomString("==") || op == AtomString("!=") || op == AtomString("<") || op == AtomString(">") || op == AtomString("<=") || op == AtomString(">=")) {
+    if (lhs->type == BaseTypeStrs[F32]) {
+      n->attr[0] = (void *)AtomAppend("f", op);
+    }
     FREE(lhs);
     FREE(rhs);
     return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
@@ -310,6 +314,9 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
   }
   if (op == AtomString("+") || op == AtomString("-") || op == AtomString("*") || op == AtomString("/")) {
     // no limit
+    if (lhs->type == BaseTypeStrs[F32]) {
+      n->attr[0] = (void *)AtomAppend("f", op);
+    }
     const char *t = lhs->type;
     FREE(lhs);
     FREE(rhs);

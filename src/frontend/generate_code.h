@@ -17,33 +17,36 @@ typedef enum {
   IR_RETURN,    //* RETURN x
   IR_SCAN,      //* SCAN x
   IR_PRINT,     //* PRINT x
-
   IR_NOP,  //* do nothing, placeholder
-
   IR_UOP_BNOT,
   IR_UOP_NOT,
   IR_UOP_MINUS,
-
   IR_BOP_MUL,
   IR_BOP_DIV,
   IR_BOP_MOD,
   IR_BOP_ADD,
   IR_BOP_SUB,
-
+  IR_BOP_FMUL,
+  IR_BOP_FDIV,
+  IR_BOP_FADD,
+  IR_BOP_FSUB,
+  IR_BOP_FLT,
+  IR_BOP_FLE,
+  IR_BOP_FGT,
+  IR_BOP_FGE,
+  IR_BOP_FEQ,
+  IR_BOP_FNE,
   IR_BOP_LT,
   IR_BOP_LE,
   IR_BOP_GT,
   IR_BOP_GE,
   IR_BOP_EQ,
   IR_BOP_NE,
-
   IR_BOP_SR,
   IR_BOP_SL,
-
   IR_BOP_BAND,
   IR_BOP_BOR,
   IR_BOP_BXOR,
-
   IR_BOP_AND,
   IR_BOP_OR,
 } IRType;

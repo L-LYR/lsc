@@ -222,6 +222,26 @@ static const char* _GenerateFromBinaryExpr(ASTNode* n) {
     _Emit(IR_BOP_AND, x, y, z, NULL);
   } else if (n->attr[0] == AtomString("||")) {
     _Emit(IR_BOP_OR, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f+")) {
+    _Emit(IR_BOP_FADD, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f-")) {
+    _Emit(IR_BOP_FSUB, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f*")) {
+    _Emit(IR_BOP_FMUL, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f/")) {
+    _Emit(IR_BOP_FDIV, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f<")) {
+    _Emit(IR_BOP_FLT, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f>")) {
+    _Emit(IR_BOP_FGT, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f<=")) {
+    _Emit(IR_BOP_FLE, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f>=")) {
+    _Emit(IR_BOP_FGE, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f==")) {
+    _Emit(IR_BOP_FEQ, x, y, z, NULL);
+  } else if (n->attr[0] == AtomString("f!=")) {
+    _Emit(IR_BOP_FNE, x, y, z, NULL);
   } else {
     RAISE(Unreachable);
     return NULL;

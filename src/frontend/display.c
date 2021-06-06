@@ -46,8 +46,9 @@ static const char *TypeStr[] = {
 };
 
 static const char *IRTypeStr[] = {
-    "function", "label",   "malloc",  "param",   "copy",   "goto",   "jump_if", "arg",    "call",   "return", "scan",   "print",  "",         "uop_bnot", "uop_not",  "uop_minus", "bop_mul",
-    "bop_div",  "bop_mod", "bop_add", "bop_sub", "bop_lt", "bop_le", "bop_gt",  "bop_ge", "bop_eq", "bop_ne", "bop_sr", "bop_sl", "bop_band", "bop_bor",  "bop_bxor", "bop_and",   "bop_or",
+    "function",  "label",   "malloc",  "param",   "copy",    "goto",    "jump_if",  "arg",      "call",     "return",   "scan",    "print",    "nop",     "uop_bnot", "uop_not",
+    "uop_minus", "bop_mul", "bop_div", "bop_mod", "bop_add", "bop_sub", "bop_fmul", "bop_fdiv", "bop_fadd", "bop_fsub", "bop_flt", "bop_fle",  "bop_fgt", "bop_fge",  "bop_feq",
+    "bop_fne",   "bop_lt",  "bop_le",  "bop_gt",  "bop_ge",  "bop_eq",  "bop_ne",   "bop_sr",   "bop_sl",   "bop_band", "bop_bor", "bop_bxor", "bop_and", "bop_or",
 };
 
 // from lscp.c
@@ -439,6 +440,10 @@ void DisplayIR(IR I, Fmt *fmt) {
     RAISE(OutFileOpenErr);
   }
   for (int i = 0; i < I.curInsIdx; ++i) {
+    if (I.ins[i]->type == IR_NOP) {
+      fputc('\n', fmt->out);
+      continue;
+    }
     if (I.ins[i]->type != IR_LABEL && I.ins[i]->type != IR_FUNCTION) {
       fputs("  ", fmt->out);
     }
