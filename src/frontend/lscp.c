@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
       DisplaySymbolTable(st, &SymbolTableDisplayFmt);
       if (ShowIR && ErrorCount == 0) {
         IR ir = GenerateIR(st);
-        DisplayIR(ir, &IRDisplayFmt);
-        FREE(ir.ins);
+        DisplayIR(&ir, &IRDisplayFmt);
+        FreeIR(&ir);
       }
       FreeSymbolTable(st);
     }

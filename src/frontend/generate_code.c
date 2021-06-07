@@ -17,19 +17,26 @@ extern const char* BaseTypeStrs[];  // symbol_table.c
 static IR InnerIR;
 static Scope* CurrentScope;
 static Scope* GlobalScope;
-static struct table_t* ConstTable;
 
 static struct stack_t* ContinueInsStk;
 static struct stack_t* BreakInsStk;
 
+static const int DefaultIncNum = 64;
 static void _AppendIns() {
   if (InnerIR.curInsIdx >= InnerIR.maxInsCnt) {
-    static const int DefaultInsNum = 64;
-    InnerIR.maxInsCnt += DefaultInsNum;
+    InnerIR.maxInsCnt += DefaultIncNum;
     RESIZE(InnerIR.ins, InnerIR.maxInsCnt * sizeof(Instruction*));
   }
   InnerIR.curI->line = InnerIR.curInsIdx;
   InnerIR.ins[InnerIR.curInsIdx++] = InnerIR.curI;
+}
+
+static void _AppendLabelEntry() {
+  if (InnerIR.entries.curLabelIdx >= InnerIR.entries.maxLabelCnt) {
+    InnerIR.entries.maxLabelCnt += DefaultIncNum;
+    RESIZE(InnerIR.entries.lines, InnerIR.entries.maxLabelCnt * sizeof(int));
+  }
+  InnerIR.entries.lines[InnerIR.entries.curLabelIdx++] = InnerIR.curInsIdx;
 }
 
 static void _NewIns(IRType t) {
@@ -53,6 +60,9 @@ static void _Emit(IRType t, const char* attr, ...) {
     *_GetAttr(i++) = p;
     p = va_arg(args, const char*);
   }
+  if (t == IR_LABEL) {
+    _AppendLabelEntry();
+  }
   _AppendIns();
 }
 
@@ -61,10 +71,7 @@ static const char* _GetTmpVar() {
   return AtomAppend("t", Itoa(TmpVarCnt++));
 }
 
-static const char* _GetLabel() {
-  static int LabelCnt = 0;
-  return AtomAppend("L", Itoa(LabelCnt++));
-}
+static const char* _GetLabel() { return AtomAppend("L", Itoa(InnerIR.entries.curLabelIdx)); }
 
 static const char* _GetMark() {
   static int MarkCnt = 0;
@@ -310,7 +317,7 @@ static const char* _GenerateFromExpr(ASTNode* n) {
       return AtomString("0x1");
     }
   } else if (n->nType == StrConst) {
-    return TableGet(ConstTable, n->attr[0]);
+    return TableGet(InnerIR.ConstTable, n->attr[0]);
   } else if (n->nType == FloatConst) {
     return AtomString(Ftox(strtof(n->attr[0], NULL)));
   } else if (n->nType == BinaryExpr) {
@@ -386,6 +393,7 @@ static void _GenerateFromLoopStm(ASTNode* n) {
   const char* cond = _GetLabel();
   inLoop->attr[0] = cond;
   _Emit(IR_LABEL, cond, NULL);
+
   const char* condition = _GenerateFromExpr(((ASTNode*)(n->attr[1]))->attr[0]);
   // if [cond] goto [label in]
   _Emit(IR_JUMP_IF, condition, in, NULL);
@@ -581,7 +589,7 @@ static void _GenerateFromGlobalScope() {
 
 IR GenerateIR(SymbolTable* st) {
   GlobalScope = CurrentScope = st->s;
-  ConstTable = st->constTable;
+  InnerIR.ConstTable = st->constTable;
   ContinueInsStk = StackCreate();
   BreakInsStk = StackCreate();
   _Emit(IR_LABEL, _GetLabel(), NULL);  // label 0 is the entry
@@ -589,4 +597,11 @@ IR GenerateIR(SymbolTable* st) {
   StackFree(&ContinueInsStk);
   StackFree(&BreakInsStk);
   return InnerIR;
+}
+
+void FreeIR(IR* ir) {
+  FREE(ir->entries.lines);
+  FREE(ir->ins);
+  // TableFree(&(ir->ConstTable));
+  memset(ir, 0, sizeof(IR));
 }

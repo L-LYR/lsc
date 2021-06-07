@@ -434,23 +434,46 @@ void DisplayAST(AST *t, Fmt *fmt) {
   _BeautifyAST(fmt);
 }
 
-void DisplayIR(IR I, Fmt *fmt) {
+static void _DisplayConstTable(struct table_t *t, Fmt *fmt) {
+  void **arr = TableToArray(t, NULL);
+  int idx = 0;
+  while (arr[idx] != NULL) {
+    fprintf(fmt->out, "%s,%s\n", arr[idx + 1], arr[idx]);
+    idx += 2;
+  }
+  fputc('\n', fmt->out);
+  FREE(arr);
+}
+
+static void _DisplayLabelTable(LabelEntry *entry, Fmt *fmt) {
+  for (int i = 0; i < entry->curLabelIdx; ++i) {
+    fprintf(fmt->out, "L%d,%d\n", i, entry->lines[i]);
+  }
+  fputc('\n', fmt->out);
+}
+
+void DisplayIR(IR *ir, Fmt *fmt) {
   fmt->out = fopen(fmt->fileLoc, "w");
   if (fmt->out == NULL) {
     RAISE(OutFileOpenErr);
   }
-  for (int i = 0; i < I.curInsIdx; ++i) {
-    if (I.ins[i]->type == IR_NOP) {
+  fprintf(fmt->out, ".data\n");
+  _DisplayConstTable(ir->ConstTable, fmt);
+  fprintf(fmt->out, ".label\n");
+  _DisplayLabelTable(&(ir->entries), fmt);
+  fprintf(fmt->out, ".text\n");
+  for (int i = 0; i < ir->curInsIdx; ++i) {
+    if (ir->ins[i]->type == IR_NOP) {
       fputc('\n', fmt->out);
       continue;
     }
-    if (I.ins[i]->type != IR_LABEL && I.ins[i]->type != IR_FUNCTION) {
+    if (ir->ins[i]->type != IR_LABEL && ir->ins[i]->type != IR_FUNCTION) {
       fputs("  ", fmt->out);
     }
-    fprintf(fmt->out, "%s", IRTypeStr[I.ins[i]->type]);
+    fprintf(fmt->out, "%s", IRTypeStr[ir->ins[i]->type]);
     for (int j = 0; j < 3; ++j) {
-      if (I.ins[i]->attr[j] != NULL) {
-        fprintf(fmt->out, " %s", I.ins[i]->attr[j]);
+      if (ir->ins[i]->attr[j] != NULL) {
+        fprintf(fmt->out, " %s", ir->ins[i]->attr[j]);
       }
     }
     fputc('\n', fmt->out);

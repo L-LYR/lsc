@@ -17,7 +17,7 @@ typedef enum {
   IR_RETURN,    //* RETURN x
   IR_SCAN,      //* SCAN x
   IR_PRINT,     //* PRINT x
-  IR_NOP,  //* do nothing, placeholder
+  IR_NOP,       //* do nothing, placeholder
   IR_UOP_BNOT,
   IR_UOP_NOT,
   IR_UOP_MINUS,
@@ -57,13 +57,22 @@ typedef struct Instruction {
   const char* attr[3];
 } Instruction;
 
+typedef struct LabelEntry {
+  int* lines;
+  int maxLabelCnt;
+  int curLabelIdx;
+} LabelEntry;
+
 typedef struct IR {
   Instruction** ins;
   Instruction* curI;
   int maxInsCnt;
   int curInsIdx;
+  LabelEntry entries;
+  struct table_t* ConstTable;
 } IR;
 
 IR GenerateIR(SymbolTable* st);
+void FreeIR(IR* ir);
 
 #endif

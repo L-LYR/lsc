@@ -57,5 +57,5 @@ void _PauseForDisplay();
 // external
 void DisplayAST(AST *t, Fmt *fmt);
 void DisplaySymbolTable(SymbolTable *st, Fmt *fmt);
-void DisplayIR(IR i, Fmt *fmt);
+void DisplayIR(IR *ir, Fmt *fmt);
 #endif
