@@ -85,9 +85,8 @@ i32 fibonaci(i32 n) {
         return 0;
     } else if (n == 1) {
         return 1;    
-    } else {
-        return fibonaci(n - 1) + fibonaci(n - 2);
     }
+    return fibonaci(n - 1) + fibonaci(n - 2);
 }
 
 i32 shortPath() {
@@ -101,6 +100,5 @@ i32 shortPath() {
     if (i != 4 * j && j == 2 * i) {
         return 1;
     }
-    
     return 9;
 }

@@ -686,7 +686,10 @@ static void _HandleReturnStm(ASTNode *n) {
       }
       FREE(ea);
     }
-    a->aa.f->hasReturnValue = true;
+    // in function body
+    if (CurrentScope->prev->name == s->name) {
+      a->aa.f->hasReturnValue = true;
+    }
   }
 }
 
