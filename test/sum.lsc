@@ -89,3 +89,18 @@ i32 fibonaci(i32 n) {
         return fibonaci(n - 1) + fibonaci(n - 2);
     }
 }
+
+i32 shortPath() {
+    i32 i = 0;
+    i32 j = 1;
+
+    if (i == 0 || j == 1) {
+        return 0;
+    }
+
+    if (i != 4 * j && j == 2 * i) {
+        return 1;
+    }
+    
+    return 9;
+}

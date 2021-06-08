@@ -180,8 +180,39 @@ static const char* _GenerateFromUnarayExpr(ASTNode* n) {
 
 static const char* _GenerateFromBinaryExpr(ASTNode* n) {
   const char* y = _GenerateFromExpr(n->attr[1]);
-  const char* z = _GenerateFromExpr(n->attr[2]);
 
+  if (n->attr[0] == AtomString("&&")) {
+    const char* x = _GetTmpVar();
+    _Emit(IR_JUMP_IF, y, NULL, NULL);
+    Instruction* i1 = _GetCurIns();
+    _Emit(IR_COPY, x, AtomString("0x0"), NULL);
+    _Emit(IR_GOTO, NULL);
+    Instruction* i2 = _GetCurIns();
+    i1->attr[1] = _GetLabel();
+    _Emit(IR_LABEL, i1->attr[1], NULL);
+    const char* z = _GenerateFromExpr(n->attr[2]);
+    _Emit(IR_BOP_AND, x, y, z, NULL);
+    i2->attr[0] = _GetLabel();
+    _Emit(IR_LABEL, i2->attr[0], NULL);
+    return x;
+  }
+  if (n->attr[0] == AtomString("||")) {
+    const char* x = _GetTmpVar();
+    _Emit(IR_JUMP_IF, y, NULL, NULL);
+    Instruction* i1 = _GetCurIns();
+    const char* z = _GenerateFromExpr(n->attr[2]);
+    _Emit(IR_BOP_OR, x, y, z, NULL);
+    _Emit(IR_GOTO, NULL);
+    Instruction* i2 = _GetCurIns();
+    i1->attr[1] = _GetLabel();
+    _Emit(IR_LABEL, i1->attr[1], NULL);
+    _Emit(IR_COPY, x, AtomString("0x1"), NULL);
+    i2->attr[0] = _GetLabel();
+    _Emit(IR_LABEL, i2->attr[0], NULL);
+    return x;
+  }
+
+  const char* z = _GenerateFromExpr(n->attr[2]);
   if (n->attr[0] == AtomString("=")) {
     _Emit(IR_COPY, y, z, NULL);
     return y;
@@ -225,10 +256,6 @@ static const char* _GenerateFromBinaryExpr(ASTNode* n) {
     _Emit(IR_BOP_EQ, x, y, z, NULL);
   } else if (n->attr[0] == AtomString("!=")) {
     _Emit(IR_BOP_NE, x, y, z, NULL);
-  } else if (n->attr[0] == AtomString("&&")) {
-    _Emit(IR_BOP_AND, x, y, z, NULL);
-  } else if (n->attr[0] == AtomString("||")) {
-    _Emit(IR_BOP_OR, x, y, z, NULL);
   } else if (n->attr[0] == AtomString("f+")) {
     _Emit(IR_BOP_FADD, x, y, z, NULL);
   } else if (n->attr[0] == AtomString("f-")) {
