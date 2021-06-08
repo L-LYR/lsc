@@ -46,9 +46,8 @@ static const char *TypeStr[] = {
 };
 
 static const char *IRTypeStr[] = {
-    "function",  "label",   "malloc",  "param",   "copy",    "goto",    "jump_if",  "arg",      "call",     "return",   "scan",    "print",    "nop",     "uop_bnot", "uop_not",
-    "uop_minus", "bop_mul", "bop_div", "bop_mod", "bop_add", "bop_sub", "bop_fmul", "bop_fdiv", "bop_fadd", "bop_fsub", "bop_flt", "bop_fle",  "bop_fgt", "bop_fge",  "bop_feq",
-    "bop_fne",   "bop_lt",  "bop_le",  "bop_gt",  "bop_ge",  "bop_eq",  "bop_ne",   "bop_sr",   "bop_sl",   "bop_band", "bop_bor", "bop_bxor", "bop_and", "bop_or",
+    "function", "label", "malloc", "param", "copy", "goto", "jump_if", "arg", "call", "return", "scan", "print", "nop", "bnot", "not", "neg", "mul", "div",  "mod", "add",  "sub", "fmul",
+    "fdiv",     "fadd",  "fsub",   "flt",   "fle",  "fgt",  "fge",     "feq", "fne",  "lt",     "le",   "gt",    "ge",  "eq",   "ne",  "sr",  "sl",  "band", "bor", "bxor", "and", "or",
 };
 
 // from lscp.c
