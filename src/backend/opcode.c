@@ -57,9 +57,7 @@ void vmmalloc(Instruction* i, VM* vm) {
   int64_t* tar = _GetRef(vm, &(i->opd[0]));
   int64_t size = _GetVal(vm, &(i->opd[1]));
   ASSERT(vm->stkTop == tar);
-  int32_t* arr = ArenaAllocFor(size);
-  *(vm->stkTop++) = (int64_t)arr;
-  memset(arr, 0, size);
+  *(vm->stkTop++) = (int64_t)ArenaAllocFor(size);
   vm->pc++;
 }
 
@@ -116,7 +114,8 @@ void vmjumpifnot(Instruction* i, VM* vm) {
 }
 
 void vmarg(Instruction* i, VM* vm) {
-  *(vm->stkTop++) = _GetVal(vm, &(i->opd[0]));
+  int64_t val = _GetVal(vm, &(i->opd[0]));
+  *(vm->stkTop++) = val;
   vm->pc++;
 }
 
@@ -137,9 +136,9 @@ void vmreturn(Instruction* i, VM* vm) {
     vm->rv = _GetVal(vm, &(i->opd[0]));
   }
   Context* ctx = vm->ctx;
+  vm->ctx = ctx->prev;
   vm->pc = ctx->raddr;
   vm->stkTop = ctx->baddr;
-  vm->ctx = ctx->prev;
   FREE(ctx);
 }
 

@@ -16,7 +16,6 @@ clean:
 valgrind_flags := --leak-check=full
 valgrind_flags += --show-leak-kinds=all
 valgrind_flags += --track-origins=yes
-valgrind_flags += --log-file="./res/memcheck.log"
 
 filename_prefix := add
 
@@ -28,10 +27,10 @@ ir_output := ./res/$(filename_prefix).ir
 
 lexer-test:
 	@echo "Test Lexer";
-	valgrind $(valgrind_flags) ./bin/lscl -v -i $(test_input) -o $(lexer_output);
+	valgrind $(valgrind_flags) --log-file="./res/lexer-test-memcheck.log" ./bin/lscl -v -i $(test_input) -o $(lexer_output);
 parser-test:
 	@echo "Test AST & Symbol Table Generator & IR Generator";
-	valgrind $(valgrind_flags) ./bin/lscp -v $(ast_output) -i $(test_input) -s $(sym_output) -g $(ir_output);
+	valgrind $(valgrind_flags) --log-file="./res/parser-test-memcheck.log" ./bin/lscp -v $(ast_output) -i $(test_input) -s $(sym_output) -g $(ir_output);
 vm-test:
 	@echo "Test VM";
-	valgrind $(valgrind_flags) ./bin/lscvm -i $(ir_output);
+	valgrind $(valgrind_flags) --log-file="./res/vm-test-memcheck.log" ./bin/lscvm -i $(ir_output);

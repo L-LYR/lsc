@@ -64,6 +64,7 @@ static void *ArenaAllocImpl(struct arena_t *arena, long nbytes, const char *file
     } else {
       long m = sizeof(union header) + nbytes + NEW_CHUNK_EXTRA_SIZE;
       newArena = malloc(m);
+      memset(newArena, 0, m);
       if (newArena == NULL) {
         if (file == NULL)
           RAISE(ArenaFailed);

@@ -3,11 +3,11 @@ i32 add(i32 i, i32 j) {
     f32 ff = -f;
     return i + j;
 }
-i32[3][3] matMul(i32 a[3][3], i32 b[3][3]) {
+i32[2][4] matMul(i32 a[2][3], i32 b[3][4]) {
     i32 i, j, k;
-    i32 ans[3][3];
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
+    i32 ans[2][4];
+    for (i = 0; i < 2; ++i) {
+        for (j = 0; j < 4; ++j) {
             for (k = 0; k < 3; ++k) {
                 ans[i][j] = ans[i][j] + a[i][k] * b[k][j];
             }
@@ -15,10 +15,10 @@ i32[3][3] matMul(i32 a[3][3], i32 b[3][3]) {
     }
     return ans;
 }
-void matPrint(i32 a[3][3]) {
+void matPrint(i32 a[2][4]) {
     i32 i, j;
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
+    for (i = 0; i < 2; ++i) {
+        for (j = 0; j < 4; ++j) {
             print("%d", a[i][j]);
             print("%s", " ");
         }
@@ -26,27 +26,31 @@ void matPrint(i32 a[3][3]) {
     }
     return;
 }
-i32 fibonaci(i32 n) {
+i32 fibonacci(i32 n) {
     if (n <= 0) {
         return 0;
     } else if (n == 1) {
         return 1;    
     }
-    return fibonaci(n - 1) + fibonaci(n - 2);
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 i32 main() {
-    i32 mat[3][3] = {
-        {1,2,3},
+    i32 mat[2][3] = {
         {1,2,3},
         {1,2,3},
     };
+    i32 mat2[3][4] = {
+        {1,2,3,4},
+        {1,2,3,4},
+        {1,2,3,4},
+    };
     i32 x;
-    print("%d", fibonaci(10));
+    print("%d", fibonacci(10));
     print("%s", "\n");
-    matPrint(matMul(mat, mat));
+    matPrint(matMul(mat, mat2));
     print("%d", add(1, 2));
 
-    scan("%d", x);
-    print("%d", x);
+    //scan("%d", x);
+    //print("%d", x);
     return 0;   
 }

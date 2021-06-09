@@ -327,12 +327,13 @@ static const char* _GenerateFromPostfixExpr(ASTNode* n) {
   return t2;
 }
 
-static int _GenerateFromArgList(ASTNode* n) {
+static void _GenerateFromArgList(ASTNode* n, int* cnt) {
   if (n == NULL) {
-    return 0;
+    return;
   }
+  _GenerateFromArgList(n->attr[0], cnt);
   _Emit(IR_ARG, _GenerateFromExpr(n->attr[1]), NULL);
-  return 1 + _GenerateFromArgList(n->attr[0]);
+  (*cnt)++;
 }
 
 static const char* _GenerateFromExpr(ASTNode* n) {
@@ -365,9 +366,10 @@ static const char* _GenerateFromExpr(ASTNode* n) {
     _Emit(IR_COPY_FROM_DEREF, x, y, NULL);
     return x;
   } else if (n->nType == FunctionCall) {
-    int x = _GenerateFromArgList(n->attr[1]);
+    int argCnt = 0;
+    _GenerateFromArgList(n->attr[1], &argCnt);
     ASTNode* id = n->attr[0];
-    _Emit(IR_CALL, id->attr[0], AtomString(Itox(x)), NULL);
+    _Emit(IR_CALL, id->attr[0], AtomString(Itox(argCnt)), NULL);
     Attribute* a = TableGet(GlobalScope->curTab, id->attr[0]);
     if (a->aa.f->returnType != AtomString("void")) {
       const char* rv = _GetTmpVar();
