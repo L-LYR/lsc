@@ -5,22 +5,28 @@
 #include "symbol_table.h"
 
 typedef enum {
+  IR_EXIT,      //* EXIT
   IR_FUNCTION,  //* FUNCTION Fn:
   IR_LABEL,     //* LABEL Ln:
   IR_MALLOC,    //* MALLOC xn [SIZE]
+  IR_VAR,       //* var xn
   IR_PARAM,     //* PARA xn
   IR_COPY,      //* x <- y
-  IR_GOTO,      //* GOTO L
-  IR_JUMP_IF,   //* IF x GOTO L
-  IR_ARG,       //* ARG x
-  IR_CALL,      //* CALL f SIZE
-  IR_RETURN,    //* RETURN x
-  IR_SCAN,      //* SCAN x
-  IR_PRINT,     //* PRINT x
-  IR_NOP,       //* do nothing, placeholder
+  IR_COPY_TO_DEREF,
+  IR_COPY_FROM_DEREF,
+  IR_GOTO,         //* GOTO L
+  IR_JUMP_IF,      //* IF x GOTO L
+  IR_JUMP_IF_NOT,  //* IF not x GOTO L
+  IR_ARG,          //* ARG x
+  IR_CALL,         //* CALL f SIZE
+  IR_RETURN,       //* RETURN x
+  IR_SCAN,         //* SCAN x
+  IR_PRINT,        //* PRINT x
+  IR_NOP,          //* do nothing, placeholder
   IR_UOP_BNOT,
   IR_UOP_NOT,
   IR_UOP_MINUS,
+  IR_UOP_FMINUS,
   IR_BOP_MUL,
   IR_BOP_DIV,
   IR_BOP_MOD,
@@ -68,7 +74,6 @@ typedef struct IR {
   Instruction* curI;
   int maxInsCnt;
   int curInsIdx;
-  LabelEntry entries;
   struct table_t* ConstTable;
 } IR;
 

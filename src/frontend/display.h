@@ -50,6 +50,8 @@ void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get);
 void _NotifyNoMainFunction(int curLine);
 void _NotifyConstantOutOfRange(int curLine, const char *constVal, const char *type);
 void _NotifyMainFuncHasParam(int curLine);
+void _NotifyNeedReturnStm(int curLine, const char *f);
+void _NotifyIOStmNeedFmt(int curLine);
 
 void _NotifyRepetition(Attribute *old, Attribute *newAttr, const char *id);
 void _PauseForDisplay();

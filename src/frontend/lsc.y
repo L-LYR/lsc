@@ -337,14 +337,16 @@ loop_statement
     };
 
 io_statement
-    : PRINT LB argument_list RB SEMICOLON {
+    : PRINT LB primary_expression COMMA expression RB SEMICOLON {
         $$ = NewASTNode(IOStm, yylineno);
         $$->attr[0] = (void*)AtomString("print");
         $$->attr[1] = $3;
-    }| SCAN LB argument_list RB SEMICOLON {
+        $$->attr[2] = $5;
+    }| SCAN LB primary_expression COMMA expression RB SEMICOLON {
         $$ = NewASTNode(IOStm, yylineno);
         $$->attr[0] = (void*)AtomString("scan");
         $$->attr[1] = $3;
+        $$->attr[2] = $5;
     };
 
 expression 

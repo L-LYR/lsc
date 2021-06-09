@@ -137,6 +137,10 @@ void ArenaClear() {
   ArenaClearImpl();
 }
 
-void *ArenaAlloc(long nbytes, const char *file, int line) { return ArenaAllocImpl(GlobalAllocator, nbytes, file, line); }
+void *ArenaAlloc(long nbytes, const char *file, int line) {
+  return ArenaAllocImpl(GlobalAllocator, nbytes, file, line);
+}
 
-void *ArenaCalloc(long count, long nbytes, const char *file, int line) { return ArenaCallocImpl(GlobalAllocator, count, nbytes, file, line); }
+void *ArenaCalloc(long count, long nbytes, const char *file, int line) {
+  return ArenaCallocImpl(GlobalAllocator, count, nbytes, file, line);
+}

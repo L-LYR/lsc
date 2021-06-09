@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../exception/exception.h"
 #include "../lib/llsc.h"
 #include "ast.h"
-#include "exception.h"
 #include "symbol_table.h"
 #include "to_str.h"
 
@@ -29,14 +29,6 @@ static void _AppendIns() {
   }
   InnerIR.curI->line = InnerIR.curInsIdx;
   InnerIR.ins[InnerIR.curInsIdx++] = InnerIR.curI;
-}
-
-static void _AppendLabelEntry() {
-  if (InnerIR.entries.curLabelIdx >= InnerIR.entries.maxLabelCnt) {
-    InnerIR.entries.maxLabelCnt += DefaultIncNum;
-    RESIZE(InnerIR.entries.lines, InnerIR.entries.maxLabelCnt * sizeof(int));
-  }
-  InnerIR.entries.lines[InnerIR.entries.curLabelIdx++] = InnerIR.curInsIdx;
 }
 
 static void _NewIns(IRType t) {
@@ -60,27 +52,23 @@ static void _Emit(IRType t, const char* attr, ...) {
     *_GetAttr(i++) = p;
     p = va_arg(args, const char*);
   }
-  if (t == IR_LABEL) {
-    _AppendLabelEntry();
-  }
   _AppendIns();
 }
 
-static const char* _GetTmpVar() {
-  static int TmpVarCnt = 0;
-  return AtomAppend("t", Itoa(TmpVarCnt++));
-}
+static int TmpVarCnt = 0;  // for each function, it should begin from 0.
+static const char* _GetTmpVar() { return AtomAppend("t", Itoa(TmpVarCnt++)); }
 
-static const char* _GetLabel() { return AtomAppend("L", Itoa(InnerIR.entries.curLabelIdx)); }
+static int LabelCnt = 0;
+static const char* _GetLabel() { return AtomAppend("L", Itoa(LabelCnt++)); }
 
-static const char* _GetMark() {
-  static int MarkCnt = 0;
-  return AtomAppend("M", Itoa(MarkCnt++));
-}
+// static const char* _GetMark() {
+//   static int MarkCnt = 0;
+//   return AtomAppend("M", Itoa(MarkCnt++));
+// }
 
 static Instruction* _GetCurIns() { return InnerIR.ins[InnerIR.curInsIdx - 1]; }
 
-static int _GerCurLine() { return InnerIR.curInsIdx - 1; }
+// static int _GerCurLine() { return InnerIR.curInsIdx - 1; }
 
 static int32_t _CalArrSize(VarAttr* va) {
   int32_t size = 4;
@@ -94,13 +82,17 @@ static int32_t _CalArrSize(VarAttr* va) {
 static int _AttrCmp(const void* l, const void* r) {
   Attribute* la = (Attribute*)*(void**)l;
   Attribute* ra = (Attribute*)*(void**)r;
-  if (la->sType == ra->sType) {
+  if (la->sType != Function && ra->sType != Function) {
     return la->id - ra->id;
   } else {
-    if (la->sType == Variable) {
+    if (la->sType != Function) {
       return -1;
     } else {
-      return 1;
+      if (ra->sType == Function) {
+        return la->id - ra->id;
+      } else {
+        return 1;
+      }
     }
   }
 }
@@ -128,7 +120,7 @@ static int _CalCurrentIDBase(Scope* s) {
     if (s == NULL) {
       break;
     }
-    base += TableSize(s->curTab);
+    base += s->cnt;
   }
   return base;
 }
@@ -172,15 +164,34 @@ static const char* _GenerateFromUnarayExpr(ASTNode* n) {
   } else if (n->attr[0] == AtomString("-")) {
     x = _GetTmpVar();
     _Emit(IR_UOP_MINUS, x, y, NULL);
+  } else if (n->attr[0] == AtomString("f-")) {
+    x = _GetTmpVar();
+    _Emit(IR_UOP_FMINUS, x, y, NULL);
   } else {
     RAISE(Unreachable);
   }
   return x;
 }
+static const char* _GenerateFromPostfixExpr(ASTNode* n);
 
 static const char* _GenerateFromBinaryExpr(ASTNode* n) {
-  const char* y = _GenerateFromExpr(n->attr[1]);
+  if (n->attr[0] == AtomString("=")) {
+    ASTNode* l = n->attr[1];
+    ASTNode* r = n->attr[2];
+    if (l->nType == PostfixExpr) {
+      const char* y = _GenerateFromPostfixExpr(l);
+      const char* z = _GenerateFromExpr(r);
+      _Emit(IR_COPY_TO_DEREF, y, z, NULL);
+      return z;
+    } else {
+      const char* y = _GenerateFromExpr(l);
+      const char* z = _GenerateFromExpr(r);
+      _Emit(IR_COPY, y, z, NULL);
+      return y;
+    }
+  }
 
+  const char* y = _GenerateFromExpr(n->attr[1]);
   if (n->attr[0] == AtomString("&&")) {
     const char* x = _GetTmpVar();
     _Emit(IR_JUMP_IF, y, NULL, NULL);
@@ -196,6 +207,7 @@ static const char* _GenerateFromBinaryExpr(ASTNode* n) {
     _Emit(IR_LABEL, i2->attr[0], NULL);
     return x;
   }
+
   if (n->attr[0] == AtomString("||")) {
     const char* x = _GetTmpVar();
     _Emit(IR_JUMP_IF, y, NULL, NULL);
@@ -213,10 +225,6 @@ static const char* _GenerateFromBinaryExpr(ASTNode* n) {
   }
 
   const char* z = _GenerateFromExpr(n->attr[2]);
-  if (n->attr[0] == AtomString("=")) {
-    _Emit(IR_COPY, y, z, NULL);
-    return y;
-  }
 
   const char* x = _GetTmpVar();
   if (n->attr[0] == AtomString(",")) {
@@ -312,7 +320,7 @@ static const char* _GenerateFromPostfixExpr(ASTNode* n) {
   ArrCurOffset /= ArrCurDim[ArrCurIdx++];
   const char* y = _GenerateFromExpr(n->attr[2]);
   const char* t1 = _GetTmpVar();
-  _Emit(IR_BOP_MUL, t1, y, AtomString(Itoa(ArrCurOffset)), NULL);
+  _Emit(IR_BOP_MUL, t1, y, AtomString(Itox(ArrCurOffset)), NULL);
   const char* t2 = _GetTmpVar();
   _Emit(IR_BOP_ADD, t2, x, t1, NULL);
   // check bound
@@ -352,11 +360,14 @@ static const char* _GenerateFromExpr(ASTNode* n) {
   } else if (n->nType == UnaryExpr) {
     return _GenerateFromUnarayExpr(n);
   } else if (n->nType == PostfixExpr) {
-    return _GenerateFromPostfixExpr(n);
+    const char* y = _GenerateFromPostfixExpr(n);
+    const char* x = _GetTmpVar();
+    _Emit(IR_COPY_FROM_DEREF, x, y, NULL);
+    return x;
   } else if (n->nType == FunctionCall) {
     int x = _GenerateFromArgList(n->attr[1]);
     ASTNode* id = n->attr[0];
-    _Emit(IR_CALL, id->attr[0], AtomString(Itoa(x)), NULL);
+    _Emit(IR_CALL, id->attr[0], AtomString(Itox(x)), NULL);
     Attribute* a = TableGet(GlobalScope->curTab, id->attr[0]);
     if (a->aa.f->returnType != AtomString("void")) {
       const char* rv = _GetTmpVar();
@@ -371,16 +382,13 @@ static const char* _GenerateFromExpr(ASTNode* n) {
   return NULL;
 }
 
-static void _GenerateFromIOStm(ASTNode* n, const char* io) {
-  if (n == NULL) {
-    return;
-  }
-  _GenerateFromIOStm(n->attr[0], io);
-  const char* x = _GenerateFromExpr(n->attr[1]);
-  if (io == AtomString("print")) {
-    _Emit(IR_PRINT, x, NULL);
-  } else if (io == AtomString("scan")) {
-    _Emit(IR_SCAN, x, NULL);
+static void _GenerateFromIOStm(ASTNode* n) {
+  const char* fmt = _GenerateFromExpr(n->attr[1]);
+  const char* x = _GenerateFromExpr(n->attr[2]);
+  if (n->attr[0] == AtomString("print")) {
+    _Emit(IR_PRINT, fmt, x, NULL);
+  } else if (n->attr[0] == AtomString("scan")) {
+    _Emit(IR_SCAN, fmt, x, NULL);
   } else {
     RAISE(Unreachable);
   }
@@ -439,7 +447,7 @@ static void _GenerateFromLoopStm(ASTNode* n) {
 
 static void _GenerateFromSelectStm(ASTNode* n) {
   const char* cond = _GenerateFromExpr(n->attr[0]);
-  _Emit(IR_JUMP_IF, cond, NULL, NULL);
+  _Emit(IR_JUMP_IF_NOT, cond, NULL, NULL);
   Instruction* i = _GetCurIns();
   _GenerateFromCompoundStm(n->attr[1]);
   const char* nop = _GetLabel();
@@ -471,7 +479,7 @@ static void _GenerateFromStm(ASTNode* n) {
       RAISE(Unreachable);
     }
   } else if (n->nType == IOStm) {
-    _GenerateFromIOStm(n->attr[1], n->attr[0]);
+    _GenerateFromIOStm(n);
   } else if (n->nType == ExpressionStm) {
     _GenerateFromExpr(n->attr[0]);
   } else {
@@ -500,8 +508,8 @@ static int ArrInitOffset = 0;
 static void _GenerateFromInitializer(ASTNode* n, const char* base) {
   if (n->nType == Initializer) {
     const char* tar = _GetTmpVar();
-    _Emit(IR_BOP_ADD, tar, base, AtomString(Itoa(ArrInitOffset)), NULL);
-    _Emit(IR_COPY, tar, _GenerateFromExpr(n->attr[0]), NULL);
+    _Emit(IR_BOP_ADD, tar, base, AtomString(Itox(ArrInitOffset)), NULL);
+    _Emit(IR_COPY_TO_DEREF, tar, _GenerateFromExpr(n->attr[0]), NULL);
     ArrInitOffset += 4;
   } else if (n->nType == ArrayInitializer) {
     _GenerateFromInitializerList(n->attr[0], base);
@@ -512,16 +520,22 @@ static void _GenerateFromInitializer(ASTNode* n, const char* base) {
 
 static void _GenerateFromVarDecl(Attribute* a) {
   ASTNode* init = a->aa.v->initializer;
+  if (a->sType == Parameter) {  // PARAM
+    const char* cp = AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
+    _Emit(IR_PARAM, cp, NULL);
+    return;
+  }
+
   if (a->aa.v->arrDimNum > 0) {  // MALLOC
     const char* cp = AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
-    _Emit(IR_MALLOC, cp, AtomString(Itoa(_CalArrSize(a->aa.v))), NULL);
+    _Emit(IR_MALLOC, cp, AtomString(Itox(_CalArrSize(a->aa.v))), NULL);
     if (init != NULL) {
       ArrInitOffset = 0;
       _GenerateFromInitializer(init, cp);
     }
-  } else if (a->aa.v->arrDimNum == 0) {  // PARAM
+  } else if (a->aa.v->arrDimNum == 0) {  // VAR
     const char* cp = AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
-    _Emit(IR_PARAM, cp, NULL);
+    _Emit(IR_VAR, cp, NULL);
     if (init != NULL) {
       _Emit(IR_COPY, cp, _GenerateFromExpr(init->attr[0]), NULL);
     }
@@ -539,7 +553,7 @@ static void _GenerateFromScopeDecl() {
   Attribute* a;
   while (arr[idx] != NULL) {
     a = (Attribute*)(arr[idx]);
-    if (a->sType == Variable) {
+    if (a->sType != Function) {
       _GenerateFromVarDecl(a);
     } else {
       RAISE(Unreachable);
@@ -571,14 +585,16 @@ static void _GenerateFromGlobalScope() {
   Attribute* a;
   while (arr[idx] != NULL) {
     a = (Attribute*)(arr[idx]);
-    if (a->sType == Variable) {
+    if (a->sType != Function) {
       _GenerateFromVarDecl(a);
     } else {
-      _Emit(IR_CALL, AtomString("main"), AtomString("0"), NULL);
+      _Emit(IR_CALL, AtomString("main"), AtomString("0x0"), NULL);
+      _Emit(IR_EXIT, NULL);
       break;
     }
     idx++;
   }
+  CurrentScope->cnt = idx;
   CurrentScope = CurrentScope->next;
   ASTNode *f, *id, *body;
   while (arr[idx] != NULL) {
@@ -598,6 +614,7 @@ static void _GenerateFromGlobalScope() {
         tmp = CurrentScope;
         CurrentScope = CurrentScope->next;
       }
+      TmpVarCnt = 0;
       _GenerateFromStmList(body);
       if (tmp != NULL) {
         CurrentScope = CurrentScope->prev;
@@ -627,7 +644,6 @@ IR GenerateIR(SymbolTable* st) {
 }
 
 void FreeIR(IR* ir) {
-  FREE(ir->entries.lines);
   FREE(ir->ins);
   // TableFree(&(ir->ConstTable));
   memset(ir, 0, sizeof(IR));

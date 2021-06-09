@@ -79,8 +79,9 @@ void *TablePut(struct table_t *table, const void *key, void *value) {
     table->buckets[h] = p;
     table->size++;
     prev = NULL;
-  } else
+  } else {
     prev = p->value;
+  }
   p->value = value;  // overwrite or initialize
   table->timeStamp++;
   return prev;

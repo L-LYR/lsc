@@ -1,0 +1,52 @@
+i32 add(i32 i, i32 j) {
+    f32 f = -1.2;
+    f32 ff = -f;
+    return i + j;
+}
+i32[3][3] matMul(i32 a[3][3], i32 b[3][3]) {
+    i32 i, j, k;
+    i32 ans[3][3];
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            for (k = 0; k < 3; ++k) {
+                ans[i][j] = ans[i][j] + a[i][k] * b[k][j];
+            }
+        }
+    }
+    return ans;
+}
+void matPrint(i32 a[3][3]) {
+    i32 i, j;
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            print("%d", a[i][j]);
+            print("%s", " ");
+        }
+        print("%s", "\n");
+    }
+    return;
+}
+i32 fibonaci(i32 n) {
+    if (n <= 0) {
+        return 0;
+    } else if (n == 1) {
+        return 1;    
+    }
+    return fibonaci(n - 1) + fibonaci(n - 2);
+}
+i32 main() {
+    i32 mat[3][3] = {
+        {1,2,3},
+        {1,2,3},
+        {1,2,3},
+    };
+    i32 x;
+    print("%d", fibonaci(10));
+    print("%s", "\n");
+    matPrint(matMul(mat, mat));
+    print("%d", add(1, 2));
+
+    scan("%d", x);
+    print("%d", x);
+    return 0;   
+}

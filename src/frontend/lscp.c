@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../exception/exception.h"
 #include "../lib/llsc.h"
 #include "display.h"
-#include "exception.h"
 #include "lsc.tab.h"
 #include "symbol_table.h"
 

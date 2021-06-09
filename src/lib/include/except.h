@@ -57,7 +57,8 @@ void ExceptRaise(const struct except_t *e, const char *file, int line);
 
 #define RAISE(e) ExceptRaise(&(e), __FILE__, __LINE__)
 
-#define RE_RAISE ExceptRaise(_ExceptFrame.exception, _ExceptFrame.file, _ExceptFrame.line)  // _ExceptFrame is a object in TRY block
+#define RE_RAISE \
+  ExceptRaise(_ExceptFrame.exception, _ExceptFrame.file, _ExceptFrame.line)  // _ExceptFrame is a object in TRY block
 
 /*
     It is a unchecked runtime error to execute the C return

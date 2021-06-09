@@ -28,7 +28,8 @@ typedef enum {
 } ScopeType;
 
 struct Scope {
-  int level;               // scope level
+  int level;  // scope level
+  int cnt;
   int id;                  // to show the relationship between scopes
   int32_t stkTop;          // stack top
   ScopeType sType;         // scope type
@@ -42,6 +43,7 @@ struct Scope {
 typedef enum {
   Function,
   Variable,
+  Parameter,
 } SymbolType;
 
 typedef struct {
@@ -49,6 +51,7 @@ typedef struct {
   int paraNum;
   _Bool isMain;
   _Bool hasReturnValue;
+  _Bool hasReturnStm;
   ASTNode *defNode;
   const char *returnType;
   const char *paraTypeList[0];

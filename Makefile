@@ -3,30 +3,35 @@
 all: backend frontend
 
 frontend: lib
-	cd ./src/frontend && make lexer && make parser
+	cd ./src/frontend && make all
 lib:
 	cd ./src/lib/src && make lib -j 8;
 
-backend:
+backend: lib
+	cd ./src/backend && make all
 
 clean:
-	cd ./src/frontend && make clean;
-	cd ./src/lib/src && make clean;
-	rm -rf ./res/*;
+	-rm -rf ./res/* ./bin/*;
 
 valgrind_flags := --leak-check=full
 valgrind_flags += --show-leak-kinds=all
 valgrind_flags += --track-origins=yes
 valgrind_flags += --log-file="./res/memcheck.log"
 
-test_input := ./test/sum.lsc
-lexer_output := ./res/test.la
-ast_output := ./res/test.ast
-sym_output := ./res/test.sym
-ir_output := ./res/test.ir
+filename_prefix := add
 
-tests:
+test_input := ./test/$(filename_prefix).lsc
+lexer_output := ./res/$(filename_prefix).la
+ast_output := ./res/$(filename_prefix).ast
+sym_output := ./res/$(filename_prefix).sym
+ir_output := ./res/$(filename_prefix).ir
+
+lexer-test:
 	@echo "Test Lexer";
 	valgrind $(valgrind_flags) ./bin/lscl -v -i $(test_input) -o $(lexer_output);
+parser-test:
 	@echo "Test AST & Symbol Table Generator & IR Generator";
 	valgrind $(valgrind_flags) ./bin/lscp -v $(ast_output) -i $(test_input) -s $(sym_output) -g $(ir_output);
+vm-test:
+	@echo "Test VM";
+	valgrind $(valgrind_flags) ./bin/lscvm -i $(ir_output);

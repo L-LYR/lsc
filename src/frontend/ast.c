@@ -3,8 +3,8 @@
 
 #include <string.h>
 
+#include "../exception/exception.h"
 #include "../lib/llsc.h"
-#include "exception.h"
 // #include <python3.8/Python.h>
 #include <stdio.h>
 #include <stdlib.h>

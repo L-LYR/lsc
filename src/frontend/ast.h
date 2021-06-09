@@ -18,7 +18,6 @@ typedef enum {
   ArrayInitializer,  // [0]initializer list
   // Identifiers will be temporarily treated as strings.
 
-  IOStm,        // [0]const char* IO [1]arguement list
   JumpStm,      // [0]const char* keyword [1]expression
   UnaryExpr,    // [0]const char* operator [1]expression
   Declaration,  // [0]base type [1]declarator list
@@ -35,6 +34,7 @@ typedef enum {
   ParameterTypeList,    // [0]next [1]type specifier
 
   PostfixExpr,   // [0]const char* operator [1]expression [2]expression
+  IOStm,         // [0]const char* IO [1]StrConst [2] expression
   BinaryExpr,    // [0]const char* operator [1]expression [2]expression
   SelectionStm,  // [0]condition expression [1]branch1 [2]branch2
   Declarator,    // [0]type specifier [1]identifier [2]initializer

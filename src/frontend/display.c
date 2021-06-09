@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../exception/exception.h"
 #include "../lib/llsc.h"
-#include "exception.h"
 #include "generate_code.h"
+#include "symbol_table.h"
 
 extern Scope *GlobalScope;
 
@@ -17,6 +18,7 @@ static char TmpInnerBuffer[128];
 static const char *SymbolTypeStrs[] = {
     "Function",
     "Variable",
+    "Variable",
 };
 
 static const char *SymbolTableHeaders[] = {
@@ -24,30 +26,79 @@ static const char *SymbolTableHeaders[] = {
 };
 
 static const char *FuncDefDetailHeaders[] = {
-    "Function Name", "Definition Location", "Parameter Number", "Main Function?", "Return Type", "Parameter Type List", NULL,
+    "Function Name",
+    "Definition Location",
+    "Parameter Number",
+    "Main Function?",
+    "Return Type",
+    "Parameter Type List",
+    NULL,
 };
 
 static const char *TypeStr[] = {
-    "Bool Constant",       "Integer Constant",
-    "Float Constant",      "String Constant",
-    "Identifier",          "Specified Type",
-    "Initializer",         "Expression Statement",
-    "Array Initializer",   "IO Statement",
-    "Jump Statement",      "Unary Expression",
-    "Declaration",         "Function Call",
-    "Compound Statement",  "Arugument List",
-    "Declaration List",    "Statement List",
-    "Declarator List",     "Initializer List",
-    "Global List",         "Parameter Declaration List",
-    "Parameter Type List", "Postfix Expression",
-    "Bianry Expression",   "Selection Statement",
-    "Declarator",          "Function Declaration",
-    "Loop Statement",      "Function Definition",
+    "Bool Constant",        "Integer Constant",     "Float Constant",
+    "String Constant",      "Identifier",           "Specified Type",
+    "Initializer",          "Expression Statement", "Array Initializer",
+    "Jump Statement",       "Unary Expression",     "Declaration",
+    "Function Call",        "Compound Statement",   "Arugument List",
+    "Declaration List",     "Statement List",       "Declarator List",
+    "Initializer List",     "Global List",          "Parameter Declaration List",
+    "Parameter Type List",  "Postfix Expression",   "IO Statement",
+    "Bianry Expression",    "Selection Statement",  "Declarator",
+    "Function Declaration", "Loop Statement",       "Function Definition",
 };
 
 static const char *IRTypeStr[] = {
-    "function", "label", "malloc", "param", "copy", "goto", "jump_if", "arg", "call", "return", "scan", "print", "nop", "bnot", "not", "neg", "mul", "div",  "mod", "add",  "sub", "fmul",
-    "fdiv",     "fadd",  "fsub",   "flt",   "fle",  "fgt",  "fge",     "feq", "fne",  "lt",     "le",   "gt",    "ge",  "eq",   "ne",  "sr",  "sl",  "band", "bor", "bxor", "and", "or",
+    "exit",
+    "function",
+    "label",
+    "malloc",
+    "var",
+    "param",
+    "copy",
+    "copy_to_deref",
+    "copy_from_deref",
+    "goto",
+    "jump_if",
+    "jump_if_not",
+    "arg",
+    "call",
+    "return",
+    "scan",
+    "print",
+    "nop",
+    "bnot",
+    "not",
+    "neg",
+    "fneg",
+    "mul",
+    "div",
+    "mod",
+    "add",
+    "sub",
+    "fmul",
+    "fdiv",
+    "fadd",
+    "fsub",
+    "flt",
+    "fle",
+    "fgt",
+    "fge",
+    "feq",
+    "fne",
+    "lt",
+    "le",
+    "gt",
+    "ge",
+    "eq",
+    "ne",
+    "sr",
+    "sl",
+    "band",
+    "bor",
+    "bxor",
+    "and",
+    "or",
 };
 
 // from lscp.c
@@ -166,7 +217,8 @@ void _NotifyReturnTypeUnmatch(int curLine, const char *want, const char *get, co
 }
 
 void _NotifyIOStmMustGetBaseType(int curLine, const char *get) {
-  static const char *IOStmMustGetBaseType = "Line %d: IO statement must get base type as arguments, but gets type '%s'.\n\n";
+  static const char *IOStmMustGetBaseType =
+      "Line %d: IO statement must get base type as arguments, but gets type '%s'.\n\n";
   _Notify(IOStmMustGetBaseType, curLine, get);
 }
 
@@ -186,7 +238,8 @@ void _NotifyExpectArrayInitializer(int curLine) {
 }
 
 void _NotifyArrayInitializerDimUnmatch(int curLine, int want, int get) {
-  static const char *ArrayInitializerDimUnmatch = "Line %d: array initializer wants %d element(s), gets %d element(s).\n\n";
+  static const char *ArrayInitializerDimUnmatch =
+      "Line %d: array initializer wants %d element(s), gets %d element(s).\n\n";
   _Notify(ArrayInitializerDimUnmatch, curLine, want, get);
 }
 
@@ -206,14 +259,24 @@ void _NotifyConstantOutOfRange(int curLine, const char *constVal, const char *ty
 }
 
 void _NotifyMainFuncHasParam(int curLine) {
-  static const char *MainFuncHasParam = "Line %d: function main should not has params\n\n";
+  static const char *MainFuncHasParam = "Line %d: function main should not has params.\n\n";
   _Notify(MainFuncHasParam, curLine);
+}
+
+void _NotifyNeedReturnStm(int curLine, const char *f) {
+  static const char *NeedAtLeastOneReturnStm = "Line %d: Function '%s' needs at least one return statement.\n\n";
+  _Notify(NeedAtLeastOneReturnStm, curLine, f);
+}
+
+void _NotifyIOStmNeedFmt(int curLine) {
+  static const char *IOStmNeedFmt = "Line %d: IO Statement needs a format string.\n\n";
+  _Notify(IOStmNeedFmt, curLine);
 }
 
 void _NotifyRepetition(Attribute *old, Attribute *newAttr, const char *id) {
   // for the way of management of memory,
   // redefinition of function will not be notified here.
-  if (newAttr->sType == Variable) {  // redeclaration
+  if (newAttr->sType != Function) {  // redeclaration
     if (old->declLoc != -1) {
       _NotifyRedeclaration(newAttr->declLoc, id, old->sType, old->declLoc);
     } else if (old->aa.f != NULL) {
@@ -222,7 +285,7 @@ void _NotifyRepetition(Attribute *old, Attribute *newAttr, const char *id) {
       RAISE(Unreachable);
     }
   } else if (newAttr->sType == Function) {
-    if (old->sType == Variable) {  // redeclaration
+    if (old->sType != Function) {  // redeclaration
       _NotifyRedeclaration(newAttr->declLoc, id, old->sType, old->declLoc);
     } else if (old->sType == Function) {
       _Bool isDecl = newAttr->declLoc != -1;
@@ -260,9 +323,11 @@ static void _DisplaySymbolTable(struct table_t *t, Fmt *fmt) {
   while (arr[i] != NULL) {
     a = ((Attribute *)(arr[i + 1]));
     if (a->sType == Function) {
-      fprintf(fmt->out, "%d;%s;%s;%s;%d;%d;(null)\n", a->id, (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc);
-    } else if (a->sType == Variable) {
-      fprintf(fmt->out, "%d;%s;%s;%s;%d;%d;%s\n", a->id, (const char *)arr[i], SymbolTypeStrs[a->sType], a->type, a->address, a->declLoc, _DisplayBool(a->aa.v->initializer != NULL));
+      fprintf(fmt->out, "%d;%s;%s;%s;%d;%d;(null)\n", a->id, (const char *)(arr[i]), SymbolTypeStrs[a->sType], a->type,
+              a->address, a->declLoc);
+    } else {
+      fprintf(fmt->out, "%d;%s;%s;%s;%d;%d;%s\n", a->id, (const char *)arr[i], SymbolTypeStrs[a->sType], a->type,
+              a->address, a->declLoc, _DisplayBool(a->aa.v->initializer != NULL));
     }
     i += 2;
   }
@@ -444,13 +509,6 @@ static void _DisplayConstTable(struct table_t *t, Fmt *fmt) {
   FREE(arr);
 }
 
-static void _DisplayLabelTable(LabelEntry *entry, Fmt *fmt) {
-  for (int i = 0; i < entry->curLabelIdx; ++i) {
-    fprintf(fmt->out, "L%d,%d\n", i, entry->lines[i]);
-  }
-  fputc('\n', fmt->out);
-}
-
 void DisplayIR(IR *ir, Fmt *fmt) {
   fmt->out = fopen(fmt->fileLoc, "w");
   if (fmt->out == NULL) {
@@ -458,8 +516,6 @@ void DisplayIR(IR *ir, Fmt *fmt) {
   }
   fprintf(fmt->out, ".data\n");
   _DisplayConstTable(ir->ConstTable, fmt);
-  fprintf(fmt->out, ".label\n");
-  _DisplayLabelTable(&(ir->entries), fmt);
   fprintf(fmt->out, ".text\n");
   for (int i = 0; i < ir->curInsIdx; ++i) {
     if (ir->ins[i]->type == IR_NOP) {

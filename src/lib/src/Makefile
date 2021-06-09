@@ -12,4 +12,4 @@ lib: $(OBJ)
 ../lib/%.o: %.c
 	clang $(CLANG_FLAG) -c -g $^ -o $@
 clean:
-	rm -rf ../lib/*
+	-rm -rf ../lib/*

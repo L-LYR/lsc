@@ -11,10 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../exception/exception.h"
 #include "../lib/llsc.h"
 #include "ast.h"
 #include "display.h"
-#include "exception.h"
 #include "stdbool.h"
 #include "symbol_table.h"
 #include "to_str.h"
@@ -22,9 +22,10 @@
 extern int ErrorCount;
 
 static const char *ReservedSymbolList[] = {
-    "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+",   "-",   "++",  "--", "~", "!",
-    "*",    "/",   "%",   "<",      ">",    "<=", ">=",   "==",  "!=",     "<<",    ">>",       "&",     "|",    "^",   "&&",  "||",  "=",  ",", "(",
-    ")",    "[",   "]",   "{",      "}",    ";",  "f+",   "f-",  "f*",     "f/",    "f<",       "f>",    "f<=",  "f>=", "f==", "f!=", NULL,
+    "void", "i32", "f32", "string", "bool", "if", "else", "for", "return", "break", "continue", "print", "scan", "+",
+    "-",    "f-",  "++",  "--",     "~",    "!",  "*",    "/",   "%",      "<",     ">",        "<=",    ">=",   "==",
+    "!=",   "<<",  ">>",  "&",      "|",    "^",  "&&",   "||",  "=",      ",",     "(",        ")",     "[",    "]",
+    "{",    "}",   ";",   "f+",     "f-",   "f*", "f/",   "f<",  "f>",     "f<=",   "f>=",      "f==",   "f!=",  NULL,
 };
 
 typedef enum { VOID, I32, F32, STRING, BOOL } BaseType;
@@ -44,7 +45,7 @@ void AtomInit() {
 struct table_t *ConstTable = NULL;
 Scope *GlobalScope = NULL;
 static Scope *CurrentScope = NULL;
-static int DefaultTableSize = 32;
+static int DefaultTableSize = 64;
 static int CurID = 0;
 static const int MAX_ARRAY_DIM = 8;
 static char InnerStrBuffer[128];
@@ -129,6 +130,7 @@ static void _AddSymbol(Scope *s, const char *id, Attribute *attr) {
   Attribute *a = TableGet(s->curTab, id);
   if (a == NULL) {
     attr->id = TableSize(s->curTab);
+    s->cnt++;
     TablePut(s->curTab, id, attr);
     _PauseForDisplay();
   } else {
@@ -163,7 +165,7 @@ static Attribute *_CheckFuncDef(ASTNode *id, const char *t) {
     a = _NewAttribute(Function, t, 0, id->line);
     _AddSymbol(s, id->attr[0], a);
   } else {
-    if (a->sType == Variable) {
+    if (a->sType != Function) {
       _NotifyRedefinition(id->line, id->attr[0], a->sType, a->aa.f->defLoc);
       return NULL;
     }
@@ -208,7 +210,7 @@ static ExprAttr *_CheckFuncCall(ASTNode *n) {
     _NotifyUndefinedReference(n->line, p->attr[0]);
     return NULL;
   }
-  if (a->sType == Variable) {
+  if (a->sType != Function) {
     _NotifyUncallable(n->line, p->attr[0], a->type);
     return NULL;
   }
@@ -286,7 +288,8 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
     FREE(rhs);
     return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
   }
-  if (op == AtomString("==") || op == AtomString("!=") || op == AtomString("<") || op == AtomString(">") || op == AtomString("<=") || op == AtomString(">=")) {
+  if (op == AtomString("==") || op == AtomString("!=") || op == AtomString("<") || op == AtomString(">") ||
+      op == AtomString("<=") || op == AtomString(">=")) {
     if (lhs->type == BaseTypeStrs[F32]) {
       n->attr[0] = (void *)AtomAppend("f", op);
     }
@@ -390,7 +393,7 @@ static ExprAttr *_CheckUnaryExprType(ASTNode *n) {
   const char *t = a->type;
   const char *op = n->attr[0];
   if (op == AtomString("!")) {
-    if (t == BaseTypeStrs[STRING]) {
+    if (t != BaseTypeStrs[BOOL]) {
       _NotifyInvalidArgumentType(n->line, t, "unary expression", "!");
       FREE(a);
       return NULL;
@@ -409,6 +412,9 @@ static ExprAttr *_CheckUnaryExprType(ASTNode *n) {
       _NotifyInvalidArgumentType(n->line, t, "unary expression", "+/-");
       FREE(a);
       return NULL;
+    }
+    if (op == AtomString("-")) {
+      n->attr[0] = (void *)AtomString("f-");
     }
     a->isLvalue = false;
   } else if (op == AtomString("--") || op == AtomString("++")) {
@@ -449,7 +455,7 @@ static ExprAttr *_CheckExpressionType(ASTNode *n) {
       return NULL;
     }
     int dim = 0;
-    if (a->sType == Variable) {
+    if (a->sType != Function) {
       dim = a->aa.v->arrDimNum;
     }
     return _NewExprAttr(a->type, dim == 0, dim);
@@ -523,22 +529,27 @@ static _Bool _IsBaseType(const char *t) {
   return false;
 }
 
-static void _CheckIOArgList(ASTNode *n, int line) {
+static void _CheckIOArgList(ASTNode *n) {
   _Bool isScan = n->attr[0] == AtomString("scan");
-  ASTNode *p = n->attr[1], *e;
-  while (p != NULL) {
-    e = p->attr[1];
-    ExprAttr *a = _CheckExpressionType(e);
-    if (a != NULL) {
-      if (!_IsBaseType(a->type)) {
-        _NotifyIOStmMustGetBaseType(line, a->type);
-      }
-      if (isScan && !a->isLvalue) {
-        _NotifyUnassignable(line);
-      }
-      FREE(a);
+  ExprAttr *fmt = _CheckExpressionType(n->attr[1]);
+  ExprAttr *a = _CheckExpressionType(n->attr[2]);
+  if (fmt == NULL) {
+    return;
+  }
+
+  if (fmt->type != AtomString("string")) {
+    _NotifyIOStmNeedFmt(n->line);
+  }
+  FREE(fmt);
+
+  if (a != NULL) {
+    if (!_IsBaseType(a->type)) {
+      _NotifyIOStmMustGetBaseType(n->line, a->type);
     }
-    p = p->attr[0];
+    if (isScan && !a->isLvalue) {
+      _NotifyUnassignable(n->line);
+    }
+    FREE(a);
   }
 }
 
@@ -592,14 +603,14 @@ static _Bool _CheckInitializerList(ASTNode *n, const char *t, int maxDim, int cu
 }
 
 // static void _GoDownAndCheck(ASTNode *n) {}
-static void _HandleDeclList(ASTNode *n);
+static void _HandleDeclList(ASTNode *n, SymbolType st);
 static void _HandleStmList(ASTNode *n);
 
 static void _HandleCompoundStm(ASTNode *n) {
   if (n == NULL) {
     return;
   }
-  _HandleDeclList(n->attr[0]);
+  _HandleDeclList(n->attr[0], Variable);
   _AddNewLayer();
   _HandleStmList(n->attr[1]);
   _BackToPrevScope();
@@ -674,7 +685,7 @@ static void _HandleReturnStm(ASTNode *n) {
   Attribute *a = TableGet(t, s->name);
   const char *rt = a->aa.f->returnType;
   _Bool needReturn = rt != BaseTypeStrs[VOID];
-
+  a->aa.f->hasReturnStm = true;
   if ((needReturn && n->attr[1] == NULL) || (!needReturn && n->attr[1] != NULL)) {
     _NotifyWrongReturnStm(n->line, s->name, needReturn);
   }
@@ -727,7 +738,7 @@ static void _HandleStm(ASTNode *n) {
       RAISE(Unreachable);
     }
   } else if (n->nType == IOStm) {
-    _CheckIOArgList(n, n->line);
+    _CheckIOArgList(n);
   } else if (n->nType == ExpressionStm) {
     ExprAttr *a = _CheckExpressionType(n->attr[0]);
     if (a != NULL) {
@@ -811,7 +822,7 @@ static int _GetArrayDimList(const char *type, int curLine) {
 //   return -1;
 // }
 
-static void _HandleDeclarator(ASTNode *n, Scope *s) {
+static void _HandleDeclarator(ASTNode *n, Scope *s, SymbolType st) {
   ASTNode *t = n->attr[0];
   ASTNode *id = n->attr[1];
   // Get base type
@@ -835,7 +846,7 @@ static void _HandleDeclarator(ASTNode *n, Scope *s) {
   // for (int i = 0; i < dim; ++i) {
   //   varSize *= InnerBuffer[i];
   // }
-  Attribute *a = _NewAttribute(Variable, t->attr[0], s->stkTop, id->line);
+  Attribute *a = _NewAttribute(st, t->attr[0], s->stkTop, id->line);
   // s->stkTop += varSize;
   s->stkTop += 4;  // aligned 4 byte
   // check initializer
@@ -848,22 +859,22 @@ static void _HandleDeclarator(ASTNode *n, Scope *s) {
   _AddSymbol(s, id->attr[0], a);
 }
 
-static void _HandleDeclaratorList(ASTNode *n, Scope *s) {
+static void _HandleDeclaratorList(ASTNode *n, Scope *s, SymbolType st) {
   if (n == NULL) {
     return;
   }
-  _HandleDeclaratorList(n->attr[0], s);
-  _HandleDeclarator(n->attr[1], s);
+  _HandleDeclaratorList(n->attr[0], s, st);
+  _HandleDeclarator(n->attr[1], s, st);
 }
 
-static void _HandleDeclList(ASTNode *n) {
+static void _HandleDeclList(ASTNode *n, SymbolType st) {
   if (n == NULL) {
     return;
   }
-  _HandleDeclList(n->attr[0]);
+  _HandleDeclList(n->attr[0], st);
   // Declaration Node is useless here.
   // Specifying types is handled in the AST.
-  _HandleDeclaratorList(((ASTNode *)(n->attr[1]))->attr[1], CurrentScope);
+  _HandleDeclaratorList(((ASTNode *)(n->attr[1]))->attr[1], CurrentScope, st);
 }
 
 static const char *_GernerateParaTypeList(ASTNode *n) {
@@ -934,7 +945,7 @@ static void _HandleGlobalList(ASTNode *n) {
   ASTNode *p = (ASTNode *)(n->attr[1]);
   if (p->nType == Declaration) {
     // insert and check
-    _HandleDeclaratorList(p->attr[1], GlobalScope);
+    _HandleDeclaratorList(p->attr[1], GlobalScope, Variable);
   } else if (p->nType == FunctionDecl) {
     // insert and check
     ASTNode *rt = p->attr[0];
@@ -971,12 +982,15 @@ static void _HandleGlobalList(ASTNode *n) {
       }
       a->aa.f->defNode = p;
       _AddPeerScope(FuncBody, id->attr[0]);
-      _HandleDeclaratorList(pl, CurrentScope);
+      _HandleDeclaratorList(pl, CurrentScope, Parameter);
       // parameter declarator list is also a declarator list...LOL
       _HandleCompoundStm(p->attr[3]);
       _Bool needReturn = rt->attr[0] != BaseTypeStrs[VOID];
       if (needReturn && !a->aa.f->hasReturnValue) {
         _NotifyWrongReturnStm(p->line, id->attr[0], needReturn);
+      }
+      if (!a->aa.f->hasReturnStm) {
+        _NotifyNeedReturnStm(p->line, id->attr[0]);
       }
     }
   } else {

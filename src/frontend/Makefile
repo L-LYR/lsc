@@ -1,16 +1,23 @@
 .PHONY:
-	lexer ast-parser st-parser clean
+	lexer ast-parser st-parser clean all
 
-cc := clang
 LLSC := ../lib/lib/llsc.a
 
-warning := -Wall -Wextra -Wno-unused-function -Wno-unneeded-internal-declaration
+LFRONT := ../../bin/lfront.a
 
-lexer: lsc.yy.c lscl.c exception.c
-	clang $(warning) -g $^ $(LLSC)  -o ../../bin/lscl
+warning := -Wall -Wextra
 
-parser: lsc.yy.c lsc.tab.c ast.c lscp.c exception.c display.c symbol_table.c to_str.c generate_code.c
-	clang $(warning) -g $^ $(LLSC) -o ../../bin/lscp;
+all: lfront lexer parser
+
+lfront:	lsc.yy.c lsc.tab.c
+	clang $(warning) -Wno-unused-function -Wno-unneeded-internal-declaration -c -g $^ && \
+	llvm-ar -rc $(LFRONT) *.o && \
+	rm *.o
+lexer: lscl.c ../exception/exception.c
+	clang $(warning) -g $^ $(LLSC) $(LFRONT) -o ../../bin/lscl
+
+parser: ast.c lscp.c ../exception/exception.c display.c symbol_table.c to_str.c generate_code.c
+	clang $(warning) -g $^ $(LLSC) $(LFRONT) -o ../../bin/lscp;
 	cp ./*.py ../../bin/;
 	chmod +x ../../bin/*.py;
 
@@ -18,5 +25,4 @@ lsc.yy.c: lsc.l lsc.tab.c
 	flex -o lsc.yy.c lsc.l
 lsc.tab.c: lsc.y
 	bison -v -d lsc.y
-clean:
-	rm -rf ../../bin/*
+
