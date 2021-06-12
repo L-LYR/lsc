@@ -94,6 +94,11 @@ typedef struct VM {
 
 typedef void (*Executor)(Instruction* i, VM*);
 
-void Run(FILE* f);
+void Run(FILE* f, FILE* b);
+
+typedef struct {
+  int begin;
+  int end;
+} BasicBlock;
 
 #endif

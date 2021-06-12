@@ -54,8 +54,9 @@ static const char* InsNameInit[] = {
     "or",
 };
 
-static const int InsTypeNum = sizeof(InsNameInit) / sizeof(InsNameInit[0]);
-static const char* InsTypeName[InsTypeNum];
+const int InsTypeNum = sizeof(InsNameInit) / sizeof(InsNameInit[0]);
+const char* InsTypeName[InsTypeNum];
+
 static const int DefaultTableSize = 128;
 static struct table_t* ConstTab;
 static struct table_t* LabelTab;
@@ -192,7 +193,7 @@ static void _SetAttr(Instruction* i, int j, const char* a) {
   }
 }
 
-static Instruction* _ReadCodeSeg(FILE* f) {
+static Instruction* _ReadCodeSeg(FILE* f, int* cnt) {
   if (_ReadLine(f) == -1) {
     RAISE(UnexpectedEOF);
   }
@@ -252,12 +253,15 @@ static Instruction* _ReadCodeSeg(FILE* f) {
     }
   }
   TableFree(&LabelTab);
+  *cnt = insNum;
   return ins;
 }
 
-void Read(VM* vm, FILE* f) {
+int Read(VM* vm, FILE* f) {
   _Init();
   _ReadDateSeg(f);
-  vm->ins = _ReadCodeSeg(f);
+  int ret = 0;
+  vm->ins = _ReadCodeSeg(f, &ret);
   vm->constTab = ConstTab;
+  return ret;
 }

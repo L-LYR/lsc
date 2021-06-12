@@ -1,7 +1,9 @@
 #include "vm.h"
 
 // extern reader.c
-void Read(VM* vm, FILE* f);
+int Read(VM* vm, FILE* f);
+// extern optimize.c
+void Optimize(Instruction* ins, int cnt, FILE* b);
 
 extern Executor ops[];
 
@@ -13,11 +15,12 @@ static void _ExecLoop(VM* vm) {
   }
 }
 
-void Run(FILE* f) {
+void Run(FILE* f, FILE* b) {
   VM vm;
   ArenaInit();
-  Read(&vm, f);
+  int cnt = Read(&vm, f);
   fclose(f);
+  Optimize(vm.ins, cnt, b);
   vm.pc = 0;
   vm.stkTop = vm.stack;
   _ExecLoop(&vm);

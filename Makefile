@@ -24,6 +24,7 @@ lexer_output := ./res/$(filename_prefix).la
 ast_output := ./res/$(filename_prefix).ast
 sym_output := ./res/$(filename_prefix).sym
 ir_output := ./res/$(filename_prefix).ir
+bb_output := ./res/$(filename_prefix).bb
 
 lexer-test:
 	@echo "Test Lexer";
@@ -33,4 +34,4 @@ parser-test:
 	valgrind $(valgrind_flags) --log-file="./res/parser-test-memcheck.log" ./bin/lscp -v $(ast_output) -i $(test_input) -s $(sym_output) -g $(ir_output);
 vm-test:
 	@echo "Test VM";
-	valgrind $(valgrind_flags) --log-file="./res/vm-test-memcheck.log" ./bin/lscvm -i $(ir_output);
+	valgrind $(valgrind_flags) --log-file="./res/vm-test-memcheck.log" ./bin/lscvm -i $(ir_output) -b $(bb_output);
