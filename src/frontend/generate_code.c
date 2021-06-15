@@ -114,10 +114,13 @@ static void** _GenerateDeclSeq(struct table_t* table) {
 }
 
 static int _CalCurrentIDBase(Scope* s) {
+  if (s->sType == Global) {
+    return 0;
+  }
   int base = 0;
   while (true) {
     s = s->prev;
-    if (s == NULL) {
+    if (s->sType == Global) {
       break;
     }
     base += s->cnt;
@@ -134,7 +137,11 @@ static const char* _SearchFromCurScope(ASTNode* id) {
     }
     a = TableGet(s->curTab, id->attr[0]);
     if (a != NULL && id->line >= a->declLoc) {
-      return AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(s)));
+      const char* p = "x";
+      if (s->sType == Global) {
+        p = "g";
+      }
+      return AtomAppend(p, Itoa(a->id + _CalCurrentIDBase(s)));
     }
   }
   RAISE(Unreachable);
@@ -314,7 +321,8 @@ static const char* _GenerateFromPostfixExpr(ASTNode* n) {
     for (int i = 0; i < a->aa.v->arrDimNum; ++i) {
       ArrCurOffset *= ArrCurDim[i];
     }
-    return AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(s)));
+    const char* p = s->sType == Global ? "g" : "x";
+    return AtomAppend(p, Itoa(a->id + _CalCurrentIDBase(s)));
   }
   const char* x = _GenerateFromPostfixExpr(n->attr[1]);
   ArrCurOffset /= ArrCurDim[ArrCurIdx++];
@@ -386,11 +394,21 @@ static const char* _GenerateFromExpr(ASTNode* n) {
 
 static void _GenerateFromIOStm(ASTNode* n) {
   const char* fmt = _GenerateFromExpr(n->attr[1]);
-  const char* x = _GenerateFromExpr(n->attr[2]);
   if (n->attr[0] == AtomString("print")) {
+    const char* x = _GenerateFromExpr(n->attr[2]);
     _Emit(IR_PRINT, fmt, x, NULL);
   } else if (n->attr[0] == AtomString("scan")) {
-    _Emit(IR_SCAN, fmt, x, NULL);
+    ASTNode* np = n->attr[2];
+    const char* x;
+    if (np->nType == PostfixExpr) {
+      x = _GenerateFromPostfixExpr(np);
+      const char* t = _GetTmpVar();
+      _Emit(IR_SCAN, fmt, t, NULL);
+      _Emit(IR_COPY_TO_DEREF, x, t, NULL);
+    } else {
+      x = _GenerateFromExpr(np);
+      _Emit(IR_SCAN, fmt, x, NULL);
+    }
   } else {
     RAISE(Unreachable);
   }
@@ -520,23 +538,23 @@ static void _GenerateFromInitializer(ASTNode* n, const char* base) {
   }
 }
 
-static void _GenerateFromVarDecl(Attribute* a) {
+static void _GenerateFromVarDecl(Attribute* a, const char* prefix) {
   ASTNode* init = a->aa.v->initializer;
   if (a->sType == Parameter) {  // PARAM
-    const char* cp = AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
+    const char* cp = AtomAppend(prefix, Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
     _Emit(IR_PARAM, cp, NULL);
     return;
   }
 
   if (a->aa.v->arrDimNum > 0) {  // MALLOC
-    const char* cp = AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
+    const char* cp = AtomAppend(prefix, Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
     _Emit(IR_MALLOC, cp, AtomString(Itox(_CalArrSize(a->aa.v))), NULL);
     if (init != NULL) {
       ArrInitOffset = 0;
       _GenerateFromInitializer(init, cp);
     }
   } else if (a->aa.v->arrDimNum == 0) {  // VAR
-    const char* cp = AtomAppend("x", Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
+    const char* cp = AtomAppend(prefix, Itoa(a->id + _CalCurrentIDBase(CurrentScope)));
     _Emit(IR_VAR, cp, NULL);
     if (init != NULL) {
       _Emit(IR_COPY, cp, _GenerateFromExpr(init->attr[0]), NULL);
@@ -556,7 +574,7 @@ static void _GenerateFromScopeDecl() {
   while (arr[idx] != NULL) {
     a = (Attribute*)(arr[idx]);
     if (a->sType != Function) {
-      _GenerateFromVarDecl(a);
+      _GenerateFromVarDecl(a, "x");
     } else {
       RAISE(Unreachable);
     }
@@ -588,7 +606,7 @@ static void _GenerateFromGlobalScope() {
   while (arr[idx] != NULL) {
     a = (Attribute*)(arr[idx]);
     if (a->sType != Function) {
-      _GenerateFromVarDecl(a);
+      _GenerateFromVarDecl(a, "g");
     } else {
       _Emit(IR_CALL, AtomString("main"), AtomString("0x0"), NULL);
       _Emit(IR_EXIT, NULL);
@@ -596,6 +614,7 @@ static void _GenerateFromGlobalScope() {
     }
     idx++;
   }
+  TmpVarCnt = 0;
   CurrentScope->cnt = idx;
   CurrentScope = CurrentScope->next;
   ASTNode *f, *id, *body;
@@ -616,8 +635,8 @@ static void _GenerateFromGlobalScope() {
         tmp = CurrentScope;
         CurrentScope = CurrentScope->next;
       }
-      TmpVarCnt = 0;
       _GenerateFromStmList(body);
+      TmpVarCnt = 0;
       if (tmp != NULL) {
         CurrentScope = CurrentScope->prev;
       }

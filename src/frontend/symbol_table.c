@@ -298,7 +298,8 @@ static ExprAttr *_CheckBinaryExpr(ASTNode *n) {
     return _NewExprAttr(BaseTypeStrs[BOOL], false, 0);
   }
   // must be i32
-  if (op == AtomString("&") || op == AtomString("|") || op == AtomString("^") || op == AtomString("%")) {
+  if (op == AtomString("&") || op == AtomString("|") || op == AtomString("^") || op == AtomString("%") ||
+      op == AtomString(">>") || op == AtomString("<<")) {
     if (lhs->type != BaseTypeStrs[I32]) {
       _NotifyInvalidArgumentType(l->line, lhs->type, "binary expression lhs", op);
       FREE(lhs);

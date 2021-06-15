@@ -1,14 +1,20 @@
 #include "vm.h"
 
+#include <stdlib.h>
+
 // extern reader.c
 int Read(VM* vm, FILE* f);
 // extern optimize.c
 void Optimize(Instruction* ins, int cnt, FILE* b);
+// extern opcode.c
+Context* _NewContext(Context* cur);
 
 extern Executor ops[];
 
 static void _ExecLoop(VM* vm) {
+  // system("stty raw -echo");
   Instruction* i;
+  vm->ctx = _NewContext(vm->ctx);
   while (true) {
     i = &(vm->ins[vm->pc]);
     ops[i->iType](i, vm);

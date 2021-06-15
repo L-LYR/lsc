@@ -12,6 +12,7 @@ backend: lib
 
 clean:
 	-rm -rf ./res/* ./bin/*;
+	cd ./src/frontend && rm lsc.output lsc.yy.c lsc.tab.c lsc.tab.h
 
 valgrind_flags := --leak-check=full
 valgrind_flags += --show-leak-kinds=all

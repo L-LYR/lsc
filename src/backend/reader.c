@@ -92,7 +92,8 @@ static void _ConvertEscapeChar(char* p) {
       *q++ = *p++;
     } else {
       p++;
-      switch (*p++) {
+      char c = *p++;
+      switch (c) {
         case '\\':
           *q++ = '\\';
           break;
@@ -111,6 +112,9 @@ static void _ConvertEscapeChar(char* p) {
         case 'r':
           *q++ = '\r';
           break;
+        default:
+          *q++ = '\\';
+          *q++ = c;
       }
     }
   }
@@ -186,6 +190,10 @@ static void _SetAttr(Instruction* i, int j, const char* a) {
     case 'r':
       i->opd[j].oType = RegNo;
       i->opd[j].val = -1;
+      break;
+    case 'g':
+      i->opd[j].oType = gIdx;
+      i->opd[j].val = strtol(a + 1, NULL, 10);
       break;
     default:
       i->opd[j].val = (int64_t)AtomString(a);

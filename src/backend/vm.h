@@ -62,6 +62,7 @@ typedef enum {
   Imm,
   Addr,
   StkIdx,
+  gIdx,
   RegNo,
 } OperandType;
 

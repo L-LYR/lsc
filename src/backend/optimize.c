@@ -17,7 +17,7 @@ static BasicBlock *BBs = NULL;
 static int BBCnt = 0;
 
 const char *OperandTypeStr[] = {
-    "", "Imm", "Addr", "StkIdx", "RegNo",
+    "", "Imm", "Addr", "StkIdx", "GlobalIdx", "RegNo",
 };
 
 static void _ShowOperand(const Instruction *ins, FILE *b) {
@@ -32,6 +32,7 @@ static void _ShowOperand(const Instruction *ins, FILE *b) {
         // fprintf(b, "(0x%X)", (int32_t)(ins->opd[i].val));
         // break;
       case StkIdx:
+      case gIdx:
       case RegNo:
         fprintf(b, "(%ld)", ins->opd[i].val);
         break;

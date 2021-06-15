@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
+#include <unistd.h>
 
 #include "../exception/exception.h"
 #include "vm.h"
 
-static Context* _NewContext(Context* cur) {
+Context* _NewContext(Context* cur) {
   Context* c = ALLOC(sizeof(Context));
   memset(c, 0, sizeof(Context));
   c->prev = cur;
@@ -24,6 +26,8 @@ static int64_t _GetVal(VM* vm, Operand* opd) {
       return opd->val;
     case StkIdx:
       return vm->ctx->baddr[opd->val];
+    case gIdx:
+      return vm->stack[opd->val];
     default:
       RAISE(Unreachable);
       return 0;
@@ -36,6 +40,8 @@ static int64_t* _GetRef(VM* vm, Operand* opd) {
       return &(vm->ctx->regs[opd->val]);
     case StkIdx:
       return &(vm->ctx->baddr[opd->val]);
+    case gIdx:
+      return &(vm->stack[opd->val]);
     case Addr:
     case Imm:
       return (int64_t*)opd->val;
@@ -49,7 +55,9 @@ void vmexit(Instruction* _, VM* vm) {
   ArenaClear();
   AtomReset();
   TableFree(&(vm->constTab));
+  FREE(vm->ctx);
   FREE(vm->ins);
+  // system("reset");
   exit(vm->rv);
 }
 
@@ -141,11 +149,26 @@ void vmreturn(Instruction* i, VM* vm) {
   vm->stkTop = ctx->baddr;
   FREE(ctx);
 }
+static int _NonBlockGetchar() {
+  fd_set rfds;
+  struct timeval tv;
+  int ch = 0;
+  FD_ZERO(&rfds);
+  FD_SET(0, &rfds);
+  tv.tv_sec = 1;
+  tv.tv_usec = 0;
+  if (select(1, &rfds, NULL, NULL, &tv) > 0) {
+    ch = getchar();
+  }
+  return ch;
+}
 
 void vmscan(Instruction* i, VM* vm) {
   const char* fmt = (const char*)_GetVal(vm, &(i->opd[0]));
   int64_t* val = _GetRef(vm, &(i->opd[1]));
   scanf(fmt, val);
+  // usleep(500000);
+  // *val = _NonBlockGetchar();
   vm->pc++;
 }
 
