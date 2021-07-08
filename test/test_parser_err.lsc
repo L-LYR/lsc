@@ -1,0 +1,4 @@
+i32 add(i32 x, i32 y) {
+    i32 999i;
+    return x + y;
+}

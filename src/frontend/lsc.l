@@ -29,7 +29,7 @@ _Bool Verbose = false; // this can only be set in lscl.
         fprintf(yyout, "Line %3d: %16s: %s\n", yylineno, "Comment", yytext);
     }
 }
-\"(?:\\.|[^"])*\"            {return SCONSTANT;}
+\"(\\.|[^\\"])*\"            {return SCONSTANT;}
 "void"                              {return VOID;}
 "i32"                               {return I32;}
 "f32"                               {return F32;}

@@ -1,0 +1,11 @@
+i32 add(i32 x, i32 y) {
+    return x + y;
+}
+
+$ // unknown token
+
+string hello() {
+    f32 f = 3e5+7;
+    return "Hello World!";
+}
+

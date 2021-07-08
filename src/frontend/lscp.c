@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 const char *OptFmt = ":v:i:s:g:hp";
 
 const char *Usage =
-    "Usage: lscp [-vh] -i <filename> -o <filename>\n"
+    "Usage: lscp [-ph] -i <filename> -v <filename> -s <filename> -g <filename>\n"
     "Options:\n"
     "  -v <filename>\tTurn on verbose mode, display AST.\n"
     "  -i <filename>\tInput file.\n"

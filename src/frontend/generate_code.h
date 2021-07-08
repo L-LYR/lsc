@@ -63,11 +63,11 @@ typedef struct Instruction {
   const char* attr[3];
 } Instruction;
 
-typedef struct LabelEntry {
-  int* lines;
-  int maxLabelCnt;
-  int curLabelIdx;
-} LabelEntry;
+// typedef struct LabelEntry {
+//   int* lines;
+//   int maxLabelCnt;
+//   int curLabelIdx;
+// } LabelEntry;
 
 typedef struct IR {
   Instruction** ins;

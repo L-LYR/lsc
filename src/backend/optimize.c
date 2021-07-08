@@ -98,12 +98,10 @@ static void _GenerateBBs(FILE *b) {
 void _GenerateDFG(FILE *b) {
   BBs = ALLOC(sizeof(BasicBlock) * BBCnt);
   int last = 0;
-  // _Bool AdjMat[BBCnt][BBCnt];
   int from, to;
   for (int i = 0; i < InsCnt; ++i) {
     int cur = BBNoArr[i];
     if (last != cur) {
-      // AdjMat[last][cur] = true;
       BBs[last].end = i - 1;
       BBs[cur].begin = i;
       if (InnerIns[i - 1].iType != EXIT && InnerIns[i - 1].iType != RETURN) {

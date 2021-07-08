@@ -1,0 +1,91 @@
+i32 fibonaci(i32 n) {
+    // if and else if scopes
+    if (n) { // need bool type
+        return 0;
+    } else if (n == 1) {
+        return 1;    
+    } else {
+        return fibonaci(n - 1) + fibonaci(n - 2);
+    }
+}
+
+i32 fg() {
+    return 1;
+}
+
+i32[2] returnArray() {
+    i32 a[2][2];
+    return a[0][1]; // return array type
+}
+
+i32 mian() {
+    bool b = {false}; // error apply
+    f32 f = 5.e-45;
+    i32 y = f; // error type
+    f32 __float__;
+    i32 a[4][2] = {
+        {1,2},
+        {3}, // dim unmatch
+        {5,6},
+        {7,8,9}, // dim unmatch
+    };
+    i32 b[2] = 2; // error apply
+    string s = "Hello, World!";
+    i32 x = fg; // error type
+
+    f32 ff[4] = {1,2,3,4}; // error type
+    fibonaci(x);
+
+    x = f ^ s; // error type
+
+    continue; // wrong location of continue
+    ++x;
+    ++x = 2; // non lvalue
+    fibonaci(f); // parameter type unmatch
+    fibonaci(); // number of parameter unmatch
+    1 + 2.0; // error type
+    x = f[0]; // unsubscriptable
+    x = a[2][1];
+    x = a[f][f]; // subscriptable must be integer
+    a[1] = a[2]; // assignment between arrays
+    x = fg + x; // function and variable
+    fg(x);  // number of parameter unmatch
+
+    f(); // uncallable
+    for (x = 32; x || x; --x) { // error condition
+        i32 i; // loop statement scope
+        print("%d", fibonaci(x)); // can only print base type
+        continue;
+        {
+            continue;
+        }
+        break;
+    }
+
+    break; // wrong location of break;
+
+    // This is a test comment
+    
+    return 0;
+}
+
+i32 var;
+i32 var; // redefinition variable
+i32 var(f32); // redefinition function
+
+f32 func(i32, string[5], f32[3][4]);
+
+f32 func(i32 i, string s[5], f32 mat[3][4]) {
+    i32 var = var;
+    // need return
+    if (i == 0) {
+        // return;
+    }
+    func(i, s, mat); // parameter type unmatch
+    // return 0;
+} // need return value
+
+void voidFunc(i32 i) {
+    return i; // no return
+}
+

@@ -1,0 +1,37 @@
+i32[2][4] matMul(i32 a[2][3], i32 b[3][4]) {
+    i32 i, j, k;
+    i32 ans[2][4];
+    for (i = 0; i < 2; ++i) {
+        for (j = 0; j < 4; ++j) {
+            for (k = 0; k < 3; ++k) {
+                ans[i][j] = ans[i][j] + a[i][k] * b[k][j];
+            }
+        }
+    }
+    return ans;
+}
+void matPrint(i32 a[2][4]) {
+    i32 i, j;
+    for (i = 0; i < 2; ++i) {
+        for (j = 0; j < 4; ++j) {
+            print("%d", a[i][j]);
+            print("%s", " ");
+        }
+        print("%s", "\n");
+    }
+    return;
+}
+i32 main() {
+    i32 mat[2][3] = {
+        {1,2,3},
+        {1,2,3},
+    };
+    i32 mat2[3][4] = {
+        {1,2,3,4},
+        {1,2,3,4},
+        {1,2,3,4},
+    };
+    matPrint(matMul(mat, mat2));
+    return 0;
+}
+
